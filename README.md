@@ -37,20 +37,17 @@ uv pip install -e ".[dev]"
 
 ```bash
 # Add a new package
-uv pip add <package-name>
+uv add <package-name>
 
 # Add a new development package
-uv pip add --dev <package-name>
+uv add --dev <package-name>
 ```
 
 4. Updating dependencies:
 
 ```bash
 # Update all packages
-uv pip compile requirements.txt
-
-# Update specific package
-uv pip add --upgrade <package-name>
+uv sync
 ```
 
 5. Running tests:
@@ -62,7 +59,7 @@ pytest
 ### Common Commands
 
 - List installed packages: `uv pip list`
-- Remove a package: `uv pip remove <package-name>`
+- Remove a package: `uv remove <package-name>`
 - Show package info: `uv pip show <package-name>`
 - Export requirements: `uv pip freeze > requirements.txt`
 
