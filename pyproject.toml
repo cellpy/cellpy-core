@@ -1,7 +1,65 @@
 [project]
 name = "cellpy-base"
 version = "0.1.0"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+
+dependencies = [
+    "duckdb>=1.2.2",
+    "duckdb-engine>=0.17.0",
+    "narwhals>=1.38.0",
+    "pandas>=2.2.3",
+    "polars>=1.29.0",
+    "pyarrow>=20.0.0",
+    "sqlalchemy>=2.0.40",
+]
+
+keywords = [
+    "cellpy", 
+    "base", 
+    "battery"
+]
+
+classifiers = [
+    # How mature is this project? Common values are
+    #   3 - Alpha
+    #   4 - Beta
+    #   5 - Production/Stable
+    "Development Status :: 4 - Beta",
+
+  # Indicate who your project is intended for
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Software Development :: Build Tools",
+
+    # Specify the Python versions you support here.
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[build-system]
+requires = ["hatchling >= 1.27", "uv-dynamic-versioning>=0.7.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/docs",
+  "/tests",
+  "/scripts",
+  "/dev",
+  "/local",
+  "/tmp",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cellpybase"]
+
+[dependency-groups]
+dev = [
+    "cellpy>=1.0.2",
+    "ruff>=0.11.8",
+]
