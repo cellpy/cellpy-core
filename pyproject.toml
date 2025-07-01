@@ -5,7 +5,7 @@ license = "MIT"
 license-files = ["LICEN[CS]E*"]
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 
 dependencies = [
     "duckdb>=1.2.2",
@@ -62,4 +62,12 @@ packages = ["src/cellpybase"]
 dev = [
     "cellpy>=1.0.2",
     "ruff>=0.11.8",
+    "pytest>=8.0.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
