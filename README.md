@@ -1,8 +1,8 @@
-# cellpy-base
+# cellpy-core
 
 ## Installing
 
-only available on <https://github.com/cellpy/cellpy-base>
+only available on <https://github.com/cellpy/cellpy-core>
 
 ## Developing
 
