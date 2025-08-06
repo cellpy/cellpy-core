@@ -1,5 +1,5 @@
 [project]
-name = "cellpy-base"
+name = "cellpycore"
 version = "0.1.0"
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
@@ -19,7 +19,7 @@ dependencies = [
 
 keywords = [
     "cellpy", 
-    "base", 
+    "core", 
     "battery"
 ]
 
@@ -56,7 +56,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cellpybase"]
+packages = ["src/cellpycore"]
 
 [dependency-groups]
 dev = [
