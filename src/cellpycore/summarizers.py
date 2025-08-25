@@ -3,14 +3,14 @@ from typing import Sequence, TypeVar, Union
 
 # ------------------------------------------------------------
 # TODO: remove this when we have ported the following modules to core:
-from cellpy.readers import core
-from cellpy.parameters.internal_settings import (
+from cellpy.readers import core  # type: ignore
+from cellpy.parameters.internal_settings import (  # type: ignore
     get_cellpy_units,
     get_default_output_units,
     HeadersNormal,
     HeadersStepTable,
     HeadersSummary,
-)
+)  # type: ignore
 # ------------------------------------------------------------
 
 from cellpycore import selectors, units
@@ -837,7 +837,8 @@ def _main():
     import pathlib
     import matplotlib.pyplot as plt
 
-    from cellpy import cellreader
+    # TODO: remove this when we have ported the following module to core:
+    from cellpy import cellreader  # type: ignore
 
     # load the data
     arbin_raw_file = (
