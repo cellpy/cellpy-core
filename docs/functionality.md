@@ -65,6 +65,10 @@ flexible structure that allows for more columns
   - Source
     - UUID
     - will not be used, only kept for tracability
+  - Cycle Type
+    - categorial column
+    - e.g. standard, GITT, ICI, characterization
+    - in first version: pre-defined input
   - Default: calculate if empty; keep if filled (can be overridden by argument):
     - Charge energy
     - Discharge energy
@@ -75,6 +79,9 @@ flexible structure that allows for more columns
       - Cell temperature(s)
       - Chamber temperature
       - (could be more)
+  - Mask
+    - Boolean
+    - default: True (meaning: this value is selected and used)
 
 Naming scheme:
 - aux_temperature_[arbitrary name]
@@ -99,19 +106,52 @@ https://cellpy.readthedocs.io/en/latest/fundamentals/data_structure.html
 
 ### Raw data: Harmonized_Raw
 
-see above.
+see above; with additional calculations when necessary:
+- calculate step type and step mode (for steptable and then update)
+- decide on how to handle cycler-specific measurement points that don't follow the time series (e.g. internal resistances at start/end of a cycle)
+  - option 1: forward fill values (ethical concerns!!!)
+    - could add prefix to indicate what was done in the processing
 
-### Core Summary
 
-Define headers
-
-
-### Steptable
+### StepTable
 - Use unique step numbers
+- one row for each individual sequential step
+
 - do things to speed up calculations for pulsing
 
+Headers:
+- Min, Max, delta, time-average, capacity-average, arithmetic-mean, stdv, medians, first, last
+- First, last, delta
+  - Cycle number
+  - Step number, substep number and type and mode
+  - Original datapoint number and index
+- Mask
+  - Boolean
+  - default: True (meaning: this value is selected and used)
 
-Define headers
+
+
+### Core CycleTable
+
+Define headers:
+- Min, Max, delta, time-average, capacity-average, arithmetic-mean
+  - for every raw value
+  - also for auxillaries
+- capacity, energy and time per mode
+- charge and discharge difference
+- Coulombic/Energy/Power efficiency
+- Voltage efficiency: energy efficiency/CE
+- Cumulated values
+- Splits per mode:
+  - CV share: amount of capacity in CV/full capacity in cycle etc
+
+- Internal resistance estimations based on potential drops
+  - resistances at different time scales
+
+- Mask
+  - Boolean
+  - default: True (meaning: this value is selected and used)
+
 
 
 ## Other questions
