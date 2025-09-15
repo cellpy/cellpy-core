@@ -1,31 +1,23 @@
-# Definition of what operations Cellpy Core will perform
-
-JP started moving stuff into a readers/slim folder have a look at cell_core.py:
-
-  - cell_core: the cellpy core class
-  - selectors: module containing functions;
-    - input: data object;
-    - not allowed to modify the data object
-  - summarizers: (should also not modify the data object)
-  - units (optional)
-
-
+# Definition of Cellpy Core Functionality
 
 ## Cellpy Core Functionality
-- receive data object
-    - to be defined - separate task?
-- augment data object with
-  - Unified time series    - 
-  - Steptable
-    - to be defined - separate task?
-    - substeps?
-  - Core summary
-    - to be defined - separate task?
-- Metadata
-  - keep metadata out of core, but keep it in mind when setting it up
-  - Morrow will not use metadata within cellpy
-  - Only keep metadata that is strictly necessary for use within core
-    - cell-specific
+- Receive data object (Cellpy Core Input)
+    - Harmonized_Raw (see below)
+- Augment data object with *Cellpy Core Output*:
+  - StepTable
+    - See separate definition
+  - CycleTable
+    - See separate definition
+- Update Harmonized_Raw
+  - If necessary: update Harmonized_Raw with calculated steps (from StepTable) 
+
+
+
+### Metadata
+Metadata will be kept out of the core. Important to keep metadata in mind when setting up Cellpy Core, so that metadata can easily follow and be aligned with the data.
+
+- Only keep metadata that is strictly necessary for use within core (to be defined as part of Harmonized_Raw)
+    - cell-specifics
     - test information
       - tester, channel etc
     - raw data
@@ -35,10 +27,15 @@ JP started moving stuff into a readers/slim folder have a look at cell_core.py:
 
 
 ## Cellpy Core Input (Harmonized_Raw)
-flexible structure that allows for more columns
+*To be summarized in a separate file*
 
-- Time series data (format to be decided)
-  - **Datetime object** (in *high enough* resolution)
+**SPEED-16:** "Define the object that goes into cellpy core"
+
+
+Flexible structure that allows for more columns
+
+- Time series data
+  - **Datetime object**
     - UTC
     - resolution from cycler
   - **Data point number - original**
@@ -91,24 +88,22 @@ Naming scheme:
 
 
 To be discussed
-- EIS, cyclic voltametry
-- 3-electrode setup
-
-- needed:
-  - data resolution (for definition of step types)
-  - units (if we chose units)
+- EIS, cyclic voltametry, 3-electrode setup
+- data resolution (for definition of step types)
+- units (if we chose units)
 
 
 
 ## Cellpy Core Output
+*To be summarized in a separate file*
 
-https://cellpy.readthedocs.io/en/latest/fundamentals/data_structure.html
+**SPEED-17:** "Define the object that comes out of cellpy core"
 
-### Raw data: Harmonized_Raw
+### Updated Harmonized_Raw
 
-see above; with additional calculations when necessary:
-- calculate step type and step mode (for steptable and then update)
-- decide on how to handle cycler-specific measurement points that don't follow the time series (e.g. internal resistances at start/end of a cycle)
+Additional calculations when necessary:
+- Calculate step type and step mode (for steptable and then update)
+- Decide on how to handle cycler-specific measurement points that don't follow the time series (e.g. internal resistances at start/end of a cycle)
   - option 1: forward fill values (ethical concerns!!!)
     - could add prefix to indicate what was done in the processing
 
@@ -116,24 +111,21 @@ see above; with additional calculations when necessary:
 ### StepTable
 - Use unique step numbers
 - one row for each individual sequential step
+- do things to speed up calculations (e.g. for pulsing)
 
-- do things to speed up calculations for pulsing
-
-Headers:
+#### Headers
 - Min, Max, delta, time-average, capacity-average, arithmetic-mean, stdv, medians, first, last
 - First, last, delta
   - Cycle number
   - Step number, substep number and type and mode
   - Original datapoint number and index
-- Mask
-  - Boolean
-  - default: True (meaning: this value is selected and used)
+- Mask (Boolean)
 
 
 
 ### Core CycleTable
 
-Define headers:
+#### Headers
 - Min, Max, delta, time-average, capacity-average, arithmetic-mean
   - for every raw value
   - also for auxillaries
@@ -144,33 +136,41 @@ Define headers:
 - Cumulated values
 - Splits per mode:
   - CV share: amount of capacity in CV/full capacity in cycle etc
-
 - Internal resistance estimations based on potential drops
   - resistances at different time scales
-
-- Mask
-  - Boolean
-  - default: True (meaning: this value is selected and used)
+- Mask (Boolean)
 
 
 
 ## Other questions
-- decide on header structure
-- versioning on headers and filestructure
+- Header structure & versioning on headers and filestructure (separate Task: **SPEED-30**)
 
 - Units and unit conversion
   - locking units might limit resolution
   
 - How to deal with different types of experiments
   - pulsing protocols, such as GITT, ICI
-  - EIS?
+  - EIS
+  - 3-electrode data
 
 
 ## Add on's
 
 ### Pre-processing Modules
-Convert time series data from any tester to common cellpy-core-input format
+- Convert time series data from any tester to common cellpy-core-input format
 
 
-### Post-processing/Analysis modules
+### Post-processing/Analysis Modules
 
+
+### Meta-data Module(s)
+
+
+
+## Current code structure:
+  - cell_core: the cellpy core class
+  - selectors: module containing functions;
+    - input: data object;
+    - not allowed to modify the data object
+  - summarizers: (should also not modify the data object)
+  - units (optional)
