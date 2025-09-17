@@ -5,12 +5,12 @@ import logging
 
 # ------------------------------------------------------------
 # TODO: remove this when we have ported the following modules to core:
-from cellpy.readers import core
-from cellpy.parameters.internal_settings import (
+from cellpy.readers import core  # type: ignore
+from cellpy.parameters.internal_settings import (  # type: ignore
     HeadersNormal,
     HeadersStepTable,
     HeadersSummary,
-)
+)  # type: ignore
 
 # ------------------------------------------------------------
 

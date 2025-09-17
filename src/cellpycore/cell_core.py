@@ -6,13 +6,16 @@ import datetime
 
 from typing import Callable, Iterable, Union, Sequence, Optional, List, TypeVar
 
+
+# The CellpyCell (currently named CellpyCellCore) is the main class that the full cellpy package
+# should interact with.
+# The Data class can be accessed through the data property (setter and getter).
+
 # ------------------------------------------------------------
 # TODO: remove this when we have ported the following modules to core:
-from cellpy.readers import core
-from cellpy.exceptions import (
-    NoDataFound,
-)
-from cellpy.parameters.internal_settings import (
+from cellpy.readers import core  # type: ignore
+from cellpy.exceptions import NoDataFound  # type: ignore
+from cellpy.parameters.internal_settings import (  # type: ignore
     get_cellpy_units,
     get_default_output_units,
     HeadersNormal,
@@ -22,7 +25,7 @@ from cellpy.parameters.internal_settings import (
 
 # ------------------------------------------------------------
 
-from cellpycore import selectors, summarizers
+from cellpycore import selectors, summarizers, config
 
 DataFrame = TypeVar("DataFrame")
 

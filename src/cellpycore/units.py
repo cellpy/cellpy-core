@@ -2,11 +2,11 @@ import logging
 from typing import Optional, TypeVar
 
 # old cellpy modules that are still not ported to slim:
-from cellpy.readers import core
-from cellpy.parameters.internal_settings import (
+from cellpy.readers import core  # type: ignore
+from cellpy.parameters.internal_settings import (  # type: ignore
     get_cellpy_units,
     CellpyUnits,
-)
+)  # type: ignore
 
 DataFrame = TypeVar("DataFrame")
 
