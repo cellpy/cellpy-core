@@ -27,72 +27,7 @@ Metadata will be kept out of the core. Important to keep metadata in mind when s
 
 
 ## Cellpy Core Input (Harmonized_Raw)
-*To be summarized in a separate file*
-
-**SPEED-16:** "Define the object that goes into cellpy core"
-
-
-Flexible structure that allows for more columns
-
-- Time series data
-  - **Datetime object**
-    - UTC
-    - resolution from cycler
-  - **Data point number - original**
-    - kept from data collection
-    - important for sorting and debugging
-      - handling of daylight saving time
-      - sort out mismatch between datapoint vs timestamp vs order in the file
-  - **Data point number - updated**
-      - Index (corrected sequential datapoints)
-      - Has to be added as separate column
-
-  - Voltage (V)
-  - Current (A)
-  - Cycle Number
-  - Step Number (original)
-  - Unique Step Number (sequential)
-  - Substep Number
-  - Step Type (optional values)
-    - ch, dch, rest
-  - Step Mode (optional values)
-    - CC, CV, CP, None
-  - Charge capacity
-  - Discharge capacity
-  - Source
-    - UUID
-    - will not be used, only kept for tracability
-  - Cycle Type
-    - categorial column
-    - e.g. standard, GITT, ICI, characterization
-    - in first version: pre-defined input
-  - Default: calculate if empty; keep if filled (can be overridden by argument):
-    - Charge energy
-    - Discharge energy
-    - Charge power
-    - Discharge power
-  - Auxilary
-    - e.g. Temperature
-      - Cell temperature(s)
-      - Chamber temperature
-      - (could be more)
-  - Mask
-    - Boolean
-    - default: True (meaning: this value is selected and used)
-
-Naming scheme:
-- aux_temperature_[arbitrary name]
-- aux_voltage_[]
-- aux_pressure_[]
-- aux_resistance_[]
-
-
-To be discussed
-- EIS, cyclic voltametry, 3-electrode setup
-- data resolution (for definition of step types)
-- units (if we chose units)
-
-
+Summarized in [harmonized_raw_definition.md](./harmonized_raw_definition.md)
 
 ## Cellpy Core Output
 *To be summarized in a separate file*
