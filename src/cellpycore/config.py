@@ -58,6 +58,7 @@ class SuperDuperCols(Enum):
         return obj
 
     # TODO: dtype should be a python native "dtype object" if it exists, or a pl.DataType? Using str for now.
+    #       It is also possible to convert from str to pl.DataType in the __new__ method, I guess.
     A: list[str, str, str] = "col1", "V", "Float64"
     B: list[str, str, str] = "col2", "mAh/g", "Float64"
     C: list[str, str, str] = "col3", "s", "Float64"
