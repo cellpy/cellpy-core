@@ -1,4 +1,4 @@
-name: Django CI
+name: Minimal tests
 run-name: CI triggered by @${{ github.actor }}
 on:
   push:
