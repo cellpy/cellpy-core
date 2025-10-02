@@ -322,6 +322,11 @@ from .config import Headers
 3. **Install pre-commit hooks** (if available)
 4. **Run tests** to ensure everything works
 
+It is recommended to use the `uv` project management solution for
+adding new dependencies: `uv add something`
+
+More details can be found at [Astral's uv documentation](https://docs.astral.sh/uv/).
+
 ### Development Process
 
 1. **Create a feature (issue) branch** from `main`
@@ -340,6 +345,11 @@ from .config import Headers
 - **Keep PRs focused** and reasonably sized
 
 ## Testing Guidelines
+
+We are currently using `pytest` as test runner. We have not decided
+if we would like implement sandboxed local testing (e.g. with `nox`),
+and it might never happen since for example `github actions` also
+can check sandboxed tests.
 
 ### Test Structure
 
@@ -383,10 +393,18 @@ def test_function_name_with_invalid_input_raises_exception():
 
 ### Documentation Requirements
 
+Initial documentation should use markdown format and should live in the docs folder.
+Keep in mind that we intend to implement `sphinx` in a not-too-far future.
+
 - **All public APIs** must be documented
 - **Examples** should be provided for complex functions
 - **Keep documentation** up-to-date with code changes
 - **Use clear, concise language**
+
+### Additional tooling
+
+- **AI**: a `.cursor` folder exists where general rules and project specific rules can be put
+- **Aliases**: a `.aliases` file exists where general linux aliases can be put and sourced (`source .aliases`)
 
 ---
 
