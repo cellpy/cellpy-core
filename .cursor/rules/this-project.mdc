@@ -1,0 +1,9 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+
+This is a python project. And it uses a python environment (.venv). Rember to activate it! We
+also have uv installed. Use it if you want.
