@@ -1,0 +1,33 @@
+name: Django CI
+run-name: CI triggered by @${{ github.actor }}
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv and set the python version
+      uses: astral-sh/setup-uv@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        version: "0.8.13"
+
+    - name: Install the project
+      run: uv sync --locked --all-extras --dev
+
+    - name: Run tests
+      run: uv run pytest -vv
+
