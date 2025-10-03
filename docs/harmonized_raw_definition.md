@@ -23,7 +23,7 @@ Set up a flexible structure that allows for more columns.
 | source_uuid | str(36) | - | "e15b46ca-e584-467f-a176-8bf98b8090e5" | will not be used, only kept for info and tracability |
 | step_num | int | - | 123 | updated unique and sequential step number |
 | source_step_num | int | - | 123 | original step number |
-| step_type | str(10) | - | "charge", "discharge", "rest", etc. | optional value |
+| step_type | str(10) | - | "charge", "discharge", "rest" | optional value, calculated by CellpyCore if not provided |
 | step_type_detail | str(10) | - | - | optional value; (to be used to give additional info about steps, for example when a test is interrupted) |
 | step_mode | str(10) | - | "CV", "CC", "CP", "None" | optional value |
 | cycle_num | int | - | 12 | - |
