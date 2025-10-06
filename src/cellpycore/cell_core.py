@@ -21,11 +21,11 @@ logger = logging.getLogger(__name__)
 
 
 class Data:
-    meta_test_dependent: Meta = MockMetaTestDependent()
-
-    raw: DataFrame
-    cycle: DataFrame
-    step: DataFrame
+    def __init__(self):
+        self.meta_test_dependent: Meta = MockMetaTestDependent()
+        self.raw: Optional[DataFrame] = None
+        self.cycle: Optional[DataFrame] = None
+        self.step: Optional[DataFrame] = None
 
 
 class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
