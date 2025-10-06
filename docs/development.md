@@ -105,7 +105,7 @@ We follow the **GitHub Flow** methodology loosely with the following branch stru
 - **`main`**: The primary branch containing production-ready code
 - **`nn-add-something*`**: Branch that addresses a particular issue 
 
-Optionally, we can label branches using the following allowed labels
+Optionally, we can label branches using the following allowed labels (might be changed in the future)
 - **`feature/*`**: Feature development branches
 - **`bugfix/*`**: Bug fix branches
 - **`hotfix/*`**: Critical production fixes
