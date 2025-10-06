@@ -134,6 +134,7 @@ Optionally, we can label branches using the following allowed labels (might be c
 
 ### Commit Message Standards
 Use clear, descriptive commit messages.
+Better to commit often (with slightly non-perfect commit messages), than perfect commit messages pr. month.
 
 If you want to impress your fellow developers, you can opt for the
 fancy commit message standard:
