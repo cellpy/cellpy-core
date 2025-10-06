@@ -12,6 +12,13 @@ the settings. It should allow for both "dot notation" and "bracket notation" to 
 """
 
 from dataclasses import dataclass
+from enum import StrEnum
+
+
+class CyclingMode(StrEnum):
+    ANODE = "anode"
+    OTHER = "other"
+
 
 @dataclass
 class BaseCols:
@@ -52,7 +59,7 @@ class FlexibleCols(BaseCols):
 class Cols(BaseCols):
     # Implement common additonal functionality here (e.g. to_json method).
     #
-    # If we chose to use custom getattr method, swap the 
+    # If we chose to use custom getattr method, swap the
     # class inheritance to FlexibleCols (will encure some performance loss).
     pass
 
@@ -64,6 +71,24 @@ class CycleCols(Cols):
     step_type: str = "step_type"
     step_mode: str = "step_mode"
     charge_capacity: str = "charge_capacity"
+
+
+class StepCols(Cols):
+    step_num: str = "step_num"
+    sub_step_num: str = "sub_step_num"
+    step_type: str = "step_type"
+    step_mode: str = "step_mode"
+    charge_capacity: str = "charge_capacity"
+    discharge_capacity: str = "discharge_capacity"
+
+
+class RawCols(Cols):
+    source_type: str = "source_type"
+    source_uuid: str = "source_uuid"
+    source_datapoint_num: str = "source_datapoint_num"
+    datapoint_num: str = "datapoint_num"
+    step_num: str = "step_num"
+    cycle_num: str = "cycle_num"
 
 
 def cols_check():

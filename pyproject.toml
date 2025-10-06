@@ -36,7 +36,6 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
 
     # Specify the Python versions you support here.
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 
@@ -62,6 +61,7 @@ packages = ["src/cellpycore"]
 dev = [
     "ruff>=0.11.8",
     "pytest>=8.0.0",
+    "pint>=0.25",
 ]
 
 [tool.pytest.ini_options]
