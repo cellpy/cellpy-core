@@ -86,4 +86,9 @@ Option for more auxillary columns; naming scheme:
   - Units (based on Rasmus' suggestion) are included in the header table above
 - EIS, cyclic voltametry, 3-electrode setup
 - **Data resolution** (for definition of step types)
+  
+
+### Input from PEC testing
+- Tasks: i.e. test number that is automatically assigned by the PEC tester
+- !!! TestRegime and TestRegime version (schedule files)
 

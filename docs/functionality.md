@@ -31,6 +31,11 @@ Summarized in [core_output_definition.md](./core_output_definition.md)
   - EIS
   - 3-electrode data
 
+- How do we handle sequential tests?
+  - re-proccess everything?
+  - smart ways of stitching processed data together?
+  - then we might have e.g. a cycle number and a total cycle number
+    - decide how to deal with cummulative values
 
 ## Add on's
 

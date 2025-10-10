@@ -1,0 +1,125 @@
+Date and Time	x	
+Time stamp	x	
+Total time (days)		we have time for each cycle and start/end times
+Total test time (days)		
+Storage time (days)	PP	
+Cycle - actual	x	
+Cycle - normalized	PP	
+Cycle - total		open question on how combine different tests
+Cycle - total - normalized	PP	
+Cycle length (h)	x	cycle duration
+OCV length (h)	x	rest_duration
+Position	x	source_type and source_uuid
+Tasks	?	follow up
+CellUnit	?	follow up
+Current_dch (C)	x	C-rates for PP
+Current_dch std dev (C)		follow up
+Current_dch_end (C)	?	
+Current_cha (C)	x	
+Current_cha std dev (C)		follow up
+Current_cha_end (C)	?	
+Temp avg (°C)	x	have min and max for cycle, not separated for ch/dch
+Temp std dev (°C)		follow up
+Temp dch start (°C)		follow up
+Temp dch avg (°C)		follow up
+Temp dch max (°C)		follow up
+Temp dch std dev (°C)		follow up
+Temp cha start (°C)		follow up
+Temp cha avg (°C)		follow up
+Temp cha max (°C)		follow up
+Temp cha std dev (°C)		follow up
+Voltage EoD (V)	x	relaxation_potential_discharge
+Voltage EoC (V)	x	relaxation_potential_charge
+Voltage EoD ocv (V)	x	open_circuit_potential_discharge
+Voltage EoC ocv (V)	x	open_circuit_potential_charge
+Voltage charge avg (V)	x	
+Voltage discharge avg (V)	x	
+Voltage start (V)	?	
+Voltage end (V)	?	
+Ah_dch (Ah)	x	discharge_capacity
+Ah_cha (Ah)	x	charge_capacity
+Ah_dch (nominal) (%)		PP
+Ah_dch (C20 first) (%)		PP
+Ah_cha (nominal) (%)		PP
+Ah_cha (C20 first) (%)		PP
+SoH (%)		PP
+CE (%)	x	
+Wh_dch (Wh)	x	
+Wh_cha (Wh)	x	
+Wh_dch (Wh/kg)		PP
+Wh_cha (Wh/kg)		PP
+Wh_dch (%)		PP
+Wh_cha (%)		PP
+Efficiency (%)	x	energy_efficiency
+Ah_balance start (mAh)		
+Ah_balance end (mAh)		
+Ah_balance max (mAh)		
+Ah_balance min (mAh)		
+SoC - max (nom) (%)		
+SoC - min (nom) (%)		
+SoC - max (C20 last) (%)		
+SoC - min (C20 last) (%)		
+Self-discharge (mV/day)	?	calendar ageing?
+Self-discharge (mAh/day)	?	
+R_DC 0ms SoC50 dch (mOhm)		Resistance to be discussed
+R_DC 50ms SoC50 dch (mOhm)		
+R_DC 1s SoC50 dch (mOhm)		
+R_DC 30s SoC50 dch (mOhm)		
+R_DC 3min SoC50 dch (mOhm)		
+R_DC 15min SoC50 dch (mOhm)		
+R_DC 30min SoC50 dch (mOhm)		
+R_DC 60min SoC50 dch (mOhm)		
+R_DC 0ms SoC50 cha (mOhm)		
+R_DC 50ms SoC50 cha (mOhm)		
+R_DC 1s SoC50 cha (mOhm)		
+R_DC 30s SoC50 cha (mOhm)		
+R_DC 3min SoC50 cha (mOhm)		
+R_DC 15min SoC50 cha (mOhm)		
+R_DC 30min SoC50 cha (mOhm)		
+R_DC 60min SoC50 cha (mOhm)		
+R_DC 0ms EoD (mOhm)		
+R_DC 50ms EoD (mOhm)		
+R_DC 1s EoD (mOhm)		
+R_DC 30s EoD (mOhm)		
+R_DC 3min EoD (mOhm)		
+R_DC 15min EoD (mOhm)		
+R_DC 30min EoD (mOhm)		
+R_DC 60min EoD (mOhm)		
+R_DC 0ms EoC (mOhm)		
+R_DC 50ms EoC (mOhm)		
+R_DC 1s EoC (mOhm)		
+R_DC 30s EoC (mOhm)		
+R_DC 3min EoC (mOhm)		
+R_DC 15min EoC (mOhm)		
+R_DC 30min EoC (mOhm)		
+R_DC 60min EoC (mOhm)		
+R_DC PEC SoC50 dch (mOhm)		
+R_DC PEC SoC50 cha (mOhm)		
+R_DC PEC EoD (mOhm)		
+R_DC PEC EoC (mOhm)		
+Cycle type		in HR
+TestRegime		should be included
+TestRegime version		should be included
+F1 cha (V)		PP
+F2 cha (V)		PP
+F3 cha (V)		PP
+dF1 cha (mV)		PP
+dF2 cha (mV)		PP
+dF3 cha (mV)		PP
+F1 cha (1/V)		PP
+F2 cha (1/V)		PP
+F3 cha (1/V)		PP
+F1 dch (V)		PP
+F2 dch (V)		PP
+F3 dch (V)		PP
+dF1 dca (mV)		PP
+dF2 dca (mV)		PP
+dF3 dca (mV)		PP
+F1 dch (1/V)		PP
+F2 dch (1/V)		PP
+F3 dch (1/V)		PP
+Ah_dch slippage (Ah)	??	
+Ah_cha slippage (Ah)	??	
+Shunt voltage dch (µV)	??	
+Shunt voltage cha (µV)	??	
+CE Shunt 	??	

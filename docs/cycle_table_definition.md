@@ -114,14 +114,21 @@ For each auxillary column in harmonized_raw, the following columns will be added
     - relaxation_potential_charge, relaxation_potential_discharge
     - open_circuit_potential_charge, open_circuit_potential_discharge	
 - How to deal with dedicated resistance steps (e.g. as included in Arbins)?
-- Resistances at different time scales?
+- Resistances at different time scales? (not for first version)
+  - 0ms, 50ms, 1s etc
+  - 50% SoC, end of charge, end of discharge
 - We have cc and cv shares - what about cp?
   - What additional columns would make sense with respect to CP?
 - Should we also have cv_discharge_capacity etc.? (even though CCCV is more common for charge)
 - Should we split auxillaries into charge and discharge as well?
+  - add start and end temperatures?
 - Check summary tables for PEC data from Preben
+  - added a few points, Julia will follow up excel sheet;
 - Mask (Boolean) - how should this be included?
 - Any other cumulated values to be added?
+- standard deviations?
+  - e.g. for currents (and all other means)
+- should we add any indicators for capacity loss or is this post processing?
 
 
 Doublecheck if we have
