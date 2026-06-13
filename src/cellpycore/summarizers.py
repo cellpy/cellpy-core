@@ -4,6 +4,7 @@ from typing import Sequence, TypeVar, Union
 
 from cellpycore import selectors, units
 from cellpycore.config import StepCols, CycleCols, RawCols
+from cellpycore.legacy import HeadersStepTable, HeadersSummary, HeadersNormal
 from cellpycore.cell_core import Data
 
 logger = logging.getLogger(__name__)
@@ -13,9 +14,13 @@ DataFrame = TypeVar("DataFrame")
 Array = TypeVar("Array")
 
 
-headers_steps = StepCols()
-headers_summary = CycleCols()
-headers_raw = RawCols()
+# The summarizer bodies are written against the legacy header names (the same
+# names cellpy uses for its raw/step/summary DataFrame columns), so the module
+# level header instances must be the legacy classes for the OldCellpyCellCore
+# bridge to work. See cellpy-core#4 (header harmonization) for the longer-term plan.
+headers_steps = HeadersStepTable()
+headers_summary = HeadersSummary()
+headers_raw = HeadersNormal()
 
 cellpy_units = units.get_cellpy_units()
 output_units = units.get_default_output_units()
@@ -547,7 +552,7 @@ def generate_absolute_summary_columns(
 
 
 def generate_specific_summary_columns(
-    data: Data, mode: str, specific_columns: Sequence
+    data: Data, mode: str, specific_columns: Sequence, to_units=None
 ) -> Data:
     """
     Generate specific summary columns.
@@ -556,11 +561,16 @@ def generate_specific_summary_columns(
         data (Data): The data object.
         mode (str): The mode of the data (gravimetric, areal or absolute).
         specific_columns (Sequence): The columns to generate specific summary columns for.
+        to_units: The target (output) units to convert to. Defaults to the cellpy
+            default units. Pass the consumer's units (e.g. cellpy's instance
+            ``cellpy_units``) to honour user-selected output units.
 
     Returns:
         Data: The data object with the specific summary columns added to the summary.
     """
-    specific_converter = units.get_converter_to_specific(data=data, mode=mode)
+    specific_converter = units.get_converter_to_specific(
+        data=data, mode=mode, to_units=to_units
+    )
     summary = data.summary
     for col in specific_columns:
         logger.debug(f"generating specific column {col}_{mode}")
@@ -614,6 +624,16 @@ def end_voltage_to_summary(data: Data) -> Data:
             header_steps_cycle: header_summary_cycle,
             header_steps_voltage_last: headers_summary.end_voltage_discharge,
         }
+    )
+
+    # A cycle can contain several charge/discharge-type steps (e.g. discharge +
+    # cv_discharge). Keep only the last one per cycle (matching legacy cellpy's
+    # "selecting last" behaviour) so the left-merge does not multiply summary rows.
+    discharge_steps = discharge_steps.drop_duplicates(
+        subset=[header_summary_cycle], keep="last"
+    )
+    charge_steps = charge_steps.drop_duplicates(
+        subset=[header_summary_cycle], keep="last"
     )
 
     summary = summary.merge(discharge_steps, on=header_summary_cycle, how="left")

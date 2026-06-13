@@ -4,6 +4,7 @@ from typing import Any, Callable, Iterable, List, Optional, Union, TypeVar
 import logging
 
 from cellpycore.config import Cols, StepCols, CycleCols, RawCols
+from cellpycore.legacy import HeadersStepTable, HeadersSummary, HeadersNormal
 from cellpycore.cell_core import Data
 
 DataFrame = TypeVar("DataFrame")
@@ -14,9 +15,12 @@ FIRST = "_first"
 LAST = "_last"
 DELTA = "_diff"
 
-headers_step_table = StepCols()
-headers_summary = CycleCols()
-headers_normal = RawCols()
+# The selector bodies use the legacy header names (matching cellpy's raw/step
+# DataFrame columns), so the module-level header instances must be the legacy
+# classes for the OldCellpyCellCore bridge. See cellpy-core#4 (header harmonization).
+headers_step_table = HeadersStepTable()
+headers_summary = HeadersSummary()
+headers_normal = HeadersNormal()
 
 # TODO: move this to a settings file
 STEP_TYPES = [

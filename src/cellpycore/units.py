@@ -1,7 +1,9 @@
 import logging
 from typing import Optional, TypeVar
 
-from cellpycore.legacy import Data, CellpyUnits
+from cellpycore.cell_core import Data
+from cellpycore.legacy import CellpyUnits
+
 DataFrame = TypeVar("DataFrame")
 
 UNIT_REGISTER_LOADED = False

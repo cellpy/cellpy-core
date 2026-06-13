@@ -165,7 +165,21 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         summary.index = list(range(summary_length))
 
         if select_columns:
-            logger.debug("Sorry - select_columns is not implemented yet")
+            logger.debug("keeping only selected set of columns")
+            columns_to_keep = [
+                self.raw_cols.charge_capacity_txt,
+                self.raw_cols.cycle_index_txt,
+                self.raw_cols.data_point_txt,
+                self.raw_cols.datetime_txt,
+                self.raw_cols.discharge_capacity_txt,
+                self.raw_cols.test_time_txt,
+            ]
+            for cn in column_names:
+                if not columns_to_keep.count(cn):
+                    try:
+                        summary.pop(cn)
+                    except KeyError:
+                        logger.debug(f"could not pop {cn}")
 
         data.summary = summary
 
@@ -205,6 +219,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         normalization_cycles: Union[Sequence, int, None],
         step_txt: Optional[str] = None,
         specifics: Optional[List[str]] = None,
+        to_units=None,
     ) -> Data:
         """Add specific summary columns to the summary.
 
@@ -214,6 +229,9 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             normalization_cycles: The number of cycles to normalize the data by.
             step_txt: The step text to use (charge or discharge capacity, will pick 'first' based on cycle mode if not provided)
             specifics: The specifics to add.
+            to_units: The target (output) units used when converting to specific
+                columns. Defaults to ``self.cellpy_units`` (the legacy bridge units)
+                so that consumer-selected output units are honoured.
 
         Returns:
             The data with the specific summary columns added.
@@ -222,6 +240,9 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
 
         if specifics is None:
             specifics = ["gravimetric", "areal", "absolute"]
+
+        if to_units is None:
+            to_units = getattr(self, "cellpy_units", None)
 
         if step_txt is None:
             if self.cycle_mode == "anode":
@@ -233,14 +254,15 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             data, nom_cap_abs, normalization_cycles, step_txt
         )
 
-        data = summarizers.c_rates_to_summary(
-            data, nom_cap_abs, normalization_cycles, step_txt
-        )
+        # Note: the C-rates are added by make_core_summary (using the step-table
+        # rates, independent of nom_cap, matching legacy cellpy). Adding them again
+        # here would duplicate the charge_c_rate/discharge_c_rate columns (pandas
+        # merge would suffix them _x/_y), so it is intentionally not repeated.
 
         specific_columns = self.cycle_cols.specific_columns
         for mode in specifics:
             data = summarizers.generate_specific_summary_columns(
-                data, mode, specific_columns
+                data, mode, specific_columns, to_units=to_units
             )
 
         return data
