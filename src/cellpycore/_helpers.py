@@ -162,3 +162,20 @@ def create_raw_data() -> DataFrame:
     }
 
     return pl.DataFrame(data)
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    df = create_raw_data()
+    df_pandas = df.to_pandas()
+
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+    axs[0, 0].plot(df_pandas["test_time"], df_pandas["potential"])
+    axs[0, 0].set_title("Potential")
+    axs[0, 1].plot(df_pandas["test_time"], df_pandas["current"])
+    axs[0, 1].set_title("Current")
+    axs[1, 0].plot(df_pandas["test_time"], df_pandas["temperature_cell"])
+    axs[1, 0].set_title("Temperature Cell")
+    axs[1, 1].plot(df_pandas["test_time"], df_pandas["temperature_chamber"])
+    axs[1, 1].set_title("Temperature Chamber")
+    plt.show()
