@@ -1,19 +1,10 @@
 import logging
 from typing import Sequence, TypeVar, Union
 
-# ------------------------------------------------------------
-# TODO: remove this when we have ported the following modules to core:
-from cellpy.readers import core  # type: ignore
-from cellpy.parameters.internal_settings import (  # type: ignore
-    get_cellpy_units,
-    get_default_output_units,
-    HeadersNormal,
-    HeadersStepTable,
-    HeadersSummary,
-)  # type: ignore
-# ------------------------------------------------------------
 
 from cellpycore import selectors, units
+from cellpycore.config import StepCols, CycleCols, RawCols
+from cellpycore.cell_core import Data
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +13,12 @@ DataFrame = TypeVar("DataFrame")
 Array = TypeVar("Array")
 
 
-headers_steps = HeadersStepTable()
-headers_summary = HeadersSummary()
-headers_raw = HeadersNormal()
+headers_steps = StepCols()
+headers_summary = CycleCols()
+headers_raw = RawCols()
 
-cellpy_units = get_cellpy_units()
-output_units = get_default_output_units()
+cellpy_units = units.get_cellpy_units()
+output_units = units.get_default_output_units()
 
 
 # TODO: This must be implemented properly when we have a decided a way to get the raw limits from the instrument
@@ -69,7 +60,7 @@ def _ustep(n: Array) -> list:
 
 # TODO: [NEXT] - use this in cell_core / cellreader.CellpyCell make_step_table
 def make_step_table(
-    data: core.Data,
+    data: Data,
     step_specifications=None,
     short=False,
     override_step_types=None,
@@ -79,7 +70,7 @@ def make_step_table(
     sort_rows=True,
     from_data_point=None,
     raw_limits: dict = DEFAULT_RAW_LIMITS,
-) -> Union[core.Data, DataFrame]:
+) -> Union[Data, DataFrame]:
     """Create a table (v.5) that contains summary information for each step.
 
     This function creates a table containing information about the
@@ -448,14 +439,14 @@ def make_step_table(
 
 
 def generate_absolute_summary_columns(
-    data: core.Data,
+    data: Data,
     _first_step_txt: str = headers_raw.charge_capacity_txt,
     _second_step_txt: str = headers_raw.discharge_capacity_txt,
-) -> core.Data:
+) -> Data:
     """Generate absolute summary columns.
 
     Args:
-        data (core.Data): The data object.
+        data (Data): The data object.
         _first_step_txt (str): The first step text.
         _second_step_txt (str): The second step text.
     """
@@ -556,18 +547,18 @@ def generate_absolute_summary_columns(
 
 
 def generate_specific_summary_columns(
-    data: core.Data, mode: str, specific_columns: Sequence
-) -> core.Data:
+    data: Data, mode: str, specific_columns: Sequence
+) -> Data:
     """
     Generate specific summary columns.
 
     Args:
-        data (core.Data): The data object.
+        data (Data): The data object.
         mode (str): The mode of the data (gravimetric, areal or absolute).
         specific_columns (Sequence): The columns to generate specific summary columns for.
 
     Returns:
-        core.Data: The data object with the specific summary columns added to the summary.
+        Data: The data object with the specific summary columns added to the summary.
     """
     specific_converter = units.get_converter_to_specific(data=data, mode=mode)
     summary = data.summary
@@ -578,15 +569,15 @@ def generate_specific_summary_columns(
     return data
 
 
-def end_voltage_to_summary(data: core.Data) -> core.Data:
+def end_voltage_to_summary(data: Data) -> Data:
     """
     Add end-voltage columns to the summary.
 
     Args:
-        data (core.Data): The data object.
+        data (Data): The data object.
 
     Returns:
-        core.Data: The data object with the end-voltage columns added to the summary.
+        Data: The data object with the end-voltage columns added to the summary.
     """
 
     # TODO: refactor this to use the correct headers and parameters when we have decided on them:
@@ -669,16 +660,16 @@ def _calculate_nominal_capacity_from_cycles(
 
 
 def equivalent_cycles_to_summary(
-    data: core.Data,
+    data: Data,
     nom_cap: float = 1.0,
     normalization_cycles: Union[Sequence, int, None] = None,
     step_txt: str = headers_raw.charge_capacity_txt,
-) -> core.Data:
+) -> Data:
     """
     Add equivalent cycles column to the summary.
 
     Args:
-        data (core.Data): The data object.
+        data (Data): The data object.
         nom_cap (float): The nominal capacity (default: 1.0)
         normalization_cycles (Union[Sequence, int, None]): The cycles for normalization (default: None)
         step_txt (str): The header string for the charge or discharge capacity (default: charge capacity)
@@ -702,11 +693,11 @@ def equivalent_cycles_to_summary(
 
 
 def c_rates_to_summary(
-    data: core.Data,
+    data: Data,
     nom_cap: float = 1.0,
     normalization_cycles: Union[Sequence, int, None] = None,
     step_txt: str = headers_raw.charge_capacity_txt,
-) -> core.Data:
+) -> Data:
     """
     Add c-rates to the summary.
 
@@ -718,6 +709,7 @@ def c_rates_to_summary(
     Returns:
         core.Data: The data object with the c-rates added to the summary.
     """
+    from cellpycore import units
     logger.debug("Extracting C-rates")
 
     summary = data.summary
@@ -729,7 +721,7 @@ def c_rates_to_summary(
         )
 
     def rate_to_cellpy_units(rate):
-        conversion_factor = core.Q(1.0, data.raw_units["current"]) / core.Q(
+        conversion_factor = units.Q(1.0, data.raw_units["current"]) / units.Q(
             1.0, cellpy_units["current"]
         )
         conversion_factor = conversion_factor.to_reduced_units().magnitude
@@ -775,7 +767,7 @@ def c_rates_to_summary(
     return data
 
 
-def ir_to_summary(data: core.Data) -> core.Data:
+def ir_to_summary(data: Data) -> Data:
     # should check:  test.charge_steps = None,
     # test.discharge_steps = None
     # THIS DOES NOT WORK PROPERLY!!!!
@@ -833,141 +825,7 @@ def ir_to_summary(data: core.Data) -> core.Data:
 
 
 def _main():
-    # a function to show how to use the summarizers
-    import pathlib
-    import matplotlib.pyplot as plt
-
-    # TODO: remove this when we have ported the following module to core:
-    from cellpy import cellreader  # type: ignore
-
-    # load the data
-    arbin_raw_file = (
-        pathlib.Path(__file__).parent.parent.parent
-        / "testdata"
-        / "data"
-        / "20160805_test001_45_cc_01.res"
-    )
-    cpi = cellreader.CellpyCell()
-    cpi.set_instrument("arbin_res")
-    cpi.from_raw(arbin_raw_file)
-
-    # make the step table
-    # cpi.make_step_table()
-    cpi.data = make_step_table(cpi.data, raw_limits=cpi.raw_limits)
-
-    # create a simple selector function that will be used to select the data
-    # from the raw data (the create_selector method creates a function that picks the last row from each cycle,
-    # thus assuming ended half-cycle values are repeated until end-of-cycle)
-    simple_summary_selector_function = selectors.create_selector(cpi.data)
-    cpi.data.summary = simple_summary_selector_function()
-
-    # the data type is of "half-cell anode" ("anode"), so we assume that the first step is the discharge step
-    # and the second step is the charge step
-    _first_step_txt = headers_raw.discharge_capacity_txt
-    _second_step_txt = headers_raw.charge_capacity_txt
-
-    # generate the absolute summary columns (the columns that are only dependent on the raw data, and not for
-    # example the mass of the electrodes)
-    cpi.data = generate_absolute_summary_columns(
-        cpi.data, _first_step_txt, _second_step_txt
-    )
-
-    # add end-voltage columns
-    cpi.data = end_voltage_to_summary(cpi.data)
-
-    # add ir
-    cpi.data = ir_to_summary(cpi.data)
-
-    # add equivalent cycles column (uses meta data)
-    cpi.data = equivalent_cycles_to_summary(
-        cpi.data, nom_cap=1.0, normalization_cycles=[1, 2, 3]
-    )
-
-    # add c-rates (uses meta data)
-    cpi.data = c_rates_to_summary(cpi.data)
-
-    # plot the summary
-    fig, axes = plt.subplots(5, 1, figsize=(4, 8), sharex=True)
-
-    # Capacities vs cycle
-    axes[0].plot(
-        cpi.data.summary[headers_summary.cycle_index],
-        cpi.data.summary[headers_summary.charge_capacity],
-        label="charge",
-    )
-    axes[0].plot(
-        cpi.data.summary[headers_summary.cycle_index],
-        cpi.data.summary[headers_summary.discharge_capacity],
-        label="discharge",
-    )
-    axes[0].set_ylabel("Capacity")
-    axes[0].legend()
-    axes[0].set_title("Capacities vs Cycle")
-
-    # Capacities vs equivalent cycles
-    axes[1].plot(
-        cpi.data.summary[headers_summary.normalized_cycle_index],
-        cpi.data.summary[headers_summary.charge_capacity],
-        label="charge",
-    )
-    axes[1].plot(
-        cpi.data.summary[headers_summary.normalized_cycle_index],
-        cpi.data.summary[headers_summary.discharge_capacity],
-        label="discharge",
-    )
-    axes[1].set_ylabel("Capacity")
-    axes[1].legend()
-    axes[1].set_title("Capacities vs Equivalent Cycles")
-
-    # End voltages
-    axes[2].plot(
-        cpi.data.summary[headers_summary.cycle_index],
-        cpi.data.summary[headers_summary.end_voltage_charge],
-        label="charge",
-    )
-    axes[2].plot(
-        cpi.data.summary[headers_summary.cycle_index],
-        cpi.data.summary[headers_summary.end_voltage_discharge],
-        label="discharge",
-    )
-    axes[2].set_ylabel("End Voltage")
-    axes[2].legend()
-    axes[2].set_title("End Voltages vs Cycle")
-
-    # C-rates
-    axes[3].plot(
-        cpi.data.summary[headers_summary.cycle_index],
-        cpi.data.summary[headers_summary.charge_c_rate],
-        label="charge",
-    )
-    axes[3].plot(
-        cpi.data.summary[headers_summary.cycle_index],
-        cpi.data.summary[headers_summary.discharge_c_rate],
-        label="discharge",
-    )
-    axes[3].set_ylabel("C-rate")
-    axes[3].legend()
-    axes[3].set_title("C-rates vs Cycle")
-
-    # Internal resistance
-    axes[4].plot(
-        cpi.data.summary[headers_summary.cycle_index],
-        cpi.data.summary[headers_summary.ir_charge],
-        label="charge",
-    )
-    axes[4].plot(
-        cpi.data.summary[headers_summary.cycle_index],
-        cpi.data.summary[headers_summary.ir_discharge],
-        label="discharge",
-    )
-    axes[4].set_ylabel("Internal Resistance")
-    axes[4].set_xlabel("Cycle")
-    axes[4].legend()
-    axes[4].set_title("Internal Resistance vs Cycle")
-
-    fig.align_ylabels()
-    plt.tight_layout()
-    plt.show()
+    print("summarizers.py - no main function yet")
 
 
 if __name__ == "__main__":

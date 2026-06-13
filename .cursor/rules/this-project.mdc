@@ -6,4 +6,6 @@ alwaysApply: true
 
 
 This is a python project. And it uses a python environment (.venv). Rember to activate it! We
-also have uv installed. Use it if you want.
+also have uv installed. Use uv if you want. If not, just do the normal "source .venv/Scripts/activate" (assuming you are in the top directory). The project uses the common structure for python projects, where the main code is in the src/cellpycore folder and tests are in the tests folder. And docs are in the docs folder. Again, assuming you are in the top directory of this repository.
+
+This library is to be used as a core part of a larger library (cellpy) that should read cell testing data from battery testers. It implements the core functionallity: finding all the steps and cycles and creating tables containing information pr step or pr cycle. It should run fast. And it should be easy for developers of the full cellpy library to use and extend it. It should be thread safe. It should be understandable.

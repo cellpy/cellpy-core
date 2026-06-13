@@ -1,18 +1,46 @@
 import logging
 from typing import Optional, TypeVar
 
-# old cellpy modules that are still not ported to slim:
-from cellpy.readers import core  # type: ignore
-from cellpy.parameters.internal_settings import (  # type: ignore
-    get_cellpy_units,
-    CellpyUnits,
-)  # type: ignore
-
+from cellpycore.legacy import Data, CellpyUnits
 DataFrame = TypeVar("DataFrame")
+
+UNIT_REGISTER_LOADED = False
+_ureg = None
+
+
+def _create_unit_registry():
+    import pint
+    global UNIT_REGISTER_LOADED, _ureg
+    if UNIT_REGISTER_LOADED:
+        return _ureg
+
+    _ureg = pint.UnitRegistry()
+    try:
+        _ureg.formatter.default_format = "~P"
+    except AttributeError:
+        _ureg.formatter.default_format = "~P"
+    UNIT_REGISTER_LOADED = True
+
+
+def Q(*args, **kwargs):
+    global _ureg, UNIT_REGISTER_LOADED
+    if not UNIT_REGISTER_LOADED:
+        _create_unit_registry()
+    return _ureg.Quantity(*args, **kwargs)
+
+
+def get_cellpy_units(*args, **kwargs) -> CellpyUnits:
+    """Returns an augmented global dictionary with units"""
+    return CellpyUnits()
+
+
+def get_default_output_units(*args, **kwargs) -> CellpyUnits:
+    """Returns an augmented dictionary with units to use as default."""
+    return CellpyUnits()
 
 
 def get_converter_to_specific(
-    data: core.Data,
+    data: Data,
     value: float = None,
     from_units: CellpyUnits = None,
     to_units: CellpyUnits = None,
@@ -42,29 +70,29 @@ def get_converter_to_specific(
 
     if mode == "gravimetric":
         value = value or data.mass
-        value = core.Q(value, new_units["mass"])
-        to_unit_specific = core.Q(1.0, new_units["specific_gravimetric"])
+        value = Q(value, new_units["mass"])
+        to_unit_specific = Q(1.0, new_units["specific_gravimetric"])
 
     elif mode == "areal":
         value = value or data.active_electrode_area
-        value = core.Q(value, new_units["area"])
-        to_unit_specific = core.Q(1.0, new_units["specific_areal"])
+        value = Q(value, new_units["area"])
+        to_unit_specific = Q(1.0, new_units["specific_areal"])
 
     elif mode == "volumetric":
         value = value or data.volume
-        value = core.Q(value, new_units["volume"])
-        to_unit_specific = core.Q(1.0, new_units["specific_volumetric"])
+        value = Q(value, new_units["volume"])
+        to_unit_specific = Q(1.0, new_units["specific_volumetric"])
 
     elif mode == "absolute":
-        value = core.Q(1.0, None)
-        to_unit_specific = core.Q(1.0, None)
+        value = Q(1.0, None)
+        to_unit_specific = Q(1.0, None)
 
     else:
         logging.debug(f"mode={mode} not supported!")
         return 1.0
 
-    from_unit_cap = core.Q(1.0, old_units["charge"])
-    to_unit_cap = core.Q(1.0, new_units["charge"])
+    from_unit_cap = Q(1.0, old_units["charge"])
+    to_unit_cap = Q(1.0, new_units["charge"])
 
     # from unit is always in absolute values:
     from_unit = from_unit_cap
@@ -77,7 +105,7 @@ def get_converter_to_specific(
 
 
 def nominal_capacity_as_absolute(
-    data: core.Data,
+    data: Data,
     value: Optional[float] = None,
     specific: Optional[float] = None,
     nom_cap_specifics: Optional[str] = None,
@@ -103,12 +131,12 @@ def nominal_capacity_as_absolute(
     if value is None:
         value = data.nom_cap
 
-    value = core.Q(value, cellpy_units["nominal_capacity"])
+    value = Q(value, cellpy_units["nominal_capacity"])
 
     if nom_cap_specifics == "gravimetric":
-        specific = core.Q(specific, cellpy_units["mass"])
+        specific = Q(specific, cellpy_units["mass"])
     elif nom_cap_specifics == "areal":
-        specific = core.Q(specific, cellpy_units["area"])
+        specific = Q(specific, cellpy_units["area"])
     elif nom_cap_specifics == "absolute":
         specific = 1
 
@@ -117,7 +145,7 @@ def nominal_capacity_as_absolute(
         raise NotImplementedError("volumetric not implemented yet")
 
     if convert_charge_units:
-        conversion_factor_charge = core.Q(1, cellpy_units["charge"]) / core.Q(
+        conversion_factor_charge = Q(1, cellpy_units["charge"]) / Q(
             1, data.raw_units["charge"]
         )
     else:

@@ -3,16 +3,8 @@ import functools
 from typing import Any, Callable, Iterable, List, Optional, Union, TypeVar
 import logging
 
-# ------------------------------------------------------------
-# TODO: remove this when we have ported the following modules to core:
-from cellpy.readers import core  # type: ignore
-from cellpy.parameters.internal_settings import (  # type: ignore
-    HeadersNormal,
-    HeadersStepTable,
-    HeadersSummary,
-)  # type: ignore
-
-# ------------------------------------------------------------
+from cellpycore.config import Cols, StepCols, CycleCols, RawCols
+from cellpycore.cell_core import Data
 
 DataFrame = TypeVar("DataFrame")
 
@@ -22,9 +14,9 @@ FIRST = "_first"
 LAST = "_last"
 DELTA = "_diff"
 
-headers_step_table = HeadersStepTable()
-headers_summary = HeadersSummary()
-headers_normal = HeadersNormal()
+headers_step_table = StepCols()
+headers_summary = CycleCols()
+headers_normal = RawCols()
 
 # TODO: move this to a settings file
 STEP_TYPES = [
@@ -45,7 +37,7 @@ STEP_TYPES = [
 
 
 def create_selector(
-    data: core.Data,
+    data: Data,
     selector_type: Optional[str] = None,
     exclude_types: Optional[List[str]] = None,
     exclude_steps: Optional[List[str]] = None,
@@ -85,9 +77,9 @@ def create_selector(
 
 
 def summary_selector_exluder(
-    data: core.Data,
-    custom_headers_normal: Optional[HeadersNormal] = None,
-    custom_headers_step_table: Optional[HeadersStepTable] = None,
+    data: Data,
+    custom_headers_normal: Optional[RawCols] = None,
+    custom_headers_step_table: Optional[StepCols] = None,
     exclude_types: Optional[Iterable[str]] = None,
     exclude_steps: Optional[Iterable[str]] = None,
     replace_nan: bool = True,
@@ -213,7 +205,7 @@ def summary_selector_exluder(
 
 
 def get_step_numbers(
-    data: core.Data,
+    data: Data,
     steptype: str = "charge",
     allctypes: bool = True,
     pdtype: bool = False,
@@ -360,7 +352,7 @@ def get_step_numbers(
 
 
 def get_cycle_numbers(
-    data: core.Data,
+    data: Data,
     steptable=None,
     rate=None,
     rate_on=None,
@@ -430,7 +422,7 @@ def get_cycle_numbers(
 
 
 def get_rates(
-    data: core.Data,
+    data: Data,
     steptable: Optional[Any] = None,
     agg: str = "first",
     direction: Optional[str] = None,
@@ -472,3 +464,11 @@ def get_rates(
         rates = rates.loc[rates[headers_step_table.type].isin(direction), :]
 
     return rates
+
+
+def _main():
+    print("selectors.py - no main function yet")
+
+
+if __name__ == "__main__":
+    _main()
