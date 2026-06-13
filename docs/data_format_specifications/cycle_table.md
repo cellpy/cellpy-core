@@ -12,19 +12,19 @@ Date: 2025-09-08
 | cycle_num | int | - | 12 | Cycle number |
 | datapoint_num_first | int | - | 123 | First datapoint number in cycle |
 | datapoint_num_last | int | - | 123 | Last datapoint number in cycle | 
-| first_epoch_time_utc | float | Seconds (s) | UNIX timestamp for first datapoint in cycle (in UTC) |
-| last_epoch_time_utc | float | Seconds (s) | UNIX timestamp for last datapoint in cycle (in UTC) |
-| first_test_time | float | Seconds (s) | Seconds since start of test at the beginning of cycle |
-| last_test_time | float | Seconds (s) | Seconds since start of test at the end of cycle |
-| cycle_duration | float | Seconds (s) | Duration of cycle (last_epoch_time_utc - first_epoch_time_utc) |
-| charge_duration | float | Seconds (s) | Duration of charge steps. |
-| discharge_duration | float | Seconds (s) | Duration of discharge steps. |
-| rest_duration | float | Seconds (s) | Duration of rest steps. |
+| first_epoch_time_utc | float | Seconds (s) | 1715609528.578140 | UNIX timestamp for first datapoint in cycle (in UTC) |
+| last_epoch_time_utc | float | Seconds (s) | 1715609528.578140 | UNIX timestamp for last datapoint in cycle (in UTC) |
+| first_test_time | float | Seconds (s) | 12.43212 | Seconds since start of test at the beginning of cycle |
+| last_test_time | float | Seconds (s) | 12.43212 | Seconds since start of test at the end of cycle |
+| cycle_duration | float | Seconds (s) | 3600.0 | Duration of cycle (last_epoch_time_utc - first_epoch_time_utc) |
+| charge_duration | float | Seconds (s) | 1800.0 | Duration of charge steps. |
+| discharge_duration | float | Seconds (s) | 1500.0 | Duration of discharge steps. |
+| rest_duration | float | Seconds (s) | 300.0 | Duration of rest steps. |
 | charge_capacity | float | Ampere-hour (Ah) | 34.1234 | Total charge capacity in current cycle. |
 | discharge_capacity | float | Ampere-hour (Ah) | 34.1234 | Total discharge capacity in current cycle. |
 | charge_capacity_loss | float | Ampere-hour (Ah) | 34.1234 | Charge capacity loss (charge capacity_n-1 - charge capacity_n) |
 | discharge_capacity_loss | float | Ampere-hour (Ah) | 34.1234 | Discharge capacity loss (discharge capacity_n-1 - discharge capacity_n) |
-| coulombic_difference | float | Amphere-hour (Ah) | 34.1234 | Coulombic difference (charge capacity - discharge capacity) |
+| coulombic_difference | float | Ampere-hour (Ah) | 34.1234 | Coulombic difference (charge capacity - discharge capacity) |
 | coulombic_efficiency | float | Percentage (%) | 99.95 | Coulombic efficiency (discharge capacity/charge capacity * 100%) |
 | test_cumulated_charge_capacity | float | Ampere-hour (Ah) | 34.1234 | Cumulated charge capacity throughout test. |
 | test_cumulated_discharge_capacity | float | Ampere-hour (Ah) | 34.1234 | Cumulated discharge capacity throughout test. |
@@ -36,9 +36,9 @@ Date: 2025-09-08
 | discharge_energy | float | Watt-hour (Wh) | 34.1234 | Total discharge energy in current cycle. |
 | cycle_net_energy | float | Watt-hour (Wh) | 34.1234 | (charge energy - discharge energy) |
 | energy_efficiency | float | Percentage (%) | 99.95 | Energy efficiency (discharge energy/charge energy * 100%) |
-| test_cumulated_charge_energy | float | Watt-hour (Ah) | 34.1234 | Cumulated charge energy throughout test. |
-| test_cumulated_discharge_energy | float | Watt-hour (Ah) | 34.1234 | Cumulated discharge energy throughout test. |
-| test_net_energy | float | float | Watt-hour (Wh) | 34.1234 | Net total energy throughout test. | 
+| test_cumulated_charge_energy | float | Watt-hour (Wh) | 34.1234 | Cumulated charge energy throughout test. |
+| test_cumulated_discharge_energy | float | Watt-hour (Wh) | 34.1234 | Cumulated discharge energy throughout test. |
+| test_net_energy | float | Watt-hour (Wh) | 34.1234 | Net total energy throughout test. |
 | current_charge_mean | float | Ampere (A) | 3.1234 | Arithmetic mean of current during charge step. |
 | current_charge_mean_tw | float | Ampere (A) | 3.1234 | Time-weighted mean of current during charge step. |
 | current_charge_mean_cw | float | Ampere (A) | 3.1234 | Capacity-weighted mean of current during charge step. |
@@ -63,7 +63,7 @@ Date: 2025-09-08
 | potential_end_charge | float | Volt (V) | 4.7 | Last value of the potential in the charge step. |
 | potential_start_discharge | float | Volt (V) | 4.7 | First value of the potential in the discharge step. |
 | potential_end_discharge | float | Volt (V) | 4.7 | Last value of the potential in the discharge step. |
-| voltage_efficiency | float | percetange (V) | 99.00 | |
+| voltage_efficiency | float | Percentage (%) | 99.00 | Voltage efficiency (energy efficiency / coulombic efficiency). |
 | power_charge_mean | float | Watt (W) | 3.1234 | Arithmetic mean of power during charge step. |
 | power_charge_mean_tw | float | Watt (W) | 3.1234 | Time-weighted mean of power during charge step. |
 | power_charge_mean_cw | float | Watt (W) | 3.1234 | Capacity-weighted mean of power during charge step. |

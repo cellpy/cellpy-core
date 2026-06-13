@@ -1,12 +1,22 @@
-# Cellpy Core Harmonized_Raw (DRAFT)
+# Cellpy Core Harmonized_Raw
 
-Updated definition  
-**Date:** 2025-09-17  
+**Authoritative definition** — this is the single source of truth for the harmonized raw
+format. It supersedes the earlier `docs/data_format_specifications/harmonized_raw.md`
+(2025-09-08), which was removed in issue #10.
+
+**Date:** 2025-09-17 (reviewed in issue #10)  
 **SPEED-16:** "Define the object that goes into cellpy core"
 
 ## Purpose
 
 Original cycler files are converted to this format, in order to unify the format so that only one importer has to be used wherever it will be imported.
+
+## Conventions
+
+- The cell voltage column is named **`potential`** (not `voltage`).
+- Time columns (`test_time`, etc.) are in **seconds**.
+- The cycler step mode column is **`step_mode`**. There is no `channel_status` column
+  (it was dropped in issue #10).
 
 ## Column Headers
 
@@ -70,10 +80,7 @@ Option for more auxillary columns; naming scheme:
   - enough with keeping it, or do we need an updated cycle number?
 - **cycle_type**
   - details to be discussed
-- **channel_status**
-  - | channel_status | str(10) | -  | "active", "inactive" | --- |
-  - part of Rasmus' suggestion - what is it used for?
-  - suggest removing?
+- **channel_status** — *Resolved (issue #10): removed.* Not part of the harmonized raw format.
 - **source_uuid**
   - does this contain info about the channel?
   - if not, should we add a channel number/identifyer? (string)
