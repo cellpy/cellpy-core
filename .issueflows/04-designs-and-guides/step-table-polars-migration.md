@@ -103,6 +103,34 @@ tracked in **issue #13**.
   from cellpy and break the parity guarantee). A holistic classification review, if wanted,
   belongs in its own issue.
 
+### Phase 3b polars-native summary engine + bridge (done)
+
+- **Key finding:** the native per-cycle vocabulary (`config.CycleCols` / `cycle_table.md`) is a
+  curated, forward-looking design — **not** a renamed legacy summary. ~14 legacy summary columns
+  map cleanly to native concepts (e.g. legacy `cumulated_charge_capacity` → native
+  `test_cumulated_charge_capacity`; `end_voltage_charge` → `potential_end_charge`), but ~11 are
+  legacy cruft the native design intentionally drops (`cumulated_coulombic_efficiency`,
+  `shifted_charge/discharge_capacity`, `cumulated_ric/_sei/_disconnect`,
+  `charge_c_rate/discharge_c_rate`, `ir_charge/ir_discharge`, `normalized_cycle_index`).
+- **Decision: `bridge_extras`** (over extending `CycleCols`, and over a separate clean impl).
+  The native polars engine (`summarizers.make_summary`) produces **only** the clean native
+  subset; the `OldCellpyCellCore` bridge renames native→legacy and **computes the legacy-only
+  extras** to reproduce the Phase 3a oracle byte-for-byte. Keeps `cycle_table.md`/`CycleCols`/
+  `CYCLE_EXPECTED` untouched; legacy cruft lives only in the legacy bridge (reusing the legacy
+  pandas `ir_to_summary` / `c_rates_to_summary` helpers — appropriate, they *are* legacy).
+- **Selection:** `make_summary` does the cycle-end raw-row selection inline (last step's last
+  datapoint per cycle); the advanced `selectors.create_selector` exclude-types machinery is
+  legacy-only and now unused.
+- **Parity semantics:** verified polars `cum_sum` (skips nulls like pandas), `shift` (null fill),
+  and ÷-by-zero (inf/NaN) match pandas exactly, so the polars rewrite is byte-faithful.
+- **Cell convention:** native `make_summary` assumes full-/cathode (charge = first); anode mode
+  (discharge-first) is not yet handled in the native engine (legacy bridge default is full, which
+  the oracle uses). Add when an anode consumer needs it.
+- **Superseded but kept (transitional):** `generate_absolute_summary_columns`,
+  `end_voltage_to_summary`, `selectors.create_selector`, `selectors.summary_selector_exluder` —
+  no longer used inside cellpy-core but may be imported by the external `cellpy` repo; prune in a
+  later cleanup once cross-repo usage is confirmed.
+
 ### Phase 3a data-model fix + summary oracle (done)
 
 - Phase 3 is **split**: 3a = make the summary path runnable + freeze a regression oracle;
