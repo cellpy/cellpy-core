@@ -178,6 +178,13 @@ class StepCols(Cols):
     datapoint_num_last: str = "datapoint_num_last"
     test_time_first: str = "test_time_first"
     test_time_last: str = "test_time_last"
+    step_time_mean: str = "step_time_mean"
+    step_time_std: str = "step_time_std"
+    step_time_min: str = "step_time_min"
+    step_time_max: str = "step_time_max"
+    step_time_first: str = "step_time_first"
+    step_time_last: str = "step_time_last"
+    step_time_delta: str = "step_time_delta"
     current_mean: str = "current_mean"
     current_std: str = "current_std"
     current_min: str = "current_min"
@@ -227,6 +234,15 @@ class StepCols(Cols):
     discharge_energy_first: str = "discharge_energy_first"
     discharge_energy_last: str = "discharge_energy_last"
     discharge_energy_delta: str = "discharge_energy_delta"
+    internal_resistance_mean: str = "internal_resistance_mean"
+    internal_resistance_std: str = "internal_resistance_std"
+    internal_resistance_min: str = "internal_resistance_min"
+    internal_resistance_max: str = "internal_resistance_max"
+    internal_resistance_first: str = "internal_resistance_first"
+    internal_resistance_last: str = "internal_resistance_last"
+    internal_resistance_delta: str = "internal_resistance_delta"
+    # Per-step C-rate estimate (legacy ``rate_avr``).
+    c_rate: str = "c_rate"
 
 
 class RawCols(Cols):
@@ -237,6 +253,7 @@ class RawCols(Cols):
     mask: str = "mask"
     epoch_time_utc: str = "epoch_time_utc"
     test_time: str = "test_time"
+    step_time: str = "step_time"
     source_type: str = "source_type"
     source_uuid: str = "source_uuid"
     test_id: str = "test_id"
@@ -249,12 +266,15 @@ class RawCols(Cols):
     cycle_type: str = "cycle_type"
     potential: str = "potential"
     current: str = "current"
-    step_cumulative_charge_capacity: str = "step_cumulative_charge_capacity"
-    step_cumulative_discharge_capacity: str = "step_cumulative_discharge_capacity"
-    step_cumulative_charge_energy: str = "step_cumulative_charge_energy"
-    step_cumulative_discharge_energy: str = "step_cumulative_discharge_energy"
+    # Capacity / energy are cumulative per cycle, per direction (reset each cycle).
+    # See docs/data_format_specifications/harmonized_raw.md ("Capacity convention").
+    cumulative_charge_capacity: str = "cumulative_charge_capacity"
+    cumulative_discharge_capacity: str = "cumulative_discharge_capacity"
+    cumulative_charge_energy: str = "cumulative_charge_energy"
+    cumulative_discharge_energy: str = "cumulative_discharge_energy"
     step_charge_power: str = "step_charge_power"
     step_discharge_power: str = "step_discharge_power"
+    internal_resistance: str = "internal_resistance"
     # Auxiliary columns (aux_<quantity>_<name> scheme). Defaults below cover the
     # cell/chamber temperatures and cell pressure named in the spec.
     aux_temperature_cell: str = "aux_temperature_cell"

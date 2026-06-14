@@ -86,9 +86,9 @@ def create_raw_data() -> DataFrame:
 
     potential = pl.Series(raw_cols.potential, potential, dtype=pl.Float64)
 
-    # Generate cumulative capacities
-    step_cumulative_charge_capacity = []
-    step_cumulative_discharge_capacity = []
+    # Generate cumulative capacities (cumulative per cycle, per direction).
+    cumulative_charge_capacity = []
+    cumulative_discharge_capacity = []
     charge_cap = 0.0
     discharge_cap = 0.0
 
@@ -97,18 +97,26 @@ def create_raw_data() -> DataFrame:
             charge_cap += abs(curr) * 0.1  # Assuming 0.1 hour time step
         elif st == "discharge":
             discharge_cap += abs(curr) * 0.1
-        step_cumulative_charge_capacity.append(charge_cap)
-        step_cumulative_discharge_capacity.append(discharge_cap)
+        cumulative_charge_capacity.append(charge_cap)
+        cumulative_discharge_capacity.append(discharge_cap)
 
-    step_cumulative_charge_capacity = pl.Series(
-        raw_cols.step_cumulative_charge_capacity,
-        step_cumulative_charge_capacity,
+    cumulative_charge_capacity = pl.Series(
+        raw_cols.cumulative_charge_capacity,
+        cumulative_charge_capacity,
         dtype=pl.Float64,
     )
-    step_cumulative_discharge_capacity = pl.Series(
-        raw_cols.step_cumulative_discharge_capacity,
-        step_cumulative_discharge_capacity,
+    cumulative_discharge_capacity = pl.Series(
+        raw_cols.cumulative_discharge_capacity,
+        cumulative_discharge_capacity,
         dtype=pl.Float64,
+    )
+
+    # Step time (seconds since the start of the current step) and instrument IR.
+    step_time = pl.Series(
+        raw_cols.step_time, [float(i % 10) for i in range(n_points)], dtype=pl.Float64
+    )
+    internal_resistance = pl.Series(
+        raw_cols.internal_resistance, [0.05] * n_points, dtype=pl.Float64
     )
 
     # Generate auxiliary temperature data
@@ -145,16 +153,18 @@ def create_raw_data() -> DataFrame:
         raw_cols.cycle_num: cycle_num,
         raw_cols.epoch_time_utc: epoch_time_utc,
         raw_cols.test_time: test_time,
+        raw_cols.step_time: step_time,
         raw_cols.step_mode: step_mode,
         raw_cols.step_type: step_type,
         raw_cols.step_type_detail: step_type_detail,
         raw_cols.potential: potential,
         raw_cols.current: current,
+        raw_cols.internal_resistance: internal_resistance,
         raw_cols.aux_temperature_cell: temperature_cell,
         raw_cols.aux_temperature_chamber: temperature_chamber,
         raw_cols.aux_pressure_cell: pressure,
-        raw_cols.step_cumulative_charge_capacity: step_cumulative_charge_capacity,
-        raw_cols.step_cumulative_discharge_capacity: step_cumulative_discharge_capacity,
+        raw_cols.cumulative_charge_capacity: cumulative_charge_capacity,
+        raw_cols.cumulative_discharge_capacity: cumulative_discharge_capacity,
     }
 
     return pl.DataFrame(data)
