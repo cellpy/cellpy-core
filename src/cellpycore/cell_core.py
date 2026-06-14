@@ -29,7 +29,6 @@ class Data:
 
 
 class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
-    # TODO: implement make step table (utilize summarizers.py)
     # TODO: move the data object to slim
     # TODO: copy div settings to slim
 

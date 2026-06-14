@@ -111,14 +111,14 @@ def create_raw_data() -> DataFrame:
         dtype=pl.Float64,
     )
 
-    # Generate temperature data
+    # Generate auxiliary temperature data
     temperature_cell = pl.Series(
-        raw_cols.temperature_cell,
+        raw_cols.aux_temperature_cell,
         [25.0 + (i % 20) * 0.5 for i in range(n_points)],
         dtype=pl.Float64,
     )
     temperature_chamber = pl.Series(
-        raw_cols.temperature_chamber,
+        raw_cols.aux_temperature_chamber,
         [25.0 + (i % 10) * 0.2 for i in range(n_points)],
         dtype=pl.Float64,
     )
@@ -128,12 +128,9 @@ def create_raw_data() -> DataFrame:
     source_uuid = pl.Series(
         raw_cols.source_uuid, [f"test_{i:06d}" for i in range(n_points)], dtype=pl.Utf8
     )
-    mode = pl.Series(raw_cols.mode, ["galvanostatic"] * n_points, dtype=pl.Utf8)
-    channel_status = pl.Series(
-        raw_cols.channel_status, ["active"] * n_points, dtype=pl.Utf8
-    )
+    step_mode = pl.Series(raw_cols.step_mode, ["CC"] * n_points, dtype=pl.Utf8)
     pressure = pl.Series(
-        raw_cols.pressure,
+        raw_cols.aux_pressure_cell,
         [101325.0 + (i % 100) * 10 for i in range(n_points)],
         dtype=pl.Float64,
     )
@@ -148,15 +145,14 @@ def create_raw_data() -> DataFrame:
         raw_cols.cycle_num: cycle_num,
         raw_cols.epoch_time_utc: epoch_time_utc,
         raw_cols.test_time: test_time,
-        raw_cols.mode: mode,
-        raw_cols.channel_status: channel_status,
+        raw_cols.step_mode: step_mode,
         raw_cols.step_type: step_type,
         raw_cols.step_type_detail: step_type_detail,
         raw_cols.potential: potential,
         raw_cols.current: current,
-        raw_cols.temperature_cell: temperature_cell,
-        raw_cols.temperature_chamber: temperature_chamber,
-        raw_cols.pressure: pressure,
+        raw_cols.aux_temperature_cell: temperature_cell,
+        raw_cols.aux_temperature_chamber: temperature_chamber,
+        raw_cols.aux_pressure_cell: pressure,
         raw_cols.step_cumulative_charge_capacity: step_cumulative_charge_capacity,
         raw_cols.step_cumulative_discharge_capacity: step_cumulative_discharge_capacity,
     }
@@ -174,8 +170,8 @@ if __name__ == "__main__":
     axs[0, 0].set_title("Potential")
     axs[0, 1].plot(df_pandas["test_time"], df_pandas["current"])
     axs[0, 1].set_title("Current")
-    axs[1, 0].plot(df_pandas["test_time"], df_pandas["temperature_cell"])
+    axs[1, 0].plot(df_pandas["test_time"], df_pandas["aux_temperature_cell"])
     axs[1, 0].set_title("Temperature Cell")
-    axs[1, 1].plot(df_pandas["test_time"], df_pandas["temperature_chamber"])
+    axs[1, 1].plot(df_pandas["test_time"], df_pandas["aux_temperature_chamber"])
     axs[1, 1].set_title("Temperature Chamber")
     plt.show()

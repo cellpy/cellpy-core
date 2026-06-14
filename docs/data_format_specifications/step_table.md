@@ -22,6 +22,7 @@ calculations and to classify steps.
 | sub_step_num | int | - | 123 | Sub-step number |
 | step_type | str(10) | - | "charge", "discharge", "rest", etc. | Step type |
 | sub_step_type | str(10) | - | TBD | Sub-step type (semantics TBD) |
+| mask | boolean | - | True | Selection flag; default True (row is selected / used) |
 | datapoint_num_first | int | - | 123 | First datapoint number in step |
 | datapoint_num_last | int | - | 123 | Last datapoint number in step |
 | test_time_first | float | second (s) | 14.1231 | Test time at start of step |

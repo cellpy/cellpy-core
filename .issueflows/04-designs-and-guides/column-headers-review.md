@@ -7,10 +7,10 @@ Scope of issue #10 was **docs-only**. The `src/cellpycore/config.py` header clas
 ## Where column headers live (the three layers)
 
 1. **Spec docs** (`docs/`) — the human-facing definitions. After issue #10:
-   - `docs/harmonized_raw_definition.md` — **authoritative** harmonized-raw spec (single source of truth).
+   - `docs/data_format_specifications/harmonized_raw.md` — **authoritative** harmonized-raw spec (single source of truth; moved here from `docs/harmonized_raw_definition.md` in PR #14).
    - `docs/data_format_specifications/cycle_table.md`, `step_table.md` — cycle/step table specs.
    - `docs/data-object-definition.md` — the minimal input contract.
-   - (`docs/data_format_specifications/harmonized_raw.md` was **deleted** as a stale duplicate.)
+   - (The stale 2025-09-08 duplicate that previously sat at this path was deleted in issue #10; the authoritative file was later moved back to this path in PR #14.)
 2. **New config classes** (`src/cellpycore/config.py`) — `RawCols`, `StepCols`, `CycleCols`, dataclasses of `name: str = "name"` with dot + bracket access and a `__version__`. **These are DRAFT and not yet wired into the processing engine.** Only `_helpers.py` (synthetic-data `make_raw`) reads `RawCols`.
 3. **Legacy headers** (`src/cellpycore/legacy.py`, `*_txt`) — old-cellpy names (`current_txt`, `sub_step_index_txt`, ...). **The live engine (`selectors.py`, `summarizers.py`) still consumes these, not the new `Cols` classes.**
 
@@ -21,7 +21,7 @@ The key structural fact: docs ↔ `config.py` ↔ engine are three out-of-sync r
 1. **Scope = docs-only.** No `config.py` edits in this issue.
 2. **Signal naming = `potential`** (not `voltage`), and **`test_time` is in seconds** (not milliseconds). `data-object-definition.md` was reconciled to match.
 3. **`channel_status` is dropped**; the cycler step mode column is **`step_mode`** (not `mode`).
-4. **`harmonized_raw.md` (2025-09-08) deleted**; `harmonized_raw_definition.md` (2025-09-17) is the single source of truth.
+4. **`harmonized_raw.md` (2025-09-08) deleted**; the 2025-09-17 spec is the single source of truth (now at `docs/data_format_specifications/harmonized_raw.md` after the PR #14 move).
 5. **Header metadata + versioning (SPEED-30) deferred** — documented as a recommendation, not implemented.
 6. **Strategy alignment = document gaps only** — no concrete UUID/BattINFO columns added now.
 
@@ -30,8 +30,11 @@ The key structural fact: docs ↔ `config.py` ↔ engine are three out-of-sync r
 ### A. Duplicated / conflicting harmonized-raw specs — RESOLVED
 Two specs disagreed. The newer one (richer: `mask`, `source_step_num`, `step_mode`, `cycle_type`, step cumulative energy/power, `aux_*` scheme) is now authoritative; the older one was deleted.
 
-### B. config.py ↔ doc drift — DEFERRED (follow-up issue)
-`RawCols` currently mirrors the *old* doc and is out of step with the authoritative spec. To bring `config.py` `RawCols` in line, a follow-up should:
+### B. config.py ↔ doc drift — DONE (PR #14, on the #12 branch)
+`RawCols` mirrored the *old* doc and was out of step with the authoritative spec. **Resolved:**
+`config.py` `RawCols`/`StepCols` were aligned to the authoritative specs and `_helpers.py`
+updated; `tests/test_config_columns.py` now locks all three column classes to the spec
+tables. `CycleCols` already matched `cycle_table.md`. The original deferral plan was:
 - **Add**: `mask`, `source_step_num`, `step_mode`, `cycle_type`, `step_cumulative_charge_energy`, `step_cumulative_discharge_energy`, `step_charge_power`, `step_discharge_power`, and the `aux_*` columns (`aux_temperature_cell`, `aux_temperature_chamber`, `aux_pressure_cell`, plus the extensible `aux_<quantity>_<name>` scheme).
 - **Remove**: `channel_status`; **rename** `mode` → `step_mode`.
 - **Rename** the non-aux `temperature_cell` / `temperature_chamber` / `pressure` to the `aux_*` form to match the spec.
@@ -41,10 +44,13 @@ Two specs disagreed. The newer one (richer: `mask`, `source_step_num`, `step_mod
 - `voltage` vs `potential` → standardized on **`potential`** (docs reconciled).
 - `test_time` ms vs s → standardized on **seconds** (docs reconciled).
 - `voltage_efficiency` unit typo (`percetange (V)`) in `cycle_table.md` → fixed to `Percentage (%)`.
-- `StepCols.power_capacity_*` is a misnomer (power is not a capacity). Doc (`step_table.md`) now flags the intended `power_*` naming; the actual `config.py` rename is part of the follow-up (decision B).
+- `StepCols.power_capacity_*` is a misnomer (power is not a capacity). Doc (`step_table.md`) flagged the intended `power_*` naming; **the `config.py` rename to `power_*` is now done** (PR #14, with decision B).
 
-### D. Missing headers vs `functionality.md` requirements — DOCUMENTED
-- `functionality.md` says both StepTable and CycleTable should carry a `mask` (boolean). Neither `StepCols` nor `CycleCols` has it. Add in the follow-up; the table docs note it.
+### D. Missing headers vs `functionality.md` requirements — RESOLVED (mask)
+- `mask` (boolean) is now present in all three tables: `RawCols` (from `harmonized_raw.md`),
+  and `StepCols` / `CycleCols` (PR #14 added a `mask` row to `step_table.md` /
+  `cycle_table.md` and the matching field to `config.py`, placed right after each table's
+  identity block, before `datapoint_num_first`). Default semantics: True = row selected/used.
 - `sub_step_type` is still "TBD" — left open; needs a product decision on substep semantics.
 
 ### E. Malformed doc tables — RESOLVED

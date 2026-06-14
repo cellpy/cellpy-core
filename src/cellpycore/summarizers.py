@@ -1,10 +1,12 @@
 import logging
+from dataclasses import asdict
 from typing import Optional, Sequence, TypeVar, Union
 
 
 from cellpycore import selectors
 from cellpycore.config import Schema, default_schema
 from cellpycore.cell_core import Data
+from cellpycore.legacy import CellpyLimits
 
 logger = logging.getLogger(__name__)
 
@@ -19,18 +21,11 @@ Array = TypeVar("Array")
 # the legacy-named schema, a native CellpyCellCore injects the native one.
 
 
-# TODO: This must be implemented properly when we have a decided a way to get the raw limits from the instrument
-DEFAULT_RAW_LIMITS = {
-    "current_hard": 0.001,
-    "current_soft": 0.001,
-    "stable_current_hard": 0.001,
-    "stable_current_soft": 0.001,
-    "stable_voltage_hard": 0.001,
-    "stable_voltage_soft": 0.001,
-    "stable_charge_hard": 0.001,
-    "stable_charge_soft": 0.001,
-    "ir_change": 0.001,
-}
+# Standalone default step-detection limits, derived from the CellpyLimits
+# mirror so they match legacy cellpy. When cellpy drives the engine it passes
+# its own instrument ``raw_limits`` by value, so this default only applies to
+# standalone cellpy-core use.
+DEFAULT_RAW_LIMITS = asdict(CellpyLimits())
 
 # Number of digits used when rounding the per-step C-rate (matches legacy cellpy).
 DIGITS_C_RATE = 5
