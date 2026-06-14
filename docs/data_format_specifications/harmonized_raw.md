@@ -17,6 +17,9 @@ Original cycler files are converted to this format, in order to unify the format
 - Time columns (`test_time`, etc.) are in **seconds**.
 - The cycler step mode column is **`step_mode`**. There is no `channel_status` column
   (it was dropped in issue #10).
+- Capacity / energy columns are **cumulative per cycle, per direction** — see *Capacity
+  convention* below. (Renamed from `step_cumulative_*` in issue #13; the old name was
+  misleading.)
 
 ## Column Headers
 
@@ -29,6 +32,7 @@ Set up a flexible structure that allows for more columns.
 | mask | boolean | - | True | default: True (meaning: this value is selected and used) |
 | epoch_time_utc | float | second | 1715609528.578140 | - |
 | test_time | float | second | 12.43212 | - |
+| step_time | float | second | 12.43212 | optional value; time elapsed since the start of the current step |
 | source_type | str(10) | - | "Neware" | - |
 | source_uuid | str(36) | - | "e15b46ca-e584-467f-a176-8bf98b8090e5" | will not be used, only kept for info and tracability |
 | test_id | int | - | 0 | compact per-test key within a (possibly merged) object; 0 for a single test. Group keys are (test_id, cycle_num, step_num, ...). Global identity: source_uuid |
@@ -41,18 +45,36 @@ Set up a flexible structure that allows for more columns.
 | cycle_type | str(36) | - | "Standard", "GITT", "ICI", "Characterization" | categorial column; in first version: pre-defined input |
 | potential | float | Volt | 3.6500 | - |
 | current | float | Ampere | 96.4413 | - |
-| step_cumulative_charge_capacity | float | Ah | 34.5678 | - |
-| step_cumulative_discharge_capacity | float | Ah | 34.5678 | - |
-| step_cumulative_charge_energy | float | Wh | 34.5678 | ** |
-| step_cumulative_discharge_energy | float | Wh | 34.5678 | ** |
+| cumulative_charge_capacity | float | Ah | 34.5678 | cumulative per cycle, per direction (resets at each cycle boundary); per-step / per-cycle values are derived downstream — see *Capacity convention* below |
+| cumulative_discharge_capacity | float | Ah | 34.5678 | cumulative per cycle, per direction (see *Capacity convention*) |
+| cumulative_charge_energy | float | Wh | 34.5678 | ** ; cumulative per cycle, per direction (see *Capacity convention*) |
+| cumulative_discharge_energy | float | Wh | 34.5678 | ** ; cumulative per cycle, per direction (see *Capacity convention*) |
 | step_charge_power | float | W | 34.5678 | ** |
 | step_discharge_power | float | W | 34.5678 | ** |
+| internal_resistance | float | ohm | 56.4866 | optional value; instrument-reported internal resistance |
 | aux_temperature_cell | float | degrees celcius | 25.3 | - |
 | aux_temperature_chamber | float | degrees celcius | 25.0 | - |
 | aux_pressure_cell | float | mbar | 123.4 | - |
 
 
 ** calculate if empty; keep if filled (can be overridden by argument)
+
+### Capacity convention
+
+`cumulative_charge_capacity` / `cumulative_discharge_capacity` (and the matching energy
+columns) are **cumulative per cycle, per direction**: within a cycle they accumulate across
+that cycle's steps for their direction, and reset to `0` at each cycle boundary. This matches
+how legacy cellpy raw data is supplied (verified on real Arbin data in issue #13) and is what
+the summary path relies on (the per-cycle capacity is read from the cycle's last datapoint).
+
+Downstream values are **derived**, not stored in raw:
+- **per-step** capacity = the in-step delta (last − first within a step group), produced in
+  the step table;
+- **per-cycle** capacity = the cycle-end cumulative value, produced in the cycle/summary
+  table.
+
+Importers must deliver cycle-cumulative capacity. (Accepting step-/test-cumulative raw and
+normalizing the reset granularity inside the engine is a possible future extension.)
 
 ### Auxillary columns  
 Option for more auxillary columns; naming scheme:

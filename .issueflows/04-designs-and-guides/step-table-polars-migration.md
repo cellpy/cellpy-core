@@ -51,6 +51,42 @@ tracked in **issue #13**.
 - **Edge case to fix during the rewrite:** on the tiny 47-row fixture the engine
   leaves one step's `type` blank (`''`) — revisit step-type classification.
 
+## Decisions taken in issue #13 (the follow-up itself)
+
+- **Engine vocabulary:** Option A — the polars engine targets the **native** schema;
+  `OldCellpyCellCore` bridges legacy↔native (column rename) + pandas↔polars at the seam.
+  Confirmed 2026-06-14.
+- **Dataframe lib:** pure **polars** in the engine (not narwhals).
+- **Sequencing:** phased PRs — (1) extend native schema, (2) polars step engine + bridge,
+  (3) polars summary path, (4) cross-repo parity.
+- **Capacity semantics (verified on the real Arbin fixture):** legacy raw
+  `charge_capacity` / `discharge_capacity` are **cycle-cumulative, per direction** (accumulate
+  across a cycle's steps for their direction, reset to 0 at each cycle boundary). They are
+  *not* per-step. The summary path depends on this: `selectors.summary_selector_exluder`
+  reads the cycle's **last** raw datapoint as that cycle's capacity, which is only correct for
+  cycle-cumulative raw. Taking the harmonized spec's `step_cumulative_*` name literally
+  (step-cumulative values) would **break** the summary.
+  - **Decision:** the harmonized raw capacity column **mandates cycle-cumulative** (per
+    cycle, per direction). Renamed the native columns
+    `step_cumulative_charge_capacity`→`cumulative_charge_capacity` and
+    `step_cumulative_discharge_capacity`→`cumulative_discharge_capacity` (energy renamed the
+    same way). The bridge maps legacy `charge_capacity` ↔ native `cumulative_charge_capacity`
+    (pure rename, no value transform). Per-step capacity is **derived** by the engine
+    (delta = last−first within a step); per-cycle is the cycle-end cumulative value.
+  - Reset-granularity normalization in the engine (to also accept step-/test-cumulative raw
+    from other cyclers) is a deliberate **future follow-up**, not done now.
+
+### Phase 1 native-schema changes (this PR)
+
+- `RawCols`: rename the 4 `step_cumulative_*` capacity/energy columns to `cumulative_*`;
+  add `step_time` and `internal_resistance` (engine inputs present in legacy raw / needed for
+  parity). `ref_potential` deferred — **not present** in the golden Arbin data, so not needed
+  for parity yet (note kept here so the gap is tracked).
+- `StepCols`: add `step_time` and `internal_resistance` aggregate sets (mean/std/min/max/
+  first/last/delta) and a per-step `c_rate` (native name for legacy `rate_avr`).
+- The legacy `Headers*` mirrors in `legacy.py` are **unchanged** (cellpy contract); the
+  legacy/golden path is unaffected by these native-schema edits.
+
 ## Related
 
 - Issue #12 (this work's origin): `.issueflows/03-solved-issues/issue12_*` once closed.

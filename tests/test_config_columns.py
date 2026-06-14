@@ -22,12 +22,13 @@ def _aggregates(signal: str) -> list:
 # --- harmonized_raw.md (authoritative, 2025-09-17) ---------------------------
 RAW_EXPECTED = [
     "datapoint_num", "source_datapoint_num", "mask", "epoch_time_utc",
-    "test_time", "source_type", "source_uuid", "test_id", "step_num",
+    "test_time", "step_time", "source_type", "source_uuid", "test_id", "step_num",
     "source_step_num",
     "step_type", "step_type_detail", "step_mode", "cycle_num", "cycle_type",
-    "potential", "current", "step_cumulative_charge_capacity",
-    "step_cumulative_discharge_capacity", "step_cumulative_charge_energy",
-    "step_cumulative_discharge_energy", "step_charge_power", "step_discharge_power",
+    "potential", "current", "cumulative_charge_capacity",
+    "cumulative_discharge_capacity", "cumulative_charge_energy",
+    "cumulative_discharge_energy", "step_charge_power", "step_discharge_power",
+    "internal_resistance",
     "aux_temperature_cell", "aux_temperature_chamber", "aux_pressure_cell",
 ]
 
@@ -35,10 +36,12 @@ RAW_EXPECTED = [
 STEP_EXPECTED = [
     "cycle_num", "step_num", "sub_step_num", "step_type", "sub_step_type", "mask",
     "datapoint_num_first", "datapoint_num_last", "test_time_first", "test_time_last",
+    *_aggregates("step_time"),
     *_aggregates("current"), *_aggregates("potential"),
     *_aggregates("charge_capacity"), *_aggregates("discharge_capacity"),
     *_aggregates("power"), *_aggregates("charge_energy"),
-    *_aggregates("discharge_energy"),
+    *_aggregates("discharge_energy"), *_aggregates("internal_resistance"),
+    "c_rate",
 ]
 
 # --- cycle_table.md ---------------------------------------------------------

@@ -27,6 +27,13 @@ calculations and to classify steps.
 | datapoint_num_last | int | - | 123 | Last datapoint number in step |
 | test_time_first | float | second (s) | 14.1231 | Test time at start of step |
 | test_time_last | float | second (s) | 15.1231 | Test time at end of step |
+| step_time_mean | float | second (s) | 15.1231 | 
+| step_time_std | float | second (s) | 15.1231 | 
+| step_time_min | float | second (s) | 15.1231 | 
+| step_time_max | float | second (s) | 15.1231 | 
+| step_time_first | float | second (s) | 15.1231 | 
+| step_time_last | float | second (s) | 15.1231 | 
+| step_time_delta | float | % | 15.1231 |
 | current_mean | float | Ampere (A) | 15.1231 | 
 | current_std | float | Ampere (A) | 15.1231 | 
 | current_min | float | Ampere (A) | 15.1231 | 
@@ -76,3 +83,11 @@ calculations and to classify steps.
 | discharge_energy_first | float | Watt-hour (Wh) | 15.1231 | 
 | discharge_energy_last | float | Watt-hour (Wh) | 15.1231 | 
 | discharge_energy_delta | float | % | 15.1231 |      
+| internal_resistance_mean | float | ohm | 56.4866 | 
+| internal_resistance_std | float | ohm | 56.4866 | 
+| internal_resistance_min | float | ohm | 56.4866 | 
+| internal_resistance_max | float | ohm | 56.4866 | 
+| internal_resistance_first | float | ohm | 56.4866 | 
+| internal_resistance_last | float | ohm | 56.4866 | 
+| internal_resistance_delta | float | % | 56.4866 |
+| c_rate | float | 1/h (C) | 0.05 | Per-step C-rate estimate (legacy `rate_avr`) |
