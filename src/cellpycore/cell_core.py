@@ -386,3 +386,144 @@ class OldCellpyCellCore(CellpyCellCore):
         self.raw_cols = HeadersNormal()
         self.cycle_cols = HeadersSummary()
         self.step_cols = HeadersStepTable()
+
+    # ---- legacy <-> native bridge for the polars step engine ----------------
+    # cellpy hands us pandas frames with legacy (``HeadersNormal``) column names.
+    # The step engine is polars-native and operates on the native schema, so we
+    # translate at this seam: legacy pandas raw -> native polars raw -> engine ->
+    # native polars steps -> legacy pandas steps. The output frame reproduces the
+    # legacy ``HeadersStepTable`` layout byte-for-byte (the golden oracle).
+
+    _NATIVE_STAT_TO_LEGACY = {
+        "mean": "avr",
+        "std": "std",
+        "min": "min",
+        "max": "max",
+        "first": "first",
+        "last": "last",
+        "delta": "delta",
+    }
+
+    def _legacy_to_native_raw_rename(self, columns) -> dict:
+        leg, nat = self.raw_cols, config.RawCols()
+        mapping = {
+            leg.data_point_txt: nat.datapoint_num,
+            leg.test_time_txt: nat.test_time,
+            leg.step_time_txt: nat.step_time,
+            leg.cycle_index_txt: nat.cycle_num,
+            leg.step_index_txt: nat.step_num,
+            leg.current_txt: nat.current,
+            leg.voltage_txt: nat.potential,
+            leg.charge_capacity_txt: nat.cumulative_charge_capacity,
+            leg.discharge_capacity_txt: nat.cumulative_discharge_capacity,
+            leg.internal_resistance_txt: nat.internal_resistance,
+        }
+        return {k: v for k, v in mapping.items() if k in columns}
+
+    def _native_to_legacy_step_rename(self) -> dict:
+        leg, nat = self.step_cols, config.StepCols()
+        base_map = {
+            "datapoint_num": leg.point,
+            "test_time": leg.test_time,
+            "step_time": leg.step_time,
+            "current": leg.current,
+            "potential": leg.voltage,
+            "charge_capacity": leg.charge,
+            "discharge_capacity": leg.discharge,
+            "internal_resistance": leg.internal_resistance,
+        }
+        rename = {}
+        for nbase, lbase in base_map.items():
+            for nstat, lstat in self._NATIVE_STAT_TO_LEGACY.items():
+                rename[f"{nbase}_{nstat}"] = f"{lbase}_{lstat}"
+        rename[nat.cycle_num] = leg.cycle
+        rename[nat.step_num] = leg.step
+        rename[nat.sub_step_num] = leg.sub_step
+        rename[nat.step_type] = leg.type
+        rename[nat.sub_step_type] = leg.sub_type
+        rename[nat.c_rate] = leg.rate_avr
+        return rename
+
+    def _legacy_step_column_order(self) -> list:
+        leg = self.step_cols
+        order = [leg.cycle, leg.step, leg.sub_step]
+        bases = [
+            leg.point, leg.test_time, leg.step_time, leg.current, leg.voltage,
+            leg.charge, leg.discharge, leg.internal_resistance,
+        ]
+        for base in bases:
+            order += [f"{base}_{stat}" for stat in self._NATIVE_STAT_TO_LEGACY.values()]
+        order += [leg.rate_avr, leg.type, leg.sub_type, leg.info]
+        return order
+
+    def _native_steps_to_legacy(self, native_steps, sort_rows: bool):
+        leg = self.step_cols
+        pdf = native_steps.to_pandas()
+        pdf = pdf.rename(columns=self._native_to_legacy_step_rename())
+
+        order = self._legacy_step_column_order()
+        if sort_rows:
+            # sort + reset_index reproduces the legacy 'index' column (the
+            # pre-sort, group-key-ordered position).
+            pdf = pdf.sort_values(by=f"{leg.test_time}_first").reset_index()
+            order = ["index"] + order
+
+        order = [c for c in order if c in pdf.columns]
+        return pdf[order]
+
+    def make_core_step_table(
+        self,
+        data: Data,
+        raw_limits: Optional[dict] = None,
+        step_specifications=None,
+        short: bool = False,
+        override_step_types: Optional[dict] = None,
+        override_raw_limits: Optional[dict] = None,
+        usteps: bool = False,
+        add_c_rate: bool = True,
+        nom_cap: Optional[float] = None,
+        skip_steps: Optional[Sequence] = None,
+        sort_rows: bool = True,
+        from_data_point: Optional[int] = None,
+    ) -> Union[Data, "DataFrame"]:
+        """Build the step table via the polars engine, in/out in legacy form.
+
+        See the bridge note above. Returns a pandas frame with legacy
+        ``HeadersStepTable`` columns (or that frame directly when
+        ``from_data_point`` is given).
+        """
+        import polars as pl
+
+        from cellpycore import summarizers
+        from cellpycore.config import default_schema
+
+        native_raw = pl.from_pandas(
+            data.raw.rename(columns=self._legacy_to_native_raw_rename(data.raw.columns))
+        )
+        tmp = Data()
+        tmp.raw = native_raw
+
+        kwargs = dict(
+            schema=default_schema(),
+            step_specifications=step_specifications,
+            short=short,
+            override_step_types=override_step_types,
+            override_raw_limits=override_raw_limits,
+            usteps=usteps,
+            add_c_rate=add_c_rate,
+            nom_cap=nom_cap,
+            skip_steps=skip_steps,
+            sort_rows=False,  # the bridge handles legacy sorting + 'index' column
+            from_data_point=from_data_point,
+        )
+        if raw_limits is not None:
+            kwargs["raw_limits"] = raw_limits
+
+        result = summarizers.make_step_table(tmp, **kwargs)
+        native_steps = result if from_data_point is not None else result.steps
+
+        legacy_steps = self._native_steps_to_legacy(native_steps, sort_rows=sort_rows)
+        if from_data_point is not None:
+            return legacy_steps
+        data.steps = legacy_steps
+        return data

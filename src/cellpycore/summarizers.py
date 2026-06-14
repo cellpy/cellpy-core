@@ -2,6 +2,7 @@ import logging
 from dataclasses import asdict
 from typing import Optional, Sequence, TypeVar, Union
 
+import polars as pl
 
 from cellpycore import selectors
 from cellpycore.config import Schema, default_schema
@@ -31,24 +32,135 @@ DEFAULT_RAW_LIMITS = asdict(CellpyLimits())
 DIGITS_C_RATE = 5
 
 
-def _ustep(n: Array) -> list:
-    # not tested
-    """Create u-steps from a pandas Series.
+# Per-step aggregate statistics produced for every raw signal column. The
+# arithmetic mean is named ``mean`` natively (the legacy bridge renames it to
+# ``avr``). ``delta`` is computed separately (it needs first + last).
+_STATS = ("mean", "std", "min", "max", "first", "last")
 
-    Args:
-        n (Array): The input series.
+# Mapping of native raw signal columns -> native step-table base name. The
+# cumulative (per-cycle) capacities/energies become the step-table capacity
+# aggregates; per-step capacity is the in-step ``delta``.
+_SIGNAL_BASES = (
+    ("datapoint_num", "datapoint_num"),
+    ("test_time", "test_time"),
+    ("step_time", "step_time"),
+    ("current", "current"),
+    ("potential", "potential"),
+    ("cumulative_charge_capacity", "charge_capacity"),
+    ("cumulative_discharge_capacity", "discharge_capacity"),
+    ("internal_resistance", "internal_resistance"),
+)
 
-    Returns:
-        list: The u-steps.
+
+def _delta_expr(base: str) -> pl.Expr:
+    """Per-step delta in percent (mirrors legacy cellpy's ``delta``).
+
+    ``100 * last`` when the step starts at zero, else
+    ``100 * (last - first) / abs(first)``.
     """
-    un = []
-    c = 0
-    dn = n.diff()
-    for i in dn:
-        if i != 0:
-            c += 1
-        un.append(c)
-    return un
+    first = pl.col(f"{base}_first")
+    last = pl.col(f"{base}_last")
+    return (
+        pl.when(first == 0.0)
+        .then(100.0 * last)
+        .otherwise(100.0 * (last - first) / first.abs())
+        .alias(f"{base}_delta")
+    )
+
+
+def _classify_from_specifications(step_specifications, short: bool, nhdr) -> pl.Expr:
+    """Build a step-type expression from explicit step specifications."""
+    expr = pl.lit("")
+    for row in step_specifications.itertuples():
+        if short:
+            mask = pl.col(nhdr.step_num) == row.step
+        else:
+            mask = (pl.col(nhdr.step_num) == row.step) & (
+                pl.col(nhdr.cycle_num) == row.cycle
+            )
+        expr = pl.when(mask).then(pl.lit(row.type)).otherwise(expr)
+    return expr
+
+
+def _classify_steps(
+    bases: set,
+    step_specifications,
+    short: bool,
+    override_step_types: Optional[dict],
+    override_raw_limits: Optional[dict],
+    raw_limits: dict,
+    nhdr,
+) -> pl.Expr:
+    """Return a polars expression classifying each step into a step type.
+
+    Mirrors legacy cellpy's threshold logic; later rules win (so e.g. ``ir``
+    overrides ``rest``). Returns ``""`` for steps that match no rule.
+    """
+    if step_specifications is not None:
+        return _classify_from_specifications(step_specifications, short, nhdr)
+
+    # Need the current/potential/capacity aggregates to classify; if the raw
+    # frame lacks them, leave every step uncategorized.
+    required = {"current", "potential", "charge_capacity", "discharge_capacity"}
+    if not required <= bases:
+        return pl.lit("")
+
+    orl = override_raw_limits or {}
+    current_hard = orl.get("current_hard") or raw_limits["current_hard"]
+    stable_current_soft = (
+        orl.get("stable_current_soft") or raw_limits["stable_current_soft"]
+    )
+    stable_voltage_hard = (
+        orl.get("stable_voltage_hard") or raw_limits["stable_voltage_hard"]
+    )
+    stable_charge_hard = (
+        orl.get("stable_charge_hard") or raw_limits["stable_charge_hard"]
+    )
+
+    cur_mean = pl.col("current_mean")
+    cur_min = pl.col("current_min")
+    cur_max = pl.col("current_max")
+    cur_delta = pl.col("current_delta")
+    v_delta = pl.col("potential_delta")
+    ch_delta = pl.col("charge_capacity_delta")
+    dch_delta = pl.col("discharge_capacity_delta")
+
+    m_no_cur = (cur_max.abs() + cur_min.abs()) < current_hard / 2
+    m_v_down = v_delta < -stable_voltage_hard
+    m_v_up = v_delta > stable_voltage_hard
+    m_v_stable = v_delta.abs() < stable_voltage_hard
+    m_cur_down = cur_delta < -stable_current_soft
+    m_cur_neg = cur_mean < -current_hard
+    m_cur_pos = cur_mean > current_hard
+    m_ch_changed = ch_delta.abs() > stable_charge_hard
+    m_dch_changed = dch_delta.abs() > stable_charge_hard
+    m_no_change = (
+        (v_delta == 0) & (cur_delta == 0) & (ch_delta == 0) & (dch_delta == 0)
+    )
+
+    # Order matters: later rules override earlier ones (matches legacy cellpy).
+    rules = [
+        (m_no_cur & m_v_stable, "rest"),
+        (m_no_cur & m_v_up, "ocvrlx_up"),
+        (m_no_cur & m_v_down, "ocvrlx_down"),
+        (m_dch_changed & m_cur_neg, "discharge"),
+        (m_ch_changed & m_cur_pos, "charge"),
+        (m_v_stable & m_cur_neg & m_cur_down, "cv_discharge"),
+        (m_v_stable & m_cur_pos & m_cur_down, "cv_charge"),
+        (m_no_change, "ir"),
+    ]
+    expr = pl.lit("")
+    for mask, label in rules:
+        expr = pl.when(mask).then(pl.lit(label)).otherwise(expr)
+
+    if override_step_types:
+        for step_no, stype in override_step_types.items():
+            expr = (
+                pl.when(pl.col(nhdr.step_num) == step_no)
+                .then(pl.lit(stype))
+                .otherwise(expr)
+            )
+    return expr
 
 
 def make_step_table(
@@ -114,298 +226,115 @@ def make_step_table(
     nhdr = schema.raw
     shdr = schema.step
 
-    def delta(x):
-        # Remark! this will not work if x is a TimeDelta object
-        if x.iloc[0] == 0.0:
-            # starts from a zero value
-            difference = 100.0 * x.iloc[-1]
-        else:
-            difference_factor = 100.0 * (x.iloc[-1] - x.iloc[0])
-            difference_dividend = abs(x.iloc[0])
-            difference = difference_factor / difference_dividend
-
-        return difference
+    raw = data.raw
+    # The engine is polars-native; accept a pandas frame for convenience.
+    if not isinstance(raw, pl.DataFrame):
+        raw = pl.from_pandas(raw)
 
     if from_data_point is not None:
-        df = data.raw.loc[data.raw[nhdr.data_point_txt] >= from_data_point]
-    else:
-        df = data.raw
-    # df[shdr.internal_resistance_change] = \
-    #     df[nhdr.internal_resistance_txt].pct_change()
+        raw = raw.filter(pl.col(nhdr.datapoint_num) >= from_data_point)
 
-    # selecting only the most important columns from raw:
-    keep = [
-        nhdr.data_point_txt,
-        nhdr.test_time_txt,
-        nhdr.step_time_txt,
-        nhdr.step_index_txt,
-        nhdr.cycle_index_txt,
-        nhdr.current_txt,
-        nhdr.voltage_txt,
-        nhdr.ref_voltage_txt,
-        nhdr.charge_capacity_txt,
-        nhdr.discharge_capacity_txt,
-        nhdr.internal_resistance_txt,
-        # "ir_pct_change"
+    # Sort by datapoint so per-step first()/last() are well-defined.
+    raw = raw.sort(nhdr.datapoint_num)
+
+    # Resolve which native raw signals are present (mapping each to its
+    # step-table base name). Cumulative capacities/energies feed the capacity
+    # aggregates; the per-step capacity is the in-step ``delta``.
+    raw_for_base = {
+        "datapoint_num": nhdr.datapoint_num,
+        "test_time": nhdr.test_time,
+        "step_time": nhdr.step_time,
+        "current": nhdr.current,
+        "potential": nhdr.potential,
+        "cumulative_charge_capacity": nhdr.cumulative_charge_capacity,
+        "cumulative_discharge_capacity": nhdr.cumulative_discharge_capacity,
+        "internal_resistance": nhdr.internal_resistance,
+    }
+    signals = [
+        (raw_for_base[raw_attr], base)
+        for raw_attr, base in _SIGNAL_BASES
+        if raw_for_base[raw_attr] in raw.columns
     ]
 
-    # only use col-names that exist:
-    keep = [col for col in keep if col in df.columns]
-    df = df[keep]
-    # preparing for implementation of sub_steps (will come in the future):
-    df = df.assign(**{f"{nhdr.sub_step_index_txt}": 1})
-
-    # using headers as defined in the schema
-    rename_dict = {
-        nhdr.cycle_index_txt: shdr.cycle,
-        nhdr.step_index_txt: shdr.step,
-        nhdr.sub_step_index_txt: shdr.sub_step,
-        nhdr.data_point_txt: shdr.point,
-        nhdr.test_time_txt: shdr.test_time,
-        nhdr.step_time_txt: shdr.step_time,
-        nhdr.current_txt: shdr.current,
-        nhdr.voltage_txt: shdr.voltage,
-        nhdr.charge_capacity_txt: shdr.charge,
-        nhdr.discharge_capacity_txt: shdr.discharge,
-        nhdr.internal_resistance_txt: shdr.internal_resistance,
-    }
-
-    df = df.rename(columns=rename_dict)
-    by = [shdr.cycle, shdr.step, shdr.sub_step]
+    # sub-step is a constant 1 for now (real sub-step support comes later).
+    sub_col = nhdr.step_num + "__sub"
+    raw = raw.with_columns(pl.lit(1).alias(sub_col))
 
     if skip_steps is not None:
         logging.debug(f"omitting steps {skip_steps}")
-        df = df.loc[~df[shdr.step].isin(skip_steps)]
+        raw = raw.filter(~pl.col(nhdr.step_num).is_in(skip_steps))
 
+    by = [nhdr.cycle_num, nhdr.step_num, sub_col]
     if usteps:
-        by.append(shdr.ustep)
-        df[shdr.ustep] = _ustep(df[shdr.step])
+        raw = raw.with_columns(
+            (pl.col(nhdr.step_num).diff().fill_null(1) != 0)
+            .cast(pl.Int64)
+            .cum_sum()
+            .alias("ustep")
+        )
+        by = by + ["ustep"]
 
-    logging.debug(f"groupby: {by}")
+    agg_exprs = []
+    for col, base in signals:
+        for stat in _STATS:
+            agg_exprs.append(getattr(pl.col(col), stat)().alias(f"{base}_{stat}"))
 
-    # TODO: make sure that all columns are numeric
+    steps = raw.group_by(by, maintain_order=True).agg(agg_exprs)
+    steps = steps.with_columns([_delta_expr(base) for _, base in signals])
+    # Mirror pandas groupby key ordering (ascending) for stable row positions.
+    steps = steps.sort(by)
 
-    gf = df.groupby(by=by)
-
-    # TODO: FutureWarning: The provided callable <function mean at 0x000002BD4D332840>
-    #  is currently using SeriesGroupBy.mean. In a future version of pandas, the provided
-    #  callable will be used directly. To keep current behavior pass the string "mean" instead.
-    df_steps = gf.agg(["mean", "std", "min", "max", "first", "last", delta]).rename(
-        columns={"amin": "min", "amax": "max", "mean": "avr"}
-    )
-
-    df_steps = df_steps.reset_index()
-
-    # column with C-rates (rate_avr = abs(current_avr / nom_cap)). The nominal
-    # capacity is supplied by the caller (by value); no unit conversion is done
-    # with the current values here (matching legacy cellpy).
+    # Per-step C-rate (legacy ``rate_avr`` = abs(current_avr / nom_cap)); the
+    # nominal capacity is supplied by the caller (by value).
     if add_c_rate:
         _nom_cap = nom_cap if nom_cap is not None else 1.0
-        df_steps[shdr.rate_avr] = abs(
-            round(
-                df_steps.loc[:, (shdr.current, "avr")] / _nom_cap,
-                DIGITS_C_RATE,
-            )
+        steps = steps.with_columns(
+            (pl.col("current_mean") / _nom_cap)
+            .round(DIGITS_C_RATE)
+            .abs()
+            .alias(shdr.c_rate)
         )
 
-    df_steps[shdr.type] = ""
-    df_steps[shdr.sub_type] = ""
-    df_steps[shdr.info] = ""
+    bases = {base for _, base in signals}
+    step_type = _classify_steps(
+        bases,
+        step_specifications,
+        short,
+        override_step_types,
+        override_raw_limits,
+        raw_limits,
+        nhdr,
+    )
+    steps = steps.with_columns(
+        step_type.alias(shdr.step_type),
+        pl.lit(None, dtype=pl.Utf8).alias(shdr.sub_step_type),
+        pl.lit("").alias("info"),
+    )
 
-    if step_specifications is None:
-        # TODO: refactor this:
-        if override_raw_limits is None:
-            override_raw_limits = {}
-        current_limit_value_hard = (
-            override_raw_limits.get("current_hard", None) or raw_limits["current_hard"]
-        )
-        stable_current_limit_soft = (
-            override_raw_limits.get("stable_current_soft", None)
-            or raw_limits["stable_current_soft"]
-        )
-        stable_voltage_limit_hard = (
-            override_raw_limits.get("stable_voltage_hard", None)
-            or raw_limits["stable_voltage_hard"]
-        )
-        stable_charge_limit_hard = (
-            override_raw_limits.get("stable_charge_hard", None)
-            or raw_limits["stable_charge_hard"]
-        )
-
-        mask_no_current_hard = (
-            df_steps.loc[:, (shdr.current, "max")].abs()
-            + df_steps.loc[:, (shdr.current, "min")].abs()
-        ) < current_limit_value_hard / 2
-
-        mask_voltage_down = (
-            df_steps.loc[:, (shdr.voltage, "delta")] < -stable_voltage_limit_hard
-        )
-
-        mask_voltage_up = (
-            df_steps.loc[:, (shdr.voltage, "delta")] > stable_voltage_limit_hard
-        )
-
-        mask_voltage_stable = (
-            df_steps.loc[:, (shdr.voltage, "delta")].abs() < stable_voltage_limit_hard
-        )
-
-        mask_current_down = (
-            df_steps.loc[:, (shdr.current, "delta")] < -stable_current_limit_soft
-        )
-
-        mask_current_negative = (
-            df_steps.loc[:, (shdr.current, "avr")] < -current_limit_value_hard
-        )
-
-        mask_current_positive = (
-            df_steps.loc[:, (shdr.current, "avr")] > current_limit_value_hard
-        )
-
-        mask_charge_changed = (
-            df_steps.loc[:, (shdr.charge, "delta")].abs() > stable_charge_limit_hard
-        )
-
-        mask_discharge_changed = (
-            df_steps.loc[:, (shdr.discharge, "delta")].abs() > stable_charge_limit_hard
-        )
-
-        mask_no_change = (
-            (df_steps.loc[:, (shdr.voltage, "delta")] == 0)
-            & (df_steps.loc[:, (shdr.current, "delta")] == 0)
-            & (df_steps.loc[:, (shdr.charge, "delta")] == 0)
-            & (df_steps.loc[:, (shdr.discharge, "delta")] == 0)
-        )
-
-        # TODO: make an option for only checking unique steps
-        #     e.g.
-        #     df_x = df_steps.where.steps.are.unique
-
-        # TODO: FutureWarning: Setting an item of incompatible dtype is deprecated and will raise in a future error
-        #  of pandas. Value 'rest' has dtype incompatible with float64, please explicitly cast to a
-        #  compatible dtype first.
-
-        df_steps.loc[
-            mask_no_current_hard & mask_voltage_stable,
-            (shdr.type, slice(None)),
-        ] = "rest"
-
-        df_steps.loc[
-            mask_no_current_hard & mask_voltage_up, (shdr.type, slice(None))
-        ] = "ocvrlx_up"
-
-        df_steps.loc[
-            mask_no_current_hard & mask_voltage_down, (shdr.type, slice(None))
-        ] = "ocvrlx_down"
-
-        df_steps.loc[
-            mask_discharge_changed & mask_current_negative,
-            (shdr.type, slice(None)),
-        ] = "discharge"
-
-        df_steps.loc[
-            mask_charge_changed & mask_current_positive,
-            (shdr.type, slice(None)),
-        ] = "charge"
-
-        df_steps.loc[
-            mask_voltage_stable & mask_current_negative & mask_current_down,
-            (shdr.type, slice(None)),
-        ] = "cv_discharge"
-
-        df_steps.loc[
-            mask_voltage_stable & mask_current_positive & mask_current_down,
-            (shdr.type, slice(None)),
-        ] = "cv_charge"
-
-        # --- internal resistance ----
-        df_steps.loc[mask_no_change, (shdr.type, slice(None))] = "ir"
-        # assumes that IR is stored in just one row
-
-        # --- sub-step-txt -----------
-        df_steps[shdr.sub_type] = None
-
-        # --- CV steps ----
-
-        # "voltametry_charge"
-        # mask_charge_changed
-        # mask_voltage_up
-        # (could also include abs-delta-cumsum current)
-
-        # "voltametry_discharge"
-        # mask_discharge_changed
-        # mask_voltage_down
-
-        if override_step_types is not None:
-            for step, step_type in override_step_types.items():
-                df_steps.loc[
-                    df_steps[shdr.step] == step,
-                    (shdr.type, slice(None)),
-                ] = step_type
-
-    else:
-        # not tested!
-        logger.debug("parsing custom step definition")
-        if not short:
-            logger.debug("using long format (cycle,step)")
-            for row in step_specifications.itertuples():
-                df_steps.loc[
-                    (df_steps[shdr.step] == row.step)
-                    & (df_steps[shdr.cycle] == row.cycle),
-                    (shdr.type, slice(None)),
-                ] = row.type
-                df_steps.loc[
-                    (df_steps[shdr.step] == row.step)
-                    & (df_steps[shdr.cycle] == row.cycle),
-                    (shdr.info, slice(None)),
-                ] = row.info
-        else:
-            logger.debug("using short format (step)")
-            for row in step_specifications.itertuples():
-                df_steps.loc[
-                    df_steps[shdr.step] == row.step,
-                    (shdr.type, slice(None)),
-                ] = row.type
-                df_steps.loc[
-                    df_steps[shdr.step] == row.step,
-                    (shdr.info, slice(None)),
-                ] = row.info
-
-    # check if all the steps got categorizes
-    logger.debug("looking for un-categorized steps")
-    empty_rows = df_steps.loc[df_steps[shdr.type].isnull()]
-    if not empty_rows.empty:
+    n_uncategorized = steps.filter(pl.col(shdr.step_type) == "").height
+    if n_uncategorized:
         logger.warning(
-            f"found {len(empty_rows)}:{len(df_steps)} non-categorized steps (please, check your raw-limits)"
+            f"found {n_uncategorized}:{steps.height} non-categorized steps "
+            "(please, check your raw-limits)"
         )
-        # logging.debug(empty_rows)
 
-    # flatten (possible remove in the future),
+    # Rename group-key columns to the (native) step schema names.
+    steps = steps.rename(
+        {
+            nhdr.cycle_num: shdr.cycle_num,
+            nhdr.step_num: shdr.step_num,
+            sub_col: shdr.sub_step_num,
+        }
+    )
 
-    logger.debug("flatten columns")
-    flat_cols = []
-    for col in df_steps.columns:
-        if isinstance(col, tuple):
-            if col[-1]:
-                col = "_".join(col)
-            else:
-                col = col[0]
-        flat_cols.append(col)
-
-    df_steps.columns = flat_cols
-    if sort_rows:
+    if sort_rows and "test_time_first" in steps.columns:
         logger.debug("sorting the step rows")
-        # TODO: [#index]
-        # if this throws a KeyError: 'test_time_first' it probably
-        # means that the df contains a non-nummeric 'test_time' column.
-        df_steps = df_steps.sort_values(
-            by=shdr.test_time + "_first"
-        ).reset_index()
+        steps = steps.sort("test_time_first")
 
     if from_data_point is not None:
-        return df_steps
-    else:
-        data.steps = df_steps
-        return data
+        return steps
+    data.steps = steps
+    return data
 
 
 def generate_absolute_summary_columns(

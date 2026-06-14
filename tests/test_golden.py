@@ -16,8 +16,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from cellpycore import summarizers
-from cellpycore.cell_core import Data
+from cellpycore.cell_core import Data, OldCellpyCellCore
 from cellpycore.config import Schema
 from cellpycore.legacy import HeadersNormal, HeadersStepTable, HeadersSummary
 
@@ -38,9 +37,12 @@ def _legacy_schema() -> Schema:
 
 
 def _step_table(raw_path: Path) -> pd.DataFrame:
+    # The engine is polars-native; cellpy drives it through the legacy bridge
+    # (OldCellpyCellCore), which takes/returns pandas frames in legacy naming.
+    core = OldCellpyCellCore(initialize=False)
     data = Data()
     data.raw = pd.read_parquet(raw_path)
-    result = summarizers.make_step_table(data, schema=_legacy_schema(), nom_cap=1.0)
+    result = core.make_core_step_table(data, nom_cap=1.0)
     return result.steps.reset_index(drop=True)
 
 
@@ -82,9 +84,11 @@ def test_arbin_step_table_matches_snapshot():
 def test_small_step_table_runs_on_real_data():
     """Smoke test: a tiny (47-row, 3-step) real raw frame flows through the engine.
 
-    Note: on this tiny frame the engine currently leaves one step's ``type`` blank
-    (an edge case to revisit during the issue #13 rewrite); we only assert the
-    structural result here.
+    Note: this fixture's ``step 2`` is a degenerate synthetic slice (non-monotonic
+    duplicated ``data_point``, mixed current signs, zero capacity-delta), so the
+    engine leaves its ``type`` blank. That matches legacy cellpy classification and
+    is a fixture artifact, not an engine defect; we only assert the structural
+    result here.
     """
     schema = _legacy_schema()
     steps = _step_table(ARBIN_SMALL_RAW)

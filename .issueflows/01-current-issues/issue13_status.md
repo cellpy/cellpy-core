@@ -2,7 +2,7 @@
 
 - [ ] Done
 
-Phased migration (see `issue13_plan.md`). **Phase 1 complete; Phases 2–4 remain.**
+Phased migration (see `issue13_plan.md`). **Phases 1–2 complete; Phases 3–4 remain.**
 
 ## Confirmed decisions (2026-06-14)
 
@@ -40,11 +40,25 @@ Phased migration (see `issue13_plan.md`). **Phase 1 complete; Phases 2–4 remai
   byte-exact legacy parity through the bridge is a **Phase 2** reconciliation decision
   (expand native StepCols vs regenerate the golden snapshot under the native column set).
 
+## Phase 2 — polars step engine + bridge (DONE)
+
+- `src/cellpycore/summarizers.py`: `make_step_table` rewritten **polars-native** on the
+  native schema (full per-signal aggregates + `delta`, `c_rate`, step-type classification via
+  `_classify_steps`). Removed the pandas `_ustep`/`delta`/groupby path.
+- `src/cellpycore/cell_core.py`: `OldCellpyCellCore.make_core_step_table` is the
+  **legacy↔native + pandas↔polars bridge**, reproducing the legacy 64-column step frame
+  byte-for-byte.
+- `tests/test_golden.py`: drives the step table through the bridge; the existing
+  cellpy-parity snapshot stays the gate (no regen). `tests/test_schema.py`: step tests moved
+  to the native schema.
+- Parity choice **Path P** (reproduce legacy frame exactly) over Path N (regen golden); see
+  the design note.
+- Blank step-type "edge case": resolved as a **degenerate-fixture artifact** (matches legacy
+  cellpy); classification left unchanged to preserve parity.
+- **Tests:** `uv run pytest` → 26 passed.
+
 ## Remaining
 
-- **Phase 2:** polars-native `make_step_table` + legacy↔native / pandas↔polars bridge in
-  `OldCellpyCellCore`; keep `tests/test_golden.py` green; fix tiny-fixture blank-`type` edge
-  case.
 - **Phase 3:** polars-native summary path (`summarizers` summary fns + all of `selectors.py`)
   + bridge `make_core_summary` / `add_scaled_summary_columns`.
 - **Phase 4:** cross-repo parity tests vs cellpy's `make_step_table` / `make_summary`.

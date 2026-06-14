@@ -76,7 +76,34 @@ tracked in **issue #13**.
   - Reset-granularity normalization in the engine (to also accept step-/test-cumulative raw
     from other cyclers) is a deliberate **future follow-up**, not done now.
 
-### Phase 1 native-schema changes (this PR)
+### Phase 2 step engine + bridge (done)
+
+- `summarizers.make_step_table` is now **polars-native** and operates on the **native**
+  schema. It aggregates every present native raw signal (`datapoint_num`, `test_time`,
+  `step_time`, `current`, `potential`, `cumulative_charge_*capacity`, `internal_resistance`)
+  with the full mean/std/min/max/first/last/delta set, derives the per-step `c_rate`, and
+  classifies step types via the same threshold logic as legacy (later rules win; helper
+  `_classify_steps`). Output is a polars `data.steps` frame.
+- `OldCellpyCellCore.make_core_step_table` is the **legacy↔native + pandas↔polars bridge**:
+  legacy pandas raw → rename to native → polars → engine → native polars steps → rename to
+  legacy → pandas, reproducing the legacy `HeadersStepTable` 64-column frame **byte-for-byte**
+  (incl. the leading `index` column and the `test_time_first` sort). This keeps
+  `tests/test_golden.py` green against the existing cellpy-parity snapshot **without
+  regenerating it** — the strongest parity guarantee.
+- Parity decision: the bridge reproduces the exact legacy frame (Path P), chosen over
+  adopting the native StepCols shape + regenerating the golden (Path N). The native step
+  frame is a *superset* of `StepCols` (it also carries full `test_time`/`datapoint_num`
+  aggregates needed for legacy parity); `StepCols` remains the canonical/guaranteed set.
+- `tests/test_schema.py` step tests rewritten to the native schema/raw (the engine is
+  native-only now). The summary-path test is unchanged (Phase 3 still pandas).
+- **Blank step-type "edge case" — resolved as a non-bug.** The tiny fixture's `step 2` is a
+  degenerate synthetic slice (non-monotonic/duplicated `data_point`, mixed current signs,
+  zero capacity-delta); leaving it blank matches legacy cellpy and is a fixture artifact, not
+  a defect. Classification logic was deliberately **not** changed (changing it would diverge
+  from cellpy and break the parity guarantee). A holistic classification review, if wanted,
+  belongs in its own issue.
+
+### Phase 1 native-schema changes (PR #16, merged)
 
 - `RawCols`: rename the 4 `step_cumulative_*` capacity/energy columns to `cumulative_*`;
   add `step_time` and `internal_resistance` (engine inputs present in legacy raw / needed for
