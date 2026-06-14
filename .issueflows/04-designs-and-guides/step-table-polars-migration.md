@@ -41,9 +41,20 @@ tracked in **issue #13**.
 - **Limits:** step-detection thresholds come from `CellpyLimits` (already in `legacy.py`);
   cellpy passes its own `raw_limits` by value.
 
+## Prep done (de-risks this rewrite)
+
+- **Real-data regression oracle in place** (`tests/test_golden.py`): the engine is
+  pinned against cellpy's published goldens (103 steps / 18 cycles / cycle-1
+  `data_point` 1457) on a real Arbin frame, plus a frozen step-table snapshot. The
+  polars rewrite must keep these green. Fixtures + regen script + best-practice are
+  described in `test-data-and-fixtures.md`.
+- **Edge case to fix during the rewrite:** on the tiny 47-row fixture the engine
+  leaves one step's `type` blank (`''`) — revisit step-type classification.
+
 ## Related
 
 - Issue #12 (this work's origin): `.issueflows/03-solved-issues/issue12_*` once closed.
+- Test-data strategy & oracle: `test-data-and-fixtures.md`.
 - Integration design: `cellpy-core-integration-into-cellpy.md`.
 - Header harmonization: `column-headers-review.md`, cellpy/cellpy-core#4 (SPEED-30).
 - Contract tests for the legacy mirrors: jepegit/cellpy#378.
