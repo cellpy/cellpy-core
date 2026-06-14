@@ -25,6 +25,11 @@ ARBIN_RAW = DATA_DIR / "arbin_cc_raw.parquet"
 ARBIN_STEPS = DATA_DIR / "arbin_cc_steps_expected.parquet"
 ARBIN_SUMMARY = DATA_DIR / "arbin_cc_summary_expected.parquet"
 ARBIN_SMALL_RAW = DATA_DIR / "arbin_small_raw.parquet"
+# cellpy's own committed step-type golden (testdata/data/steps.csv), vendored as
+# an *independent* cross-library reference: it predates the cellpy->cellpy-core
+# engine integration, so matching it proves true cross-repo parity (issue #13
+# Phase 4), not a self-snapshot.
+ARBIN_STEPTYPES_CELLPY = DATA_DIR / "arbin_cc_steptypes_cellpy.csv"
 
 # Golden numbers mirrored from cellpy's own suite (tests/test_cell_readers.py),
 # verified to be reproduced by cellpy-core's engine on the same raw data.
@@ -116,6 +121,40 @@ def test_arbin_summary_matches_snapshot():
         summary,
         expected.reset_index(drop=True),
         check_dtype=False,
+    )
+
+
+@pytest.mark.skipif(
+    not ARBIN_STEPTYPES_CELLPY.is_file(), reason="cellpy step-type golden missing"
+)
+def test_arbin_step_types_match_cellpy_reference():
+    """Cross-repo parity (Phase 4): cellpy-core reproduces cellpy's own committed
+    step-type classification golden (``cellpy/testdata/data/steps.csv``) exactly.
+
+    This golden is an independent reference (cellpy-computed, predating the
+    cellpy->cellpy-core engine integration), so a byte-match validates the
+    classifier across repositories rather than against a self-snapshot.
+    """
+    schema = _legacy_schema()
+    steps = _step_table(ARBIN_RAW)
+
+    reference = pd.read_csv(ARBIN_STEPTYPES_CELLPY, sep=";")
+    got = steps[[schema.step.cycle, schema.step.type]].copy()
+    got[schema.step.cycle] = got[schema.step.cycle].astype(int)
+    got["step"] = steps[schema.step.step].astype(int).to_numpy()
+    got = got[[schema.step.cycle, "step", schema.step.type]].reset_index(drop=True)
+
+    expected = reference[["cycle", "step", "type"]].copy()
+    expected["cycle"] = expected["cycle"].astype(int)
+    expected["step"] = expected["step"].astype(int)
+    expected["type"] = expected["type"].fillna("")
+
+    got.columns = ["cycle", "step", "type"]
+    got["type"] = got["type"].fillna("")
+
+    assert_frame_equal(
+        got.sort_values(["cycle", "step"]).reset_index(drop=True),
+        expected.sort_values(["cycle", "step"]).reset_index(drop=True),
     )
 
 

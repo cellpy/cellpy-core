@@ -103,6 +103,22 @@ tracked in **issue #13**.
   from cellpy and break the parity guarantee). A holistic classification review, if wanted,
   belongs in its own issue.
 
+### Phase 4 cross-repo parity (done)
+
+- **Key finding:** the cellpy→cellpy-core integration *already happened* — cellpy 1.0.3
+  delegates `make_step_table`/`make_summary` to `self.core.make_core_*`. So comparing
+  cellpy-core against a synced cellpy is circular; the meaningful references are cellpy's
+  **pre-integration committed goldens**.
+- **Steps:** cellpy's `testdata/data/steps.csv` (cycle/step/type/info, 103 rows) is an
+  independent classifier oracle. Vendored as `tests/data/arbin_cc_steptypes_cellpy.csv`;
+  cellpy-core reproduces it byte-for-byte (`test_arbin_step_types_match_cellpy_reference`).
+- **Summary (decision `steps_sufficient`):** the summary stays gated by the Phase 3a oracle +
+  cellpy's cyc-1 `data_point` golden (1457). A full byte-parity against cellpy's independent
+  `old=True` legacy summary needs cellpy run with the current core in its venv (stale install);
+  deferred to cellpy#377/#378 rather than doing env surgery.
+- Note for the future: once cellpy's pinned core is bumped to include this work, an end-to-end
+  cellpy run is the integration test; the `steps.csv` golden remains the non-circular unit check.
+
 ### Phase 3b polars-native summary engine + bridge (done)
 
 - **Key finding:** the native per-cycle vocabulary (`config.CycleCols` / `cycle_table.md`) is a

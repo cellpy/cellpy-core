@@ -1,8 +1,8 @@
 # Status — issue #13: Migrate the step/summary compute engine to polars (native schema)
 
-- [ ] Done
+- [x] Done
 
-Phased migration (see `issue13_plan.md`). **Phases 1–3 complete; Phase 4 remains.**
+Phased migration (see `issue13_plan.md`). **All phases (1–4) complete.**
 
 ## Confirmed decisions (2026-06-14)
 
@@ -106,6 +106,18 @@ Architecture decision **`bridge_extras`** (keep the curated native cycle schema 
   external `cellpy` repo may import them); prune in a later cleanup once usage is confirmed.
 - **Tests:** `uv run pytest` → 29 passed.
 
-## Remaining
+## Phase 4 — cross-repo parity (DONE)
 
-- **Phase 4:** cross-repo parity tests vs cellpy's `make_step_table` / `make_summary`.
+- **Finding:** cellpy 1.0.3 already **delegates** `make_step_table`/`make_summary` to
+  cellpy-core (`self.core.make_core_*`), so "parity vs cellpy's engine" is largely circular
+  now. The genuine *independent* references are cellpy's pre-integration committed goldens.
+- **Steps (independent, validated):** vendored cellpy's own `testdata/data/steps.csv`
+  (103 × cycle/step/type/info) as `tests/data/arbin_cc_steptypes_cellpy.csv`. cellpy-core
+  reproduces it **exactly** (103/103 step types). New test
+  `test_arbin_step_types_match_cellpy_reference`.
+- **Summary (scope decision `steps_sufficient`):** kept gated by the Phase 3a oracle + cellpy's
+  published cyc-1 `data_point` golden (1457, matches). Full summary byte-parity vs cellpy's
+  independent `old=True` legacy summary would require running cellpy with the current core in
+  its own venv (its installed core is stale); deferred to cellpy#377/#378 to avoid env surgery.
+- `dev/regenerate_test_data.py`: Stage A now also vendors `steps.csv`.
+- **Tests:** `uv run pytest` → 30 passed.

@@ -12,6 +12,7 @@ and stays loader-free.
 | `arbin_cc_raw.parquet` | `testdata/data/20160805_test001_45_cc_01.res` | 10 261 rows, 18 cols, 18 cycles | Canonical golden oracle |
 | `arbin_cc_steps_expected.parquet` | *(derived)* | 103 steps | Frozen snapshot of the current engine's step table |
 | `arbin_cc_summary_expected.parquet` | *(derived)* | 18 cycles, 27 cols | Frozen snapshot of the current per-cycle summary |
+| `arbin_cc_steptypes_cellpy.csv` | `testdata/data/steps.csv` | 103 steps, 4 cols | **Independent** cellpy step-type golden (cross-repo parity, Phase 4) |
 | `arbin_small_raw.parquet` | `testdata/data/20200624_test001_cc_01.h5` | 47 rows, 1 cycle, 3 steps | Tiny fast fixture (no ODBC) |
 
 All raw frames use the legacy `HeadersNormal` column naming (`data_point`,
@@ -25,6 +26,11 @@ be reproduced by cellpy-core's engine on `arbin_cc_raw.parquet`:
 - step-table rows: **103**
 - summary cycles: **18**
 - cycle-1 last `data_point`: **1457**
+
+`arbin_cc_steptypes_cellpy.csv` is a stronger, **per-step** cross-library check: it is
+cellpy's own committed `steps.csv` golden (cycle/step/type/info), which predates the
+cellpy→cellpy-core engine integration, so reproducing it byte-for-byte proves genuine
+cross-repo parity rather than a self-snapshot.
 
 ## Provenance & license
 
