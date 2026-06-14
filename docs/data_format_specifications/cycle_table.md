@@ -10,6 +10,7 @@ Date: 2025-09-08
 | Column name | Data type | Unit | Sample data | Description |
 | --- | --- | --- | --- | --- |
 | cycle_num | int | - | 12 | Cycle number |
+| mask | boolean | - | True | Selection flag; default True (row is selected / used) |
 | datapoint_num_first | int | - | 123 | First datapoint number in cycle |
 | datapoint_num_last | int | - | 123 | Last datapoint number in cycle | 
 | first_epoch_time_utc | float | Seconds (s) | 1715609528.578140 | UNIX timestamp for first datapoint in cycle (in UTC) |

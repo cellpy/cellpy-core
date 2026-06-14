@@ -31,6 +31,7 @@ Set up a flexible structure that allows for more columns.
 | test_time | float | second | 12.43212 | - |
 | source_type | str(10) | - | "Neware" | - |
 | source_uuid | str(36) | - | "e15b46ca-e584-467f-a176-8bf98b8090e5" | will not be used, only kept for info and tracability |
+| test_id | int | - | 0 | compact per-test key within a (possibly merged) object; 0 for a single test. Group keys are (test_id, cycle_num, step_num, ...). Global identity: source_uuid |
 | step_num | int | - | 123 | updated unique and sequential step number |
 | source_step_num | int | - | 123 | original step number |
 | step_type | str(10) | - | "charge", "discharge", "rest", etc. | optional value |
@@ -38,6 +39,8 @@ Set up a flexible structure that allows for more columns.
 | step_mode | str(10) | - | "CV", "CC", "CP", "None" | optional value |
 | cycle_num | int | - | 12 | - |
 | cycle_type | str(36) | - | "Standard", "GITT", "ICI", "Characterization" | categorial column; in first version: pre-defined input |
+| test_family | str(36) | - | "reference capacity test", "rate test" | optional; broad classification of the overall test |
+| test_type | str(36) | - | "GITT", "current interrupt" | optional; detailed classification of the test (within a family) |
 | potential | float | Volt | 3.6500 | - |
 | current | float | Ampere | 96.4413 | - |
 | step_cumulative_charge_capacity | float | Ah | 34.5678 | - |
@@ -80,10 +83,22 @@ Option for more auxillary columns; naming scheme:
   - enough with keeping it, or do we need an updated cycle number?
 - **cycle_type**
   - details to be discussed
+- **test_family / test_type**
+  - `test_family` is the broad classification (e.g. "reference capacity test", "rate test");
+    `test_type` is the detailed one within a family (e.g. "GITT", "current interrupt").
+  - limit to a controlled vocabulary, or allow free text? (same open question as `cycle_type` / `step_mode`)
 - **channel_status** — *Resolved (issue #10): removed.* Not part of the harmonized raw format.
 - **source_uuid**
   - does this contain info about the channel?
   - if not, should we add a channel number/identifyer? (string)
+- **test_id / merging**
+  - `test_id` is the compact per-row key that lets a single object hold many merged test
+    files; downstream grouping must use composite keys `(test_id, cycle_num, step_num, ...)`
+    because `cycle_num`/`step_num` collide across files.
+  - test-level descriptors (`test_family`, `test_type`, mass, nominal capacity, cycle_mode,
+    ...) should live in a normalized per-test metadata table keyed by `test_id` rather than
+    be repeated on every raw row. See
+    `.issueflows/04-designs-and-guides/test-metadata-and-merging.md`.
 
 
 
