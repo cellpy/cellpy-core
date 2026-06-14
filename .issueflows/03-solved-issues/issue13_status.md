@@ -1,8 +1,8 @@
 # Status — issue #13: Migrate the step/summary compute engine to polars (native schema)
 
-- [ ] Done
+- [x] Done
 
-Phased migration (see `issue13_plan.md`). **Phases 1–2 complete; Phases 3–4 remain.**
+Phased migration (see `issue13_plan.md`). **All phases (1–4) complete.**
 
 ## Confirmed decisions (2026-06-14)
 
@@ -78,10 +78,46 @@ summary functions + bridge.
   datapoint) and `test_arbin_summary_matches_snapshot`.
 - **Tests:** `uv run pytest` → 28 passed.
 
-## Remaining
+## Phase 3b — polars-native summary engine + bridge (DONE)
 
-- **Phase 3b:** polars-native rewrite of `selectors.py` + summary functions in `summarizers.py`
-  + `OldCellpyCellCore.make_core_summary` / `add_scaled_summary_columns` bridge; keep the new
-  summary oracle green.
+Architecture decision **`bridge_extras`** (keep the curated native cycle schema clean):
 
-- **Phase 4:** cross-repo parity tests vs cellpy's `make_step_table` / `make_summary`.
+- `src/cellpycore/summarizers.py`: new **polars-native** `make_summary` (+ `_add_end_potentials`)
+  that produces only the **clean native `CycleCols` subset** (per-cycle capacities, CE,
+  coulombic difference, capacity losses, `test_cumulated_*`, end-of-charge/discharge potentials).
+  It does the cycle-end raw selection inline (no `selectors.create_selector`).
+- `src/cellpycore/cell_core.py`:
+  - `CellpyCellCore.make_core_summary` now calls the native engine (clean subset).
+  - `OldCellpyCellCore.make_core_summary` is the **legacy↔native + pandas↔polars bridge**:
+    native engine → rename native→legacy → add the **legacy-only "extras"** the curated native
+    design deliberately omits (`cumulated_coulombic_efficiency`, `shifted_*`, `cumulated_ric*`,
+    IR via `ir_to_summary`, C-rates via `c_rates_to_summary`) → legacy column order. Reproduces
+    the Phase 3a summary oracle **byte-for-byte**.
+- **Why bridge_extras (not extend CycleCols):** `cycle_table.md` is a curated forward design;
+  the ~11 legacy-only summary columns are exactly the cruft it drops. Keeping them in the bridge
+  leaves `CycleCols`/`cycle_table.md`/`CYCLE_EXPECTED` untouched.
+- **Parity semantics verified:** polars `cum_sum`/`shift`/÷-by-zero match pandas exactly, so the
+  rewrite is byte-faithful.
+- `tests/test_schema.py`: + `test_make_summary_native_schema` (asserts the native summary has the
+  clean subset and **no** legacy cruft). `tests/test_golden.py` summary oracle unchanged + green.
+- **Superseded (transitional, left in place):** `summarizers.generate_absolute_summary_columns`,
+  `summarizers.end_voltage_to_summary`, `selectors.create_selector`,
+  `selectors.summary_selector_exluder` are no longer used inside cellpy-core but kept (the
+  external `cellpy` repo may import them); prune in a later cleanup once usage is confirmed.
+- **Tests:** `uv run pytest` → 29 passed.
+
+## Phase 4 — cross-repo parity (DONE)
+
+- **Finding:** cellpy 1.0.3 already **delegates** `make_step_table`/`make_summary` to
+  cellpy-core (`self.core.make_core_*`), so "parity vs cellpy's engine" is largely circular
+  now. The genuine *independent* references are cellpy's pre-integration committed goldens.
+- **Steps (independent, validated):** vendored cellpy's own `testdata/data/steps.csv`
+  (103 × cycle/step/type/info) as `tests/data/arbin_cc_steptypes_cellpy.csv`. cellpy-core
+  reproduces it **exactly** (103/103 step types). New test
+  `test_arbin_step_types_match_cellpy_reference`.
+- **Summary (scope decision `steps_sufficient`):** kept gated by the Phase 3a oracle + cellpy's
+  published cyc-1 `data_point` golden (1457, matches). Full summary byte-parity vs cellpy's
+  independent `old=True` legacy summary would require running cellpy with the current core in
+  its own venv (its installed core is stale); deferred to cellpy#377/#378 to avoid env surgery.
+- `dev/regenerate_test_data.py`: Stage A now also vendors `steps.csv`.
+- **Tests:** `uv run pytest` → 30 passed.

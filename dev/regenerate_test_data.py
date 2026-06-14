@@ -85,6 +85,19 @@ def stage_a_export_raw() -> bool:
             print(f"[stage A] wrote {out.name}  ({len(raw)} rows, {raw.shape[1]} cols)")
         except Exception as exc:  # noqa: BLE001 - keep going for other sources
             print(f"[stage A] FAILED {name}: {type(exc).__name__}: {exc}")
+
+    # Vendor cellpy's own committed step-type golden (independent cross-repo
+    # parity reference for issue #13 Phase 4). It predates the cellpy->cellpy-core
+    # integration, so it is a genuine external oracle for step classification.
+    import shutil
+
+    steptypes_src = CELLPY_REPO / "testdata/data/steps.csv"
+    if steptypes_src.is_file():
+        dst = DATA_DIR / "arbin_cc_steptypes_cellpy.csv"
+        shutil.copyfile(steptypes_src, dst)
+        print(f"[stage A] copied {dst.name} (cellpy step-type golden)")
+    else:
+        print(f"[stage A] missing {steptypes_src}; skip step-type golden")
     return True
 
 
