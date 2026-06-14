@@ -434,6 +434,10 @@ def make_summary(
     return data
 
 
+# TODO(#13): NOT polars — pandas (summary[...], .cumsum/.shift/.assign). Superseded by
+#  the native `make_summary` + the legacy-only extras computed in
+#  `OldCellpyCellCore._add_legacy_summary_extras`; port to polars-native or remove
+#  once the external cellpy repo no longer imports it.
 def generate_absolute_summary_columns(
     data: Data,
     schema: Optional[Schema] = None,
@@ -556,6 +560,8 @@ def generate_absolute_summary_columns(
     return data
 
 
+# TODO(#13): NOT polars — pandas (summary[col] assignment). Still used by the
+#  `add_scaled_summary_columns` bridge; port to polars-native (native schema).
 def generate_specific_summary_columns(
     data: Data,
     mode: str,
@@ -587,6 +593,9 @@ def generate_specific_summary_columns(
     return data
 
 
+# TODO(#13): NOT polars — pandas (.loc/.str/.rename/.drop_duplicates/.merge).
+#  Superseded by the native `_add_end_potentials` helper used by `make_summary`;
+#  port to polars-native or remove once the external cellpy repo no longer imports it.
 def end_voltage_to_summary(data: Data, schema: Optional[Schema] = None) -> Data:
     """
     Add end-voltage columns to the summary.
@@ -653,6 +662,8 @@ def end_voltage_to_summary(data: Data, schema: Optional[Schema] = None) -> Data:
     return data
 
 
+# TODO(#13): NOT polars — pandas (.loc/.isin/.empty/.mean). Helper for
+#  `equivalent_cycles_to_summary` / `c_rates_to_summary`; port to polars-native.
 def _calculate_nominal_capacity_from_cycles(
     summary: DataFrame,
     schema: Schema,
@@ -690,6 +701,8 @@ def _calculate_nominal_capacity_from_cycles(
     return nom_cap
 
 
+# TODO(#13): NOT polars — pandas (.assign, summary[...]). Still used by the
+#  `add_scaled_summary_columns` bridge (normalized_cycle_index); port to polars-native.
 def equivalent_cycles_to_summary(
     data: Data,
     schema: Optional[Schema] = None,
@@ -734,6 +747,8 @@ def equivalent_cycles_to_summary(
     return data
 
 
+# TODO(#13): NOT polars — pandas (.loc/.rename/.drop_duplicates/.merge/.drop). Still
+#  used by the legacy summary bridge (`_add_legacy_summary_extras`); port to polars-native.
 def c_rates_to_summary(
     data: Data,
     schema: Optional[Schema] = None,
@@ -824,6 +839,10 @@ def c_rates_to_summary(
     return data
 
 
+# TODO(#13): NOT polars — pandas (.iloc/.loc/.insert/.index row loop). Still used by the
+#  legacy summary bridge (`_add_legacy_summary_extras`); port to polars-native. NOTE the
+#  pre-existing "DOES NOT WORK PROPERLY" bug below — preserve current behaviour (oracle-locked)
+#  when porting; fix correctness in its own issue.
 def ir_to_summary(data: Data, schema: Optional[Schema] = None) -> Data:
     # should check:  test.charge_steps = None,
     # test.discharge_steps = None
