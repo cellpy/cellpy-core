@@ -54,10 +54,14 @@ model; acceptable only as a convenience projection.
 ## Status / open points
 
 - `test_id` column: **added** to `harmonized_raw.md` and `config.RawCols` (PR #14).
-- `test_family` / `test_type`: currently also present as `raw` columns (added earlier on
-  this branch). They are candidates to **move into `TestMeta`** once it exists; keep them in
-  `raw` for now to avoid breaking the just-defined spec.
-- `TestMeta` class + replacing scalar `meta_test_dependent`, and adding `test_id` to
-  `StepCols` / `CycleCols` + composite group keys: **not yet implemented** — needs its own
-  issue (ties into the engine rewrite #13 and the UUID/identity strategy in
-  `column-headers-review.md` §F).
+- `test_family` / `test_type`: **moved into the `TestMeta` spec** (PR #14) — they are
+  test-level constants, so they are no longer `raw` columns. `cycle_type` stays in `raw`
+  (it can vary per cycle).
+- `TestMeta` is now **specified** in `docs/data_format_specifications/harmonized_raw.md`
+  (uuid, provenance: `source_kind`/`source_type`/`source_uri`/`source_uuid`/
+  `raw_file_names`; time: `start_datetime`/`time_zone`/`loaded_datetime`; plus the cellpy
+  `CellpyMetaCommon` / `CellpyMetaIndividualTest` fields to mine).
+- **Not yet implemented (needs its own issue):** a `TestMeta` class replacing the scalar
+  `meta_test_dependent`; adding `test_id` to `StepCols` / `CycleCols` + composite group
+  keys; the optional `CellMeta` split. Ties into the engine rewrite #13 and the
+  UUID/identity strategy in `column-headers-review.md` §F.

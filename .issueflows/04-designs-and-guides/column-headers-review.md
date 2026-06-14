@@ -7,10 +7,10 @@ Scope of issue #10 was **docs-only**. The `src/cellpycore/config.py` header clas
 ## Where column headers live (the three layers)
 
 1. **Spec docs** (`docs/`) — the human-facing definitions. After issue #10:
-   - `docs/harmonized_raw_definition.md` — **authoritative** harmonized-raw spec (single source of truth).
+   - `docs/data_format_specifications/harmonized_raw.md` — **authoritative** harmonized-raw spec (single source of truth; moved here from `docs/harmonized_raw_definition.md` in PR #14).
    - `docs/data_format_specifications/cycle_table.md`, `step_table.md` — cycle/step table specs.
    - `docs/data-object-definition.md` — the minimal input contract.
-   - (`docs/data_format_specifications/harmonized_raw.md` was **deleted** as a stale duplicate.)
+   - (The stale 2025-09-08 duplicate that previously sat at this path was deleted in issue #10; the authoritative file was later moved back to this path in PR #14.)
 2. **New config classes** (`src/cellpycore/config.py`) — `RawCols`, `StepCols`, `CycleCols`, dataclasses of `name: str = "name"` with dot + bracket access and a `__version__`. **These are DRAFT and not yet wired into the processing engine.** Only `_helpers.py` (synthetic-data `make_raw`) reads `RawCols`.
 3. **Legacy headers** (`src/cellpycore/legacy.py`, `*_txt`) — old-cellpy names (`current_txt`, `sub_step_index_txt`, ...). **The live engine (`selectors.py`, `summarizers.py`) still consumes these, not the new `Cols` classes.**
 
@@ -21,7 +21,7 @@ The key structural fact: docs ↔ `config.py` ↔ engine are three out-of-sync r
 1. **Scope = docs-only.** No `config.py` edits in this issue.
 2. **Signal naming = `potential`** (not `voltage`), and **`test_time` is in seconds** (not milliseconds). `data-object-definition.md` was reconciled to match.
 3. **`channel_status` is dropped**; the cycler step mode column is **`step_mode`** (not `mode`).
-4. **`harmonized_raw.md` (2025-09-08) deleted**; `harmonized_raw_definition.md` (2025-09-17) is the single source of truth.
+4. **`harmonized_raw.md` (2025-09-08) deleted**; the 2025-09-17 spec is the single source of truth (now at `docs/data_format_specifications/harmonized_raw.md` after the PR #14 move).
 5. **Header metadata + versioning (SPEED-30) deferred** — documented as a recommendation, not implemented.
 6. **Strategy alignment = document gaps only** — no concrete UUID/BattINFO columns added now.
 

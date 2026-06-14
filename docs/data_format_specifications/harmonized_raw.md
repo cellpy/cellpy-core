@@ -1,8 +1,8 @@
 # Cellpy Core Harmonized_Raw
 
 **Authoritative definition** — this is the single source of truth for the harmonized raw
-format. It supersedes the earlier `docs/data_format_specifications/harmonized_raw.md`
-(2025-09-08), which was removed in issue #10.
+format. (Moved here from `docs/harmonized_raw_definition.md`; it supersedes the older
+2025-09-08 draft that was removed in issue #10.)
 
 **Date:** 2025-09-17 (reviewed in issue #10)  
 **SPEED-16:** "Define the object that goes into cellpy core"
@@ -39,8 +39,6 @@ Set up a flexible structure that allows for more columns.
 | step_mode | str(10) | - | "CV", "CC", "CP", "None" | optional value |
 | cycle_num | int | - | 12 | - |
 | cycle_type | str(36) | - | "Standard", "GITT", "ICI", "Characterization" | categorial column; in first version: pre-defined input |
-| test_family | str(36) | - | "reference capacity test", "rate test" | optional; broad classification of the overall test |
-| test_type | str(36) | - | "GITT", "current interrupt" | optional; detailed classification of the test (within a family) |
 | potential | float | Volt | 3.6500 | - |
 | current | float | Ampere | 96.4413 | - |
 | step_cumulative_charge_capacity | float | Ah | 34.5678 | - |
@@ -63,6 +61,48 @@ Option for more auxillary columns; naming scheme:
 - aux_pressure_[]
 - aux_resistance_[]
 
+## Test metadata (TestMeta)
+
+Per-test metadata, **one record per test**, keyed by `test_id` (the same `test_id` carried
+on every raw row). This is where test-level descriptors live so they are **not** repeated on
+every raw row; it is what lets a single object hold many merged test files efficiently (see
+`.issueflows/04-designs-and-guides/test-metadata-and-merging.md`). When several tests are
+merged, `TestMeta` holds one row per `test_id`.
+
+Test-level descriptors that are constant within a test (e.g. `test_family`, `test_type`,
+`cycle_mode`) belong here, **not** in the raw columns.
+
+| Field | Data type | Unit | Sample data | Comment |
+| --- | --- | --- | --- | --- |
+| test_id | int | - | 0 | key; matches `raw.test_id` (the per-test grouping key) |
+| uuid | str(36) | - | "e15b46ca-e584-467f-a176-8bf98b8090e5" | stable, globally-unique id for this test run |
+| cell_name | str | - | "cell_001" | human-readable cell / test name |
+| test_family | str(36) | - | "rate test" | broad classification of the overall test |
+| test_type | str(36) | - | "GITT" | detailed classification within a family |
+| cycle_mode | str(10) | - | "anode" | "anode" / "cathode" / "full" |
+| source_kind | str(10) | - | "file" | where the data came from: "file", "db", "api", ... |
+| source_type | str(20) | - | "Neware" | cycler / instrument type |
+| source_uri | str | - | "/data/run1.ndax" or "db://cellpydb/tests/123" | file path or DB/API locator for the source |
+| source_uuid | str(36) | - | "..." | original identifier from the source (matches `raw.source_uuid`) |
+| raw_file_names | list[str] | - | ["run1.ndax"] | original raw file(s) backing this test |
+| schedule_file_name | str | - | "rate_test.sdu" | cycler schedule / protocol file |
+| creator | str | - | "jdoe" | who produced / imported the test |
+| channel | str | - | "12" | tester channel id |
+| tester_id | str | - | "neware-01" | tester / server identity |
+| start_datetime | datetime (ISO 8601) | - | "2026-06-14T10:00:00+02:00" | test start time (from the cycler) |
+| time_zone | str | - | "Europe/Oslo" | time zone for naive timestamps |
+| loaded_datetime | datetime (ISO 8601) | - | "2026-06-14T12:30:00Z" | when the data was obtained / imported into cellpy |
+| comment | str | - | "" | free text |
+
+**Cell / material metadata (optional).** Physical cell properties (mass, total mass,
+nominal capacity + specifics, active-electrode area / loading / thickness, electrode and
+electrolyte types, experiment type, ...) are also per-test/per-cell. Legacy cellpy already
+defines these in `cellpy.parameters.internal_settings.CellpyMetaCommon` (cell/material/
+geometry) and `CellpyMetaIndividualTest` (test-dependent: `channel_index`, `creator`,
+`schedule_file_name`, `voltage_lim_low/high`, `cycle_mode`, `test_ID`). Mine those for the
+full field set; they can sit in `TestMeta` or a sibling `CellMeta` record (decision
+deferred — see the design note).
+
 ## Follow-ups
 - **step_types**
   - 'charge', 'discharge', 'rest'
@@ -83,7 +123,7 @@ Option for more auxillary columns; naming scheme:
   - enough with keeping it, or do we need an updated cycle number?
 - **cycle_type**
   - details to be discussed
-- **test_family / test_type**
+- **test_family / test_type** (now in **TestMeta**, not raw columns)
   - `test_family` is the broad classification (e.g. "reference capacity test", "rate test");
     `test_type` is the detailed one within a family (e.g. "GITT", "current interrupt").
   - limit to a controlled vocabulary, or allow free text? (same open question as `cycle_type` / `step_mode`)

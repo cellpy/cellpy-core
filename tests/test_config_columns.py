@@ -25,7 +25,6 @@ RAW_EXPECTED = [
     "test_time", "source_type", "source_uuid", "test_id", "step_num",
     "source_step_num",
     "step_type", "step_type_detail", "step_mode", "cycle_num", "cycle_type",
-    "test_family", "test_type",
     "potential", "current", "step_cumulative_charge_capacity",
     "step_cumulative_discharge_capacity", "step_cumulative_charge_energy",
     "step_cumulative_discharge_energy", "step_charge_power", "step_discharge_power",

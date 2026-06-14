@@ -247,8 +247,6 @@ class RawCols(Cols):
     step_mode: str = "step_mode"
     cycle_num: str = "cycle_num"
     cycle_type: str = "cycle_type"
-    test_family: str = "test_family"
-    test_type: str = "test_type"
     potential: str = "potential"
     current: str = "current"
     step_cumulative_charge_capacity: str = "step_cumulative_charge_capacity"
