@@ -125,6 +125,22 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         except NoDataFound:
             self._cycle_mode = cycle_mode
 
+    @property
+    def schema(self) -> config.Schema:
+        """The column-header schema for this cell.
+
+        Bundles the raw / cycle (summary) / step header objects so the summary
+        and step engine can read their column names from an injected object
+        instead of module-level globals. Built on access so subclass overrides of
+        ``raw_cols`` / ``cycle_cols`` / ``step_cols`` (e.g. the legacy bridge) are
+        always reflected.
+        """
+        return config.Schema(
+            raw=self.raw_cols,
+            cycle=self.cycle_cols,
+            step=self.step_cols,
+        )
+
     def make_core_summary(
         self,
         data: Data,
@@ -133,6 +149,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         find_end_voltage: bool = False,
         select_columns: bool = True,
         final_data_points: Optional[Iterable[int]] = None,
+        current_conversion_factor: float = 1.0,
     ) -> Data:
         """Make the core summary.
 
@@ -143,6 +160,9 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             find_end_voltage: Whether to find the end voltage.
             select_columns: Whether to select only the minimum columns that are needed.
             final_data_points: The final data point for each cycle to use for the selector.
+            current_conversion_factor: Precomputed factor that converts the raw
+                current unit to the desired output current unit for the C-rate
+                columns (by value; default 1.0 = no conversion).
 
         Returns:
             Data object with the summary.
@@ -150,12 +170,14 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
 
         from cellpycore import selectors, summarizers
 
+        schema = self.schema
+
         time_00 = time.time()
         logger.debug("start making summary")
 
         if selector is None:
             selector = selectors.create_selector(
-                data, final_data_points=final_data_points
+                data, schema, final_data_points=final_data_points
             )
         summary = selector()
         column_names = summary.columns
@@ -167,12 +189,12 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         if select_columns:
             logger.debug("keeping only selected set of columns")
             columns_to_keep = [
-                self.raw_cols.charge_capacity_txt,
-                self.raw_cols.cycle_index_txt,
-                self.raw_cols.data_point_txt,
-                self.raw_cols.datetime_txt,
-                self.raw_cols.discharge_capacity_txt,
-                self.raw_cols.test_time_txt,
+                schema.raw.charge_capacity_txt,
+                schema.raw.cycle_index_txt,
+                schema.raw.data_point_txt,
+                schema.raw.datetime_txt,
+                schema.raw.discharge_capacity_txt,
+                schema.raw.test_time_txt,
             ]
             for cn in column_names:
                 if not columns_to_keep.count(cn):
@@ -187,27 +209,29 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             logger.info(
                 "Assuming cycling in anode half-data (discharge before charge) mode"
             )
-            _first_step_txt = self.cycle_cols.discharge_capacity
-            _second_step_txt = self.cycle_cols.charge_capacity
+            _first_step_txt = schema.cycle.discharge_capacity
+            _second_step_txt = schema.cycle.charge_capacity
         else:
             logger.info("Assuming cycling in full-data / cathode mode")
-            _first_step_txt = self.cycle_cols.charge_capacity
-            _second_step_txt = self.cycle_cols.discharge_capacity
+            _first_step_txt = schema.cycle.charge_capacity
+            _second_step_txt = schema.cycle.discharge_capacity
 
         # ---------------- absolute -------------------------------
 
         data = summarizers.generate_absolute_summary_columns(
-            data, _first_step_txt, _second_step_txt
+            data, schema, _first_step_txt, _second_step_txt
         )
 
         # TODO @jepe: refactor this to method:
         if find_end_voltage:
-            data = summarizers.end_voltage_to_summary(data)
+            data = summarizers.end_voltage_to_summary(data, schema)
 
-        if find_ir and (self.raw_cols.internal_resistance_txt in data.raw.columns):
-            data = summarizers.ir_to_summary(data)
+        if find_ir and (schema.raw.internal_resistance_txt in data.raw.columns):
+            data = summarizers.ir_to_summary(data, schema)
 
-        data = summarizers.c_rates_to_summary(data)
+        data = summarizers.c_rates_to_summary(
+            data, schema, current_conversion_factor=current_conversion_factor
+        )
 
         logger.debug(f"(dt: {(time.time() - time_00):4.2f}s)")
         return data
@@ -219,7 +243,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         normalization_cycles: Union[Sequence, int, None],
         step_txt: Optional[str] = None,
         specifics: Optional[List[str]] = None,
-        to_units=None,
+        specific_converters: Optional[dict] = None,
     ) -> Data:
         """Add specific summary columns to the summary.
 
@@ -229,29 +253,29 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             normalization_cycles: The number of cycles to normalize the data by.
             step_txt: The step text to use (charge or discharge capacity, will pick 'first' based on cycle mode if not provided)
             specifics: The specifics to add.
-            to_units: The target (output) units used when converting to specific
-                columns. Defaults to ``self.cellpy_units`` (the legacy bridge units)
-                so that consumer-selected output units are honoured.
+            specific_converters: Mapping of ``mode -> conversion factor`` supplied
+                by value by the caller (so this method needs no unit handling). If
+                not provided, the factors are computed lazily via the units helper
+                using ``self.cellpy_units`` as a fallback (legacy / standalone).
 
         Returns:
             The data with the specific summary columns added.
         """
         from cellpycore import summarizers
 
+        schema = self.schema
+
         if specifics is None:
             specifics = ["gravimetric", "areal", "absolute"]
 
-        if to_units is None:
-            to_units = getattr(self, "cellpy_units", None)
-
         if step_txt is None:
             if self.cycle_mode == "anode":
-                step_txt = self.cycle_cols.discharge_capacity
+                step_txt = schema.cycle.discharge_capacity
             else:
-                step_txt = self.cycle_cols.charge_capacity
+                step_txt = schema.cycle.charge_capacity
 
         data = summarizers.equivalent_cycles_to_summary(
-            data, nom_cap_abs, normalization_cycles, step_txt
+            data, schema, nom_cap_abs, normalization_cycles, step_txt
         )
 
         # Note: the C-rates are added by make_core_summary (using the step-table
@@ -259,13 +283,95 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         # here would duplicate the charge_c_rate/discharge_c_rate columns (pandas
         # merge would suffix them _x/_y), so it is intentionally not repeated.
 
-        specific_columns = self.cycle_cols.specific_columns
+        specific_columns = schema.cycle.specific_columns
         for mode in specifics:
+            converter = self._resolve_specific_converter(
+                data, mode, specific_converters
+            )
             data = summarizers.generate_specific_summary_columns(
-                data, mode, specific_columns, to_units=to_units
+                data, mode, specific_columns, converter
             )
 
         return data
+
+    def _resolve_specific_converter(
+        self, data: Data, mode: str, specific_converters: Optional[dict]
+    ) -> float:
+        """Resolve the specific-capacity conversion factor for a mode.
+
+        Prefers the caller-supplied factor (by value). Falls back to computing it
+        via the units helper using ``self.cellpy_units`` (legacy / standalone use);
+        this is the only place the summary path may touch pint, and only when the
+        caller did not supply the factor.
+        """
+        if specific_converters is not None and mode in specific_converters:
+            return specific_converters[mode]
+
+        from cellpycore import units
+
+        return units.get_converter_to_specific(
+            data=data, mode=mode, to_units=getattr(self, "cellpy_units", None)
+        )
+
+    def make_core_step_table(
+        self,
+        data: Data,
+        raw_limits: Optional[dict] = None,
+        step_specifications=None,
+        short: bool = False,
+        override_step_types: Optional[dict] = None,
+        override_raw_limits: Optional[dict] = None,
+        usteps: bool = False,
+        add_c_rate: bool = True,
+        nom_cap: Optional[float] = None,
+        skip_steps: Optional[Sequence] = None,
+        sort_rows: bool = True,
+        from_data_point: Optional[int] = None,
+    ) -> Union[Data, "DataFrame"]:
+        """Make the core step table.
+
+        Delegates to ``summarizers.make_step_table`` using this cell's schema.
+        The instrument resolution limits (``raw_limits``) and the absolute
+        nominal capacity (``nom_cap``, for the C-rate) are supplied by the caller.
+
+        Args:
+            data: The data to make the step table from.
+            raw_limits: The instrument resolution limits. If None, the summarizer
+                default (DEFAULT_RAW_LIMITS) is used.
+            step_specifications: Optional explicit step specifications.
+            short: Whether step specifications are in short format.
+            override_step_types: Override the detected step types.
+            override_raw_limits: Override individual raw limits.
+            usteps: Whether to investigate all (sub-)steps within a cycle.
+            add_c_rate: Whether to include the per-step C-rate (rate_avr).
+            nom_cap: Absolute nominal capacity used for the C-rate (default 1.0).
+            skip_steps: Step numbers to skip.
+            sort_rows: Whether to sort the rows after processing.
+            from_data_point: First data point to use (returns a DataFrame when set).
+
+        Returns:
+            Data object with the step table, or a DataFrame when ``from_data_point``
+            is given.
+        """
+        from cellpycore import summarizers
+
+        kwargs = dict(
+            schema=self.schema,
+            step_specifications=step_specifications,
+            short=short,
+            override_step_types=override_step_types,
+            override_raw_limits=override_raw_limits,
+            usteps=usteps,
+            add_c_rate=add_c_rate,
+            nom_cap=nom_cap,
+            skip_steps=skip_steps,
+            sort_rows=sort_rows,
+            from_data_point=from_data_point,
+        )
+        if raw_limits is not None:
+            kwargs["raw_limits"] = raw_limits
+
+        return summarizers.make_step_table(data, **kwargs)
 
 
 class OldCellpyCellCore(CellpyCellCore):

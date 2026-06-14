@@ -1,3 +1,4 @@
+import functools
 import logging
 from typing import Optional, TypeVar
 
@@ -6,29 +7,36 @@ from cellpycore.legacy import CellpyUnits
 
 DataFrame = TypeVar("DataFrame")
 
-UNIT_REGISTER_LOADED = False
-_ureg = None
 
+@functools.lru_cache(maxsize=1)
+def _get_unit_registry():
+    """Create (once) and return the pint UnitRegistry.
 
-def _create_unit_registry():
-    import pint
-    global UNIT_REGISTER_LOADED, _ureg
-    if UNIT_REGISTER_LOADED:
-        return _ureg
-
-    _ureg = pint.UnitRegistry()
+    pint recommends a single shared registry per process (Quantities created by
+    different registries cannot interoperate), so we memoize one instead of
+    keeping a reassignable module-level global - this avoids shared mutable
+    state. pint is an optional dependency (install the ``units`` extra); it is
+    imported lazily so it stays off the core (summary/step) hot path, which now
+    receives conversion factors by value.
+    """
     try:
-        _ureg.formatter.default_format = "~P"
+        import pint
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError(
+            "pint is required for the cellpy-core unit-conversion helpers; "
+            "install the 'units' extra (e.g. `uv pip install cellpycore[units]`)."
+        ) from e
+
+    ureg = pint.UnitRegistry()
+    try:
+        ureg.formatter.default_format = "~P"
     except AttributeError:
-        _ureg.formatter.default_format = "~P"
-    UNIT_REGISTER_LOADED = True
+        ureg.default_format = "~P"
+    return ureg
 
 
 def Q(*args, **kwargs):
-    global _ureg, UNIT_REGISTER_LOADED
-    if not UNIT_REGISTER_LOADED:
-        _create_unit_registry()
-    return _ureg.Quantity(*args, **kwargs)
+    return _get_unit_registry().Quantity(*args, **kwargs)
 
 
 def get_cellpy_units(*args, **kwargs) -> CellpyUnits:

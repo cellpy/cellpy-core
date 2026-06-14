@@ -1,10 +1,9 @@
 import logging
-from typing import Sequence, TypeVar, Union
+from typing import Optional, Sequence, TypeVar, Union
 
 
-from cellpycore import selectors, units
-from cellpycore.config import StepCols, CycleCols, RawCols
-from cellpycore.legacy import HeadersStepTable, HeadersSummary, HeadersNormal
+from cellpycore import selectors
+from cellpycore.config import Schema, default_schema
 from cellpycore.cell_core import Data
 
 logger = logging.getLogger(__name__)
@@ -14,16 +13,10 @@ DataFrame = TypeVar("DataFrame")
 Array = TypeVar("Array")
 
 
-# The summarizer bodies are written against the legacy header names (the same
-# names cellpy uses for its raw/step/summary DataFrame columns), so the module
-# level header instances must be the legacy classes for the OldCellpyCellCore
-# bridge to work. See cellpy-core#4 (header harmonization) for the longer-term plan.
-headers_steps = HeadersStepTable()
-headers_summary = HeadersSummary()
-headers_raw = HeadersNormal()
-
-cellpy_units = units.get_cellpy_units()
-output_units = units.get_default_output_units()
+# The summarizer bodies read their column names from an injected ``Schema`` (see
+# config.Schema) instead of module-level header globals. This keeps the engine
+# schema-agnostic and thread-safe; the legacy bridge (OldCellpyCellCore) injects
+# the legacy-named schema, a native CellpyCellCore injects the native one.
 
 
 # TODO: This must be implemented properly when we have a decided a way to get the raw limits from the instrument
@@ -39,8 +32,8 @@ DEFAULT_RAW_LIMITS = {
     "ir_change": 0.001,
 }
 
-DIGITS_C_RATE = 3
-DIGITS_RATE = 12
+# Number of digits used when rounding the per-step C-rate (matches legacy cellpy).
+DIGITS_C_RATE = 5
 
 
 def _ustep(n: Array) -> list:
@@ -63,14 +56,16 @@ def _ustep(n: Array) -> list:
     return un
 
 
-# TODO: [NEXT] - use this in cell_core / cellreader.CellpyCell make_step_table
 def make_step_table(
     data: Data,
+    schema: Optional[Schema] = None,
     step_specifications=None,
     short=False,
     override_step_types=None,
     override_raw_limits=None,
     usteps=False,
+    add_c_rate=True,
+    nom_cap=None,
     skip_steps=None,
     sort_rows=True,
     from_data_point=None,
@@ -94,6 +89,8 @@ def make_step_table(
 
     Args:
         data (core.Data): The data object.
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
         step_specifications (pandas.DataFrame): step specifications
         short (bool): step specifications in short format
         override_step_types (dict): override the provided step types, for example set all
@@ -102,6 +99,10 @@ def make_step_table(
             'current_hard' to 0.1 by providing {'current_hard': 0.1}.
         usteps (bool): investigate all steps including same steps within
             one cycle (this is useful for e.g. GITT).
+        add_c_rate (bool): include a per-step C-rate estimate (rate_avr).
+        nom_cap (float): the absolute nominal capacity used to compute the C-rate
+            (rate_avr = abs(current_avr / nom_cap)). Supplied by the caller (by
+            value) so this function needs no unit handling. Defaults to 1.0.
         skip_steps (list of integers): list of step numbers that should not
             be processed (future feature - not used yet).
         sort_rows (bool): sort the rows after processing.
@@ -113,12 +114,10 @@ def make_step_table(
           otherwise the step table is returned as a DataFrame.
 
     """
-
-    # def first(x):
-    #     return x.iloc[0]
-
-    # def last(x):
-    #     return x.iloc[-1]
+    if schema is None:
+        schema = default_schema()
+    nhdr = schema.raw
+    shdr = schema.step
 
     def delta(x):
         # Remark! this will not work if x is a TimeDelta object
@@ -133,25 +132,25 @@ def make_step_table(
         return difference
 
     if from_data_point is not None:
-        df = data.raw.loc[data.raw[headers_raw.data_point_txt] >= from_data_point]
+        df = data.raw.loc[data.raw[nhdr.data_point_txt] >= from_data_point]
     else:
         df = data.raw
-    # df[headers_steps.internal_resistance_change] = \
-    #     df[headers_raw.internal_resistance_txt].pct_change()
+    # df[shdr.internal_resistance_change] = \
+    #     df[nhdr.internal_resistance_txt].pct_change()
 
     # selecting only the most important columns from raw:
     keep = [
-        headers_raw.data_point_txt,
-        headers_raw.test_time_txt,
-        headers_raw.step_time_txt,
-        headers_raw.step_index_txt,
-        headers_raw.cycle_index_txt,
-        headers_raw.current_txt,
-        headers_raw.voltage_txt,
-        headers_raw.ref_voltage_txt,
-        headers_raw.charge_capacity_txt,
-        headers_raw.discharge_capacity_txt,
-        headers_raw.internal_resistance_txt,
+        nhdr.data_point_txt,
+        nhdr.test_time_txt,
+        nhdr.step_time_txt,
+        nhdr.step_index_txt,
+        nhdr.cycle_index_txt,
+        nhdr.current_txt,
+        nhdr.voltage_txt,
+        nhdr.ref_voltage_txt,
+        nhdr.charge_capacity_txt,
+        nhdr.discharge_capacity_txt,
+        nhdr.internal_resistance_txt,
         # "ir_pct_change"
     ]
 
@@ -159,33 +158,33 @@ def make_step_table(
     keep = [col for col in keep if col in df.columns]
     df = df[keep]
     # preparing for implementation of sub_steps (will come in the future):
-    df = df.assign(**{f"{headers_raw.sub_step_index_txt}": 1})
+    df = df.assign(**{f"{nhdr.sub_step_index_txt}": 1})
 
-    # using headers as defined in the internal_settings.py file
+    # using headers as defined in the schema
     rename_dict = {
-        headers_raw.cycle_index_txt: headers_steps.cycle,
-        headers_raw.step_index_txt: headers_steps.step,
-        headers_raw.sub_step_index_txt: headers_steps.sub_step,
-        headers_raw.data_point_txt: headers_steps.point,
-        headers_raw.test_time_txt: headers_steps.test_time,
-        headers_raw.step_time_txt: headers_steps.step_time,
-        headers_raw.current_txt: headers_steps.current,
-        headers_raw.voltage_txt: headers_steps.voltage,
-        headers_raw.charge_capacity_txt: headers_steps.charge,
-        headers_raw.discharge_capacity_txt: headers_steps.discharge,
-        headers_raw.internal_resistance_txt: headers_steps.internal_resistance,
+        nhdr.cycle_index_txt: shdr.cycle,
+        nhdr.step_index_txt: shdr.step,
+        nhdr.sub_step_index_txt: shdr.sub_step,
+        nhdr.data_point_txt: shdr.point,
+        nhdr.test_time_txt: shdr.test_time,
+        nhdr.step_time_txt: shdr.step_time,
+        nhdr.current_txt: shdr.current,
+        nhdr.voltage_txt: shdr.voltage,
+        nhdr.charge_capacity_txt: shdr.charge,
+        nhdr.discharge_capacity_txt: shdr.discharge,
+        nhdr.internal_resistance_txt: shdr.internal_resistance,
     }
 
     df = df.rename(columns=rename_dict)
-    by = [headers_steps.cycle, headers_steps.step, headers_steps.sub_step]
+    by = [shdr.cycle, shdr.step, shdr.sub_step]
 
     if skip_steps is not None:
         logging.debug(f"omitting steps {skip_steps}")
-        df = df.loc[~df[headers_steps.step].isin(skip_steps)]
+        df = df.loc[~df[shdr.step].isin(skip_steps)]
 
     if usteps:
-        by.append(headers_steps.ustep)
-        df[headers_steps.ustep] = _ustep(df[headers_steps.step])
+        by.append(shdr.ustep)
+        df[shdr.ustep] = _ustep(df[shdr.step])
 
     logging.debug(f"groupby: {by}")
 
@@ -202,16 +201,21 @@ def make_step_table(
 
     df_steps = df_steps.reset_index()
 
-    df_steps[headers_steps.rate_avr] = abs(
-        round(
-            df_steps.loc[:, (headers_steps.current, "avr")],
-            DIGITS_RATE,
+    # column with C-rates (rate_avr = abs(current_avr / nom_cap)). The nominal
+    # capacity is supplied by the caller (by value); no unit conversion is done
+    # with the current values here (matching legacy cellpy).
+    if add_c_rate:
+        _nom_cap = nom_cap if nom_cap is not None else 1.0
+        df_steps[shdr.rate_avr] = abs(
+            round(
+                df_steps.loc[:, (shdr.current, "avr")] / _nom_cap,
+                DIGITS_C_RATE,
+            )
         )
-    )
 
-    df_steps[headers_steps.type] = ""
-    df_steps[headers_steps.sub_type] = ""
-    df_steps[headers_steps.info] = ""
+    df_steps[shdr.type] = ""
+    df_steps[shdr.sub_type] = ""
+    df_steps[shdr.info] = ""
 
     if step_specifications is None:
         # TODO: refactor this:
@@ -220,13 +224,6 @@ def make_step_table(
         current_limit_value_hard = (
             override_raw_limits.get("current_hard", None) or raw_limits["current_hard"]
         )
-        # current_limit_value_soft = (
-        #     override_raw_limits.get("current_soft", None) or raw_limits["current_soft"]
-        # )
-        # stable_current_limit_hard = (
-        #     override_raw_limits.get("stable_current_hard", None)
-        #     or raw_limits["stable_current_hard"]
-        # )
         stable_current_limit_soft = (
             override_raw_limits.get("stable_current_soft", None)
             or raw_limits["stable_current_soft"]
@@ -235,80 +232,53 @@ def make_step_table(
             override_raw_limits.get("stable_voltage_hard", None)
             or raw_limits["stable_voltage_hard"]
         )
-        # stable_voltage_limit_soft = (
-        #     override_raw_limits.get("stable_voltage_soft", None)
-        #     or raw_limits["stable_voltage_soft"]
-        # )
         stable_charge_limit_hard = (
             override_raw_limits.get("stable_charge_hard", None)
             or raw_limits["stable_charge_hard"]
         )
-        # stable_charge_limit_soft = (
-        #     override_raw_limits.get("stable_charge_soft", None)
-        #     or raw_limits["stable_charge_soft"]
-        # )
-        # ir_change_limit = (
-        #     override_raw_limits.get("ir_change", None) or raw_limits["ir_change"]
-        # )
 
         mask_no_current_hard = (
-            df_steps.loc[:, (headers_steps.current, "max")].abs()
-            + df_steps.loc[:, (headers_steps.current, "min")].abs()
+            df_steps.loc[:, (shdr.current, "max")].abs()
+            + df_steps.loc[:, (shdr.current, "min")].abs()
         ) < current_limit_value_hard / 2
 
         mask_voltage_down = (
-            df_steps.loc[:, (headers_steps.voltage, "delta")]
-            < -stable_voltage_limit_hard
+            df_steps.loc[:, (shdr.voltage, "delta")] < -stable_voltage_limit_hard
         )
 
         mask_voltage_up = (
-            df_steps.loc[:, (headers_steps.voltage, "delta")]
-            > stable_voltage_limit_hard
+            df_steps.loc[:, (shdr.voltage, "delta")] > stable_voltage_limit_hard
         )
 
         mask_voltage_stable = (
-            df_steps.loc[:, (headers_steps.voltage, "delta")].abs()
-            < stable_voltage_limit_hard
+            df_steps.loc[:, (shdr.voltage, "delta")].abs() < stable_voltage_limit_hard
         )
 
         mask_current_down = (
-            df_steps.loc[:, (headers_steps.current, "delta")]
-            < -stable_current_limit_soft
+            df_steps.loc[:, (shdr.current, "delta")] < -stable_current_limit_soft
         )
 
-        # mask_current_up = (
-        #     df_steps.loc[:, (headers_steps.current, "delta")]
-        #     > stable_current_limit_soft
-        # )
-
         mask_current_negative = (
-            df_steps.loc[:, (headers_steps.current, "avr")] < -current_limit_value_hard
+            df_steps.loc[:, (shdr.current, "avr")] < -current_limit_value_hard
         )
 
         mask_current_positive = (
-            df_steps.loc[:, (headers_steps.current, "avr")] > current_limit_value_hard
+            df_steps.loc[:, (shdr.current, "avr")] > current_limit_value_hard
         )
 
-        # mask_galvanostatic = (
-        #     df_steps.loc[:, (headers_steps.current, "delta")].abs()
-        #     < stable_current_limit_soft
-        # )
-
         mask_charge_changed = (
-            df_steps.loc[:, (headers_steps.charge, "delta")].abs()
-            > stable_charge_limit_hard
+            df_steps.loc[:, (shdr.charge, "delta")].abs() > stable_charge_limit_hard
         )
 
         mask_discharge_changed = (
-            df_steps.loc[:, (headers_steps.discharge, "delta")].abs()
-            > stable_charge_limit_hard
+            df_steps.loc[:, (shdr.discharge, "delta")].abs() > stable_charge_limit_hard
         )
 
         mask_no_change = (
-            (df_steps.loc[:, (headers_steps.voltage, "delta")] == 0)
-            & (df_steps.loc[:, (headers_steps.current, "delta")] == 0)
-            & (df_steps.loc[:, (headers_steps.charge, "delta")] == 0)
-            & (df_steps.loc[:, (headers_steps.discharge, "delta")] == 0)
+            (df_steps.loc[:, (shdr.voltage, "delta")] == 0)
+            & (df_steps.loc[:, (shdr.current, "delta")] == 0)
+            & (df_steps.loc[:, (shdr.charge, "delta")] == 0)
+            & (df_steps.loc[:, (shdr.discharge, "delta")] == 0)
         )
 
         # TODO: make an option for only checking unique steps
@@ -321,43 +291,43 @@ def make_step_table(
 
         df_steps.loc[
             mask_no_current_hard & mask_voltage_stable,
-            (headers_steps.type, slice(None)),
+            (shdr.type, slice(None)),
         ] = "rest"
 
         df_steps.loc[
-            mask_no_current_hard & mask_voltage_up, (headers_steps.type, slice(None))
+            mask_no_current_hard & mask_voltage_up, (shdr.type, slice(None))
         ] = "ocvrlx_up"
 
         df_steps.loc[
-            mask_no_current_hard & mask_voltage_down, (headers_steps.type, slice(None))
+            mask_no_current_hard & mask_voltage_down, (shdr.type, slice(None))
         ] = "ocvrlx_down"
 
         df_steps.loc[
             mask_discharge_changed & mask_current_negative,
-            (headers_steps.type, slice(None)),
+            (shdr.type, slice(None)),
         ] = "discharge"
 
         df_steps.loc[
             mask_charge_changed & mask_current_positive,
-            (headers_steps.type, slice(None)),
+            (shdr.type, slice(None)),
         ] = "charge"
 
         df_steps.loc[
             mask_voltage_stable & mask_current_negative & mask_current_down,
-            (headers_steps.type, slice(None)),
+            (shdr.type, slice(None)),
         ] = "cv_discharge"
 
         df_steps.loc[
             mask_voltage_stable & mask_current_positive & mask_current_down,
-            (headers_steps.type, slice(None)),
+            (shdr.type, slice(None)),
         ] = "cv_charge"
 
         # --- internal resistance ----
-        df_steps.loc[mask_no_change, (headers_steps.type, slice(None))] = "ir"
+        df_steps.loc[mask_no_change, (shdr.type, slice(None))] = "ir"
         # assumes that IR is stored in just one row
 
         # --- sub-step-txt -----------
-        df_steps[headers_steps.sub_type] = None
+        df_steps[shdr.sub_type] = None
 
         # --- CV steps ----
 
@@ -373,8 +343,8 @@ def make_step_table(
         if override_step_types is not None:
             for step, step_type in override_step_types.items():
                 df_steps.loc[
-                    df_steps[headers_steps.step] == step,
-                    (headers_steps.type, slice(None)),
+                    df_steps[shdr.step] == step,
+                    (shdr.type, slice(None)),
                 ] = step_type
 
     else:
@@ -384,30 +354,30 @@ def make_step_table(
             logger.debug("using long format (cycle,step)")
             for row in step_specifications.itertuples():
                 df_steps.loc[
-                    (df_steps[headers_steps.step] == row.step)
-                    & (df_steps[headers_steps.cycle] == row.cycle),
-                    (headers_steps.type, slice(None)),
+                    (df_steps[shdr.step] == row.step)
+                    & (df_steps[shdr.cycle] == row.cycle),
+                    (shdr.type, slice(None)),
                 ] = row.type
                 df_steps.loc[
-                    (df_steps[headers_steps.step] == row.step)
-                    & (df_steps[headers_steps.cycle] == row.cycle),
-                    (headers_steps.info, slice(None)),
+                    (df_steps[shdr.step] == row.step)
+                    & (df_steps[shdr.cycle] == row.cycle),
+                    (shdr.info, slice(None)),
                 ] = row.info
         else:
             logger.debug("using short format (step)")
             for row in step_specifications.itertuples():
                 df_steps.loc[
-                    df_steps[headers_steps.step] == row.step,
-                    (headers_steps.type, slice(None)),
+                    df_steps[shdr.step] == row.step,
+                    (shdr.type, slice(None)),
                 ] = row.type
                 df_steps.loc[
-                    df_steps[headers_steps.step] == row.step,
-                    (headers_steps.info, slice(None)),
+                    df_steps[shdr.step] == row.step,
+                    (shdr.info, slice(None)),
                 ] = row.info
 
     # check if all the steps got categorizes
     logger.debug("looking for un-categorized steps")
-    empty_rows = df_steps.loc[df_steps[headers_steps.type].isnull()]
+    empty_rows = df_steps.loc[df_steps[shdr.type].isnull()]
     if not empty_rows.empty:
         logger.warning(
             f"found {len(empty_rows)}:{len(df_steps)} non-categorized steps (please, check your raw-limits)"
@@ -433,7 +403,7 @@ def make_step_table(
         # if this throws a KeyError: 'test_time_first' it probably
         # means that the df contains a non-nummeric 'test_time' column.
         df_steps = df_steps.sort_values(
-            by=headers_steps.test_time + "_first"
+            by=shdr.test_time + "_first"
         ).reset_index()
 
     if from_data_point is not None:
@@ -445,51 +415,65 @@ def make_step_table(
 
 def generate_absolute_summary_columns(
     data: Data,
-    _first_step_txt: str = headers_raw.charge_capacity_txt,
-    _second_step_txt: str = headers_raw.discharge_capacity_txt,
+    schema: Optional[Schema] = None,
+    _first_step_txt: Optional[str] = None,
+    _second_step_txt: Optional[str] = None,
 ) -> Data:
     """Generate absolute summary columns.
 
     Args:
         data (Data): The data object.
-        _first_step_txt (str): The first step text.
-        _second_step_txt (str): The second step text.
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+        _first_step_txt (str): The first step text. Defaults to the raw
+            charge-capacity header.
+        _second_step_txt (str): The second step text. Defaults to the raw
+            discharge-capacity header.
     """
+    if schema is None:
+        schema = default_schema()
+    nhdr = schema.raw
+    shdr_sum = schema.cycle
+
+    if _first_step_txt is None:
+        _first_step_txt = nhdr.charge_capacity_txt
+    if _second_step_txt is None:
+        _second_step_txt = nhdr.discharge_capacity_txt
 
     summary = data.summary
 
     # Coulombic efficiency
-    summary[headers_summary.coulombic_efficiency] = (
+    summary[shdr_sum.coulombic_efficiency] = (
         100 * summary[_second_step_txt] / summary[_first_step_txt]
     )
-    summary[headers_summary.cumulated_coulombic_efficiency] = summary[
-        headers_summary.coulombic_efficiency
+    summary[shdr_sum.cumulated_coulombic_efficiency] = summary[
+        shdr_sum.coulombic_efficiency
     ].cumsum()
 
     # Capacity columns
     capacity_columns = {
-        headers_summary.charge_capacity: summary[headers_raw.charge_capacity_txt],
-        headers_summary.discharge_capacity: summary[headers_raw.discharge_capacity_txt],
+        shdr_sum.charge_capacity: summary[nhdr.charge_capacity_txt],
+        shdr_sum.discharge_capacity: summary[nhdr.discharge_capacity_txt],
     }
     summary = summary.assign(**capacity_columns)
 
     # Cumulated capacity columns
     calculated_from_capacity_columns = {
-        headers_summary.cumulated_charge_capacity: summary[
-            headers_summary.charge_capacity
+        shdr_sum.cumulated_charge_capacity: summary[
+            shdr_sum.charge_capacity
         ].cumsum(),
-        headers_summary.cumulated_discharge_capacity: summary[
-            headers_summary.discharge_capacity
+        shdr_sum.cumulated_discharge_capacity: summary[
+            shdr_sum.discharge_capacity
         ].cumsum(),
-        headers_summary.discharge_capacity_loss: (
-            summary[headers_summary.discharge_capacity].shift(1)
-            - summary[headers_summary.discharge_capacity]
+        shdr_sum.discharge_capacity_loss: (
+            summary[shdr_sum.discharge_capacity].shift(1)
+            - summary[shdr_sum.discharge_capacity]
         ),
-        headers_summary.charge_capacity_loss: (
-            summary[headers_summary.charge_capacity].shift(1)
-            - summary[headers_summary.charge_capacity]
+        shdr_sum.charge_capacity_loss: (
+            summary[shdr_sum.charge_capacity].shift(1)
+            - summary[shdr_sum.charge_capacity]
         ),
-        headers_summary.coulombic_difference: (
+        shdr_sum.coulombic_difference: (
             summary[_first_step_txt] - summary[_second_step_txt]
         ),
     }
@@ -497,19 +481,19 @@ def generate_absolute_summary_columns(
 
     # Cumulated coulombic difference
     calculated_from_coulombic_efficiency_columns = {
-        headers_summary.cumulated_coulombic_difference: summary[
-            headers_summary.coulombic_difference
+        shdr_sum.cumulated_coulombic_difference: summary[
+            shdr_sum.coulombic_difference
         ].cumsum(),
     }
     summary = summary.assign(**calculated_from_coulombic_efficiency_columns)
 
     # Cumulated capacity loss columns
     calculated_from_capacity_loss_columns = {
-        headers_summary.cumulated_discharge_capacity_loss: summary[
-            headers_summary.discharge_capacity_loss
+        shdr_sum.cumulated_discharge_capacity_loss: summary[
+            shdr_sum.discharge_capacity_loss
         ].cumsum(),
-        headers_summary.cumulated_charge_capacity_loss: summary[
-            headers_summary.charge_capacity_loss
+        shdr_sum.cumulated_charge_capacity_loss: summary[
+            shdr_sum.charge_capacity_loss
         ].cumsum(),
     }
     summary = summary.assign(**calculated_from_capacity_loss_columns)
@@ -517,13 +501,13 @@ def generate_absolute_summary_columns(
     # Shifted capacity columns
     individual_edge_movement = summary[_first_step_txt] - summary[_second_step_txt]
     shifted_charge_capacity_column = {
-        headers_summary.shifted_charge_capacity: individual_edge_movement.cumsum(),
+        shdr_sum.shifted_charge_capacity: individual_edge_movement.cumsum(),
     }
     summary = summary.assign(**shifted_charge_capacity_column)
 
     shifted_discharge_capacity_column = {
-        headers_summary.shifted_discharge_capacity: summary[
-            headers_summary.shifted_charge_capacity
+        shdr_sum.shifted_discharge_capacity: summary[
+            shdr_sum.shifted_charge_capacity
         ]
         + summary[_first_step_txt],
     }
@@ -532,19 +516,19 @@ def generate_absolute_summary_columns(
     ric = (summary[_first_step_txt].shift(1) - summary[_second_step_txt]) / summary[
         _second_step_txt
     ].shift(1)
-    ric_column = {headers_summary.cumulated_ric: ric.cumsum()}
+    ric_column = {shdr_sum.cumulated_ric: ric.cumsum()}
     summary = summary.assign(**ric_column)
-    summary[headers_summary.cumulated_ric] = ric.cumsum()
+    summary[shdr_sum.cumulated_ric] = ric.cumsum()
     ric_sei = (summary[_first_step_txt] - summary[_second_step_txt].shift(1)) / summary[
         _second_step_txt
     ].shift(1)
-    ric_sei_column = {headers_summary.cumulated_ric_sei: ric_sei.cumsum()}
+    ric_sei_column = {shdr_sum.cumulated_ric_sei: ric_sei.cumsum()}
     summary = summary.assign(**ric_sei_column)
     ric_disconnect = (
         summary[_second_step_txt].shift(1) - summary[_second_step_txt]
     ) / summary[_second_step_txt].shift(1)
     ric_disconnect_column = {
-        headers_summary.cumulated_ric_disconnect: ric_disconnect.cumsum()
+        shdr_sum.cumulated_ric_disconnect: ric_disconnect.cumsum()
     }
     data.summary = summary.assign(**ric_disconnect_column)
 
@@ -552,25 +536,28 @@ def generate_absolute_summary_columns(
 
 
 def generate_specific_summary_columns(
-    data: Data, mode: str, specific_columns: Sequence, to_units=None
+    data: Data,
+    mode: str,
+    specific_columns: Sequence,
+    specific_converter: float,
 ) -> Data:
     """
     Generate specific summary columns.
+
+    The unit conversion is handled by value: the caller computes the conversion
+    factor (e.g. via the consumer's own pint-based machinery) and passes it in,
+    so this function does no unit handling itself.
 
     Args:
         data (Data): The data object.
         mode (str): The mode of the data (gravimetric, areal or absolute).
         specific_columns (Sequence): The columns to generate specific summary columns for.
-        to_units: The target (output) units to convert to. Defaults to the cellpy
-            default units. Pass the consumer's units (e.g. cellpy's instance
-            ``cellpy_units``) to honour user-selected output units.
+        specific_converter (float): The precomputed conversion factor to multiply
+            the absolute columns by to obtain the specific (per mode) values.
 
     Returns:
         Data: The data object with the specific summary columns added to the summary.
     """
-    specific_converter = units.get_converter_to_specific(
-        data=data, mode=mode, to_units=to_units
-    )
     summary = data.summary
     for col in specific_columns:
         logger.debug(f"generating specific column {col}_{mode}")
@@ -579,31 +566,32 @@ def generate_specific_summary_columns(
     return data
 
 
-def end_voltage_to_summary(data: Data) -> Data:
+def end_voltage_to_summary(data: Data, schema: Optional[Schema] = None) -> Data:
     """
     Add end-voltage columns to the summary.
 
     Args:
         data (Data): The data object.
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
 
     Returns:
         Data: The data object with the end-voltage columns added to the summary.
     """
+    if schema is None:
+        schema = default_schema()
+    headers_summary = schema.cycle
+    headers_steps = schema.step
 
     # TODO: refactor this to use the correct headers and parameters when we have decided on them:
     DISCHARGE_TYPE_PREFIX = "discharge"
     CHARGE_TYPE_PREFIX = "charge"
     header_summary_cycle = headers_summary.cycle_index
     header_steps_cycle = headers_steps.cycle
-    header_steps_voltage_last = "voltage_last"
+    header_steps_voltage_last = f"{headers_steps.voltage}_last"
 
     summary = data.summary
     steps = data.steps
-
-    discharge_steps = selectors.get_step_numbers(
-        data, steptype="discharge", allctypes=False
-    )
-    charge_steps = selectors.get_step_numbers(data, steptype="charge", allctypes=False)
 
     discharge_steps = steps.loc[
         steps["type"].str.startswith(DISCHARGE_TYPE_PREFIX),
@@ -646,6 +634,7 @@ def end_voltage_to_summary(data: Data) -> Data:
 
 def _calculate_nominal_capacity_from_cycles(
     summary: DataFrame,
+    schema: Schema,
     normalization_cycles: Union[Sequence, int],
     step_txt: str,
 ) -> float:
@@ -654,6 +643,7 @@ def _calculate_nominal_capacity_from_cycles(
 
     Args:
         summary: The summary DataFrame containing cycle data.
+        schema: The column-header schema to use.
         normalization_cycles: The cycles to use for normalization (can be int or sequence).
         step_txt: The header string for the capacity column.
 
@@ -667,7 +657,7 @@ def _calculate_nominal_capacity_from_cycles(
         normalization_cycles = [normalization_cycles]
 
     cap_ref = summary.loc[
-        summary[headers_raw.cycle_index_txt].isin(normalization_cycles),
+        summary[schema.raw.cycle_index_txt].isin(normalization_cycles),
         step_txt,
     ]
     if not cap_ref.empty:
@@ -681,24 +671,35 @@ def _calculate_nominal_capacity_from_cycles(
 
 def equivalent_cycles_to_summary(
     data: Data,
+    schema: Optional[Schema] = None,
     nom_cap: float = 1.0,
     normalization_cycles: Union[Sequence, int, None] = None,
-    step_txt: str = headers_raw.charge_capacity_txt,
+    step_txt: Optional[str] = None,
 ) -> Data:
     """
     Add equivalent cycles column to the summary.
 
     Args:
         data (Data): The data object.
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
         nom_cap (float): The nominal capacity (default: 1.0)
         normalization_cycles (Union[Sequence, int, None]): The cycles for normalization (default: None)
-        step_txt (str): The header string for the charge or discharge capacity (default: charge capacity)
+        step_txt (str): The header string for the charge or discharge capacity
+            (defaults to the raw charge-capacity header)
     """
+    if schema is None:
+        schema = default_schema()
+    headers_summary = schema.cycle
+
+    if step_txt is None:
+        step_txt = schema.raw.charge_capacity_txt
+
     summary = data.summary
 
     if normalization_cycles is not None:
         nom_cap = _calculate_nominal_capacity_from_cycles(
-            summary, normalization_cycles, step_txt
+            summary, schema, normalization_cycles, step_txt
         )
 
     normalized_cycle_index_column = {
@@ -714,41 +715,56 @@ def equivalent_cycles_to_summary(
 
 def c_rates_to_summary(
     data: Data,
+    schema: Optional[Schema] = None,
     nom_cap: float = 1.0,
     normalization_cycles: Union[Sequence, int, None] = None,
-    step_txt: str = headers_raw.charge_capacity_txt,
+    step_txt: Optional[str] = None,
+    current_conversion_factor: float = 1.0,
 ) -> Data:
     """
     Add c-rates to the summary.
 
+    The current-unit conversion is handled by value: the caller computes the
+    factor that converts the raw current unit to the desired output current unit
+    and passes it in (default 1.0, i.e. no conversion), so this function does no
+    unit handling itself.
+
     Args:
         data (core.Data): The data object.
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
         nom_cap (float): The nominal capacity (default: 1.0)
         normalization_cycles (Union[Sequence, int, None]): The cycles for normalization (default: None)
-        step_txt (str): The header string for the charge or discharge capacity (default: charge capacity)
+        step_txt (str): The header string for the charge or discharge capacity
+            (defaults to the raw charge-capacity header)
+        current_conversion_factor (float): The precomputed factor to convert the
+            raw current unit to the output current unit (default: 1.0).
     Returns:
         core.Data: The data object with the c-rates added to the summary.
     """
-    from cellpycore import units
+    if schema is None:
+        schema = default_schema()
+    headers_summary = schema.cycle
+    headers_steps = schema.step
+
     logger.debug("Extracting C-rates")
+
+    if step_txt is None:
+        step_txt = schema.raw.charge_capacity_txt
 
     summary = data.summary
     steps = data.steps
 
     if normalization_cycles is not None:
         nom_cap = _calculate_nominal_capacity_from_cycles(
-            summary, normalization_cycles, step_txt
+            summary, schema, normalization_cycles, step_txt
         )
 
     def rate_to_cellpy_units(rate):
-        conversion_factor = units.Q(1.0, data.raw_units["current"]) / units.Q(
-            1.0, cellpy_units["current"]
-        )
-        conversion_factor = conversion_factor.to_reduced_units().magnitude
-        return rate * conversion_factor
+        return rate * current_conversion_factor
 
     charge_steps = steps.loc[
-        steps.type == "charge",
+        steps[headers_steps.type] == "charge",
         [headers_steps.cycle, headers_steps.rate_avr],
     ].rename(columns={headers_steps.rate_avr: headers_summary.charge_c_rate})
 
@@ -767,7 +783,7 @@ def c_rates_to_summary(
     ).drop(columns=headers_steps.cycle)
 
     discharge_steps = steps.loc[
-        steps.type == "discharge",
+        steps[headers_steps.type] == "discharge",
         [headers_steps.cycle, headers_steps.rate_avr],
     ].rename(columns={headers_steps.rate_avr: headers_summary.discharge_c_rate})
 
@@ -787,12 +803,17 @@ def c_rates_to_summary(
     return data
 
 
-def ir_to_summary(data: Data) -> Data:
+def ir_to_summary(data: Data, schema: Optional[Schema] = None) -> Data:
     # should check:  test.charge_steps = None,
     # test.discharge_steps = None
     # THIS DOES NOT WORK PROPERLY!!!!
     # Found a file where it writes IR for cycle n on cycle n+1
     # This only picks out the data on the last IR step before
+    if schema is None:
+        schema = default_schema()
+    headers_raw = schema.raw
+    headers_summary = schema.cycle
+
     summary = data.summary
     raw = data.raw
 
@@ -800,11 +821,13 @@ def ir_to_summary(data: Data) -> Data:
     only_zeros = summary[headers_raw.discharge_capacity_txt] * 0.0
     discharge_steps = selectors.get_step_numbers(
         data,
+        schema,
         steptype="discharge",
         allctypes=False,
     )
     charge_steps = selectors.get_step_numbers(
         data,
+        schema,
         steptype="charge",
         allctypes=False,
     )

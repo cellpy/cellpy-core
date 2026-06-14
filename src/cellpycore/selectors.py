@@ -3,8 +3,7 @@ import functools
 from typing import Any, Callable, Iterable, List, Optional, Union, TypeVar
 import logging
 
-from cellpycore.config import Cols, StepCols, CycleCols, RawCols
-from cellpycore.legacy import HeadersStepTable, HeadersSummary, HeadersNormal
+from cellpycore.config import StepCols, RawCols, Schema, default_schema
 from cellpycore.cell_core import Data
 
 DataFrame = TypeVar("DataFrame")
@@ -14,13 +13,6 @@ logger = logging.getLogger(__name__)
 FIRST = "_first"
 LAST = "_last"
 DELTA = "_diff"
-
-# The selector bodies use the legacy header names (matching cellpy's raw/step
-# DataFrame columns), so the module-level header instances must be the legacy
-# classes for the OldCellpyCellCore bridge. See cellpy-core#4 (header harmonization).
-headers_step_table = HeadersStepTable()
-headers_summary = HeadersSummary()
-headers_normal = HeadersNormal()
 
 # TODO: move this to a settings file
 STEP_TYPES = [
@@ -42,6 +34,7 @@ STEP_TYPES = [
 
 def create_selector(
     data: Data,
+    schema: Optional[Schema] = None,
     selector_type: Optional[str] = None,
     exclude_types: Optional[List[str]] = None,
     exclude_steps: Optional[List[str]] = None,
@@ -51,6 +44,8 @@ def create_selector(
 
     Args:
         data: The data to create the selector from.
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
         selector_type: The type of selector to create.
         exclude_types: The types to exclude from the selector.
         exclude_steps: The steps to exclude from the selector.
@@ -59,6 +54,8 @@ def create_selector(
     Returns:
         A selector function for the summary dataframe.
     """
+    if schema is None:
+        schema = default_schema()
 
     if selector_type == "non-cv":
         exclude_types = ["cv_"]
@@ -71,8 +68,8 @@ def create_selector(
     selector = functools.partial(
         summary_selector_exluder,
         data=data,
-        custom_headers_normal=headers_normal,
-        custom_headers_step_table=headers_step_table,
+        custom_headers_normal=schema.raw,
+        custom_headers_step_table=schema.step,
         exclude_types=exclude_types,
         exclude_steps=exclude_steps,
         final_data_points=final_data_points,
@@ -107,9 +104,9 @@ def summary_selector_exluder(
     raw = data.raw.copy()
 
     if custom_headers_normal is None:
-        custom_headers_normal = headers_normal
+        custom_headers_normal = default_schema().raw
     if custom_headers_step_table is None:
-        custom_headers_step_table = headers_step_table
+        custom_headers_step_table = default_schema().step
 
     # unravel the headers:
     d_n_txt = custom_headers_normal.data_point_txt
@@ -210,6 +207,7 @@ def summary_selector_exluder(
 
 def get_step_numbers(
     data: Data,
+    schema: Optional[Schema] = None,
     steptype: str = "charge",
     allctypes: bool = True,
     pdtype: bool = False,
@@ -252,6 +250,9 @@ def get_step_numbers(
         {3: [5,8]}
 
     """
+    if schema is None:
+        schema = default_schema()
+
     if trim_taper_steps is not None and usteps:
         logger.warning(
             "Trimming taper steps is not possible when using usteps. Not doing any trimming."
@@ -307,11 +308,11 @@ def get_step_numbers(
         st = data.steps
     else:
         st = steptable
-    shdr = headers_step_table
+    shdr = schema.step
 
     # Retrieving cycle numbers (if cycle_number is None, it selects all cycles)
     if cycle_number is None:
-        cycle_numbers = get_cycle_numbers(data, steptable=steptable)
+        cycle_numbers = get_cycle_numbers(data, schema, steptable=steptable)
     else:
         if isinstance(cycle_number, collections.abc.Iterable):
             cycle_numbers = cycle_number
@@ -357,6 +358,7 @@ def get_step_numbers(
 
 def get_cycle_numbers(
     data: Data,
+    schema: Optional[Schema] = None,
     steptable=None,
     rate=None,
     rate_on=None,
@@ -389,13 +391,16 @@ def get_cycle_numbers(
 
     logger.debug("getting cycle numbers")
 
+    if schema is None:
+        schema = default_schema()
+
     if steptable is None:
         d = data.raw
-        cycles = d[headers_normal.cycle_index_txt].dropna().unique()
+        cycles = d[schema.raw.cycle_index_txt].dropna().unique()
         steptable = data.steps
     else:
         logger.debug("steptable is given as input parameter")
-        cycles = steptable[headers_step_table.cycle].dropna().unique()
+        cycles = steptable[schema.step.cycle].dropna().unique()
 
     if rate is None:
         return cycles
@@ -410,8 +415,8 @@ def get_cycle_numbers(
 
     if rate_on is None:
         rate_on = ["charge", "discharge"]
-    rates = get_rates(data, steptable=steptable, agg=rate_agg, direction=rate_on)
-    rate_column = headers_step_table.rate_avr
+    rates = get_rates(data, schema, steptable=steptable, agg=rate_agg, direction=rate_on)
+    rate_column = schema.step.rate_avr
     cycles_mask = (rates[rate_column] < (rate + rate_std)) & (
         rates[rate_column] > (rate - rate_std)
     )
@@ -420,13 +425,14 @@ def get_cycle_numbers(
         cycles_mask = ~cycles_mask
 
     filtered_rates = rates[cycles_mask]
-    filtered_cycles = filtered_rates[headers_step_table["cycle"]].unique()
+    filtered_cycles = filtered_rates[schema.step.cycle].unique()
 
     return filtered_cycles
 
 
 def get_rates(
     data: Data,
+    schema: Optional[Schema] = None,
     steptable: Optional[Any] = None,
     agg: str = "first",
     direction: Optional[str] = None,
@@ -445,19 +451,22 @@ def get_rates(
         ``pandas.DataFrame`` with cycle, type, and rate_avr (i.e. C-rate) columns.
     """
 
+    if schema is None:
+        schema = default_schema()
+
     if steptable is None:
         steptable = data.steps
     rates = steptable[
         [
-            headers_step_table.cycle,
-            headers_step_table.type,
-            headers_step_table.rate_avr,
+            schema.step.cycle,
+            schema.step.type,
+            schema.step.rate_avr,
         ]
     ].dropna()
 
     if agg:
         rates = (
-            rates.groupby([headers_step_table.cycle, headers_step_table.type])
+            rates.groupby([schema.step.cycle, schema.step.type])
             .agg(agg)
             .reset_index()
         )
@@ -465,7 +474,7 @@ def get_rates(
     if direction is not None:
         if not isinstance(direction, (list, tuple)):
             direction = [direction]
-        rates = rates.loc[rates[headers_step_table.type].isin(direction), :]
+        rates = rates.loc[rates[schema.step.type].isin(direction), :]
 
     return rates
 

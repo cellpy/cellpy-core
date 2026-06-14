@@ -17,6 +17,11 @@ dependencies = [
     "sqlalchemy>=2.0.40",
 ]
 
+# pint is only needed for the optional unit-conversion helpers in
+# cellpycore.units. The core summary/step engine takes conversion factors by
+# value, so it does not require pint.
+optional-dependencies = { units = ["pint>=0.25"] }
+
 keywords = [
     "cellpy", 
     "core", 

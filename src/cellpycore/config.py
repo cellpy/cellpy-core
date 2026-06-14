@@ -64,6 +64,25 @@ class Cols(BaseCols):
     pass
 
 
+@dataclass(frozen=True)
+class Schema:
+    """Bundle of the column-header objects for one cell.
+
+    Holds the raw, cycle (summary) and step header definitions so the summary /
+    step engine can read its column names from an injected object instead of
+    module-level globals. This is what makes the engine schema-agnostic and
+    thread-safe: each cell carries its own schema.
+
+    Units are handled by value (the engine multiplies by precomputed conversion
+    factors supplied by the caller), so units are deliberately not part of the
+    schema.
+    """
+
+    raw: BaseCols
+    cycle: BaseCols
+    step: BaseCols
+
+
 class CycleCols(Cols):
     cycle_num: str = "cycle_num"
     datapoint_num_first: str = "datapoint_num_first"
@@ -228,6 +247,15 @@ class RawCols(Cols):
     pressure: str = "pressure"
     step_cumulative_charge_capacity: str = "step_cumulative_charge_capacity"
     step_cumulative_discharge_capacity: str = "step_cumulative_discharge_capacity"
+
+
+def default_schema() -> Schema:
+    """Return a Schema using the native cellpy-core column definitions.
+
+    Used as a standalone fallback when no schema is injected; the legacy bridge
+    (OldCellpyCellCore) always injects its own legacy-named schema.
+    """
+    return Schema(raw=RawCols(), cycle=CycleCols(), step=StepCols())
 
 
 def cols_check():
