@@ -7,16 +7,17 @@ the injected ``raw_limits``.
 """
 
 import pandas as pd
+import polars as pl
 import pytest
 
 from cellpycore import selectors, summarizers
 from cellpycore.cell_core import CellpyCellCore, OldCellpyCellCore, Data
 from cellpycore.config import RawCols, CycleCols, StepCols, Schema, default_schema
-from cellpycore.legacy import HeadersNormal, HeadersSummary, HeadersStepTable
+from cellpycore.legacy import HeadersNormal
 
 
-def _build_raw(nhdr: HeadersNormal) -> pd.DataFrame:
-    """Build a minimal legacy-named raw DataFrame (2 cycles x charge/discharge/rest)."""
+def _build_raw(nhdr: RawCols) -> pd.DataFrame:
+    """Build a minimal native-named raw DataFrame (2 cycles x charge/discharge/rest)."""
     records = []
     dp = 0
     for cyc in (1, 2):
@@ -33,35 +34,35 @@ def _build_raw(nhdr: HeadersNormal) -> pd.DataFrame:
                     ch, dch = 0.0, 0.0
                 records.append(
                     {
-                        nhdr.data_point_txt: dp,
-                        nhdr.test_time_txt: float(dp),
-                        nhdr.step_time_txt: float(k),
-                        nhdr.step_index_txt: step,
-                        nhdr.cycle_index_txt: cyc,
-                        nhdr.current_txt: cur,
-                        nhdr.voltage_txt: volt,
-                        nhdr.ref_voltage_txt: 0.0,
-                        nhdr.charge_capacity_txt: ch,
-                        nhdr.discharge_capacity_txt: dch,
-                        nhdr.internal_resistance_txt: 0.0,
+                        nhdr.datapoint_num: dp,
+                        nhdr.test_time: float(dp),
+                        nhdr.step_time: float(k),
+                        nhdr.step_num: step,
+                        nhdr.cycle_num: cyc,
+                        nhdr.current: cur,
+                        nhdr.potential: volt,
+                        nhdr.cumulative_charge_capacity: ch,
+                        nhdr.cumulative_discharge_capacity: dch,
+                        nhdr.internal_resistance: 0.0,
                     }
                 )
                 dp += 1
     return pd.DataFrame(records)
 
 
-def _legacy_schema(step: HeadersStepTable = None) -> Schema:
-    return Schema(
-        raw=HeadersNormal(),
-        cycle=HeadersSummary(),
-        step=step or HeadersStepTable(),
-    )
+def _native_schema(step: StepCols = None) -> Schema:
+    return Schema(raw=RawCols(), cycle=CycleCols(), step=step or StepCols())
 
 
-def _data_with_raw(nhdr: HeadersNormal) -> Data:
+def _data_with_raw(nhdr: RawCols) -> Data:
     data = Data()
     data.raw = _build_raw(nhdr)
     return data
+
+
+def _types(steps) -> set:
+    """Distinct step-type labels from a (polars) native step table."""
+    return set(steps[StepCols.step_type].to_list())
 
 
 def test_no_module_header_globals():
@@ -98,33 +99,33 @@ def test_default_schema_is_native():
 
 
 def test_make_step_table_uses_injected_schema():
-    """The output column names follow the injected schema, not any global."""
-    nhdr = HeadersNormal()
-    shdr = HeadersStepTable()
-    shdr.cycle = "CYCLE_MARKER"  # custom step-table column name
-    schema = Schema(raw=nhdr, cycle=HeadersSummary(), step=shdr)
+    """The output column names follow the injected (native) schema, not any global."""
+    nhdr = RawCols()
+    shdr = StepCols()
+    shdr.cycle_num = "CYCLE_MARKER"  # custom step-table column name
+    schema = Schema(raw=nhdr, cycle=CycleCols(), step=shdr)
 
     data = _data_with_raw(nhdr)
     result = summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
 
     assert "CYCLE_MARKER" in result.steps.columns
-    assert "charge" in set(result.steps["type"])
+    assert "charge" in set(result.steps[shdr.step_type].to_list())
 
 
 def test_two_schemas_do_not_share_state():
     """Two cells with different schemas each emit their own column names."""
-    nhdr = HeadersNormal()
+    nhdr = RawCols()
 
-    shdr_a = HeadersStepTable()
-    shdr_a.cycle = "CYCLE_A"
+    shdr_a = StepCols()
+    shdr_a.cycle_num = "CYCLE_A"
     res_a = summarizers.make_step_table(
-        _data_with_raw(nhdr), schema=Schema(nhdr, HeadersSummary(), shdr_a), nom_cap=1.0
+        _data_with_raw(nhdr), schema=Schema(nhdr, CycleCols(), shdr_a), nom_cap=1.0
     )
 
-    shdr_b = HeadersStepTable()
-    shdr_b.cycle = "CYCLE_B"
+    shdr_b = StepCols()
+    shdr_b.cycle_num = "CYCLE_B"
     res_b = summarizers.make_step_table(
-        _data_with_raw(nhdr), schema=Schema(nhdr, HeadersSummary(), shdr_b), nom_cap=1.0
+        _data_with_raw(nhdr), schema=Schema(nhdr, CycleCols(), shdr_b), nom_cap=1.0
     )
 
     assert "CYCLE_A" in res_a.steps.columns and "CYCLE_A" not in res_b.steps.columns
@@ -132,27 +133,31 @@ def test_two_schemas_do_not_share_state():
 
 
 def test_nom_cap_scales_c_rate_by_value():
-    """rate_avr = abs(current_avr / nom_cap): doubling nom_cap halves the rate."""
-    nhdr = HeadersNormal()
-    schema = _legacy_schema()
+    """c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate."""
+    nhdr = RawCols()
+    schema = _native_schema()
 
     res1 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema, nom_cap=1.0)
     res2 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema, nom_cap=2.0)
 
-    charge1 = res1.steps.loc[res1.steps["type"] == "charge", "rate_avr"].iloc[0]
-    charge2 = res2.steps.loc[res2.steps["type"] == "charge", "rate_avr"].iloc[0]
-    assert charge1 == pytest.approx(2 * charge2)
+    def _charge_rate(steps):
+        return (
+            steps.filter(pl.col(StepCols.step_type) == "charge")[StepCols.c_rate]
+            .to_list()[0]
+        )
+
+    assert _charge_rate(res1.steps) == pytest.approx(2 * _charge_rate(res2.steps))
 
 
 def test_raw_limits_affect_classification():
     """Step-type classification uses the supplied raw_limits, not a fixed default."""
-    nhdr = HeadersNormal()
-    schema = _legacy_schema()
+    nhdr = RawCols()
+    schema = _native_schema()
 
     res_default = summarizers.make_step_table(
         _data_with_raw(nhdr), schema=schema, nom_cap=1.0
     )
-    assert "charge" in set(res_default.steps["type"])
+    assert "charge" in _types(res_default.steps)
 
     huge_current_limit = dict(summarizers.DEFAULT_RAW_LIMITS)
     huge_current_limit["current_hard"] = 1.0e6
@@ -160,7 +165,7 @@ def test_raw_limits_affect_classification():
         _data_with_raw(nhdr), schema=schema, nom_cap=1.0, raw_limits=huge_current_limit
     )
     # with a huge current limit, the charge/discharge steps are no longer detected
-    assert "charge" not in set(res_huge.steps["type"])
+    assert "charge" not in _types(res_huge.steps)
 
 
 def test_generate_specific_columns_takes_factor_by_value():
