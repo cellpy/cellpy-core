@@ -83,4 +83,5 @@ summary functions + bridge.
 - **Phase 3b:** polars-native rewrite of `selectors.py` + summary functions in `summarizers.py`
   + `OldCellpyCellCore.make_core_summary` / `add_scaled_summary_columns` bridge; keep the new
   summary oracle green.
+
 - **Phase 4:** cross-repo parity tests vs cellpy's `make_step_table` / `make_summary`.
