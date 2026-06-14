@@ -23,6 +23,7 @@ from cellpycore.legacy import HeadersNormal, HeadersStepTable, HeadersSummary
 DATA_DIR = Path(__file__).parent / "data"
 ARBIN_RAW = DATA_DIR / "arbin_cc_raw.parquet"
 ARBIN_STEPS = DATA_DIR / "arbin_cc_steps_expected.parquet"
+ARBIN_SUMMARY = DATA_DIR / "arbin_cc_summary_expected.parquet"
 ARBIN_SMALL_RAW = DATA_DIR / "arbin_small_raw.parquet"
 
 # Golden numbers mirrored from cellpy's own suite (tests/test_cell_readers.py),
@@ -44,6 +45,16 @@ def _step_table(raw_path: Path) -> pd.DataFrame:
     data.raw = pd.read_parquet(raw_path)
     result = core.make_core_step_table(data, nom_cap=1.0)
     return result.steps.reset_index(drop=True)
+
+
+def _summary(raw_path: Path) -> pd.DataFrame:
+    # Per-cycle summary, driven through the legacy bridge (pandas/legacy naming).
+    core = OldCellpyCellCore(initialize=False)
+    data = Data()
+    data.raw = pd.read_parquet(raw_path)
+    core.make_core_step_table(data, nom_cap=1.0)
+    core.make_core_summary(data, find_ir=True, find_end_voltage=True)
+    return data.summary.reset_index(drop=True)
 
 
 pytestmark = pytest.mark.skipif(
@@ -75,6 +86,34 @@ def test_arbin_step_table_matches_snapshot():
     expected = pd.read_parquet(ARBIN_STEPS)
     assert_frame_equal(
         steps,
+        expected.reset_index(drop=True),
+        check_dtype=False,
+    )
+
+
+def test_arbin_summary_matches_cellpy_goldens():
+    """The per-cycle summary has one row per cycle and the expected cyc-1 datapoint."""
+    schema = _legacy_schema()
+    summary = _summary(ARBIN_RAW)
+
+    assert len(summary) == ARBIN_N_CYCLES
+    assert int(summary[schema.raw.data_point_txt].iloc[0]) == ARBIN_CYC1_DATA_POINT
+
+
+@pytest.mark.skipif(not ARBIN_SUMMARY.is_file(), reason="summary fixture missing")
+def test_arbin_summary_matches_snapshot():
+    """Lock the current summary output as the regression oracle for the issue #13
+    summary-path rewrite.
+
+    This snapshot is cellpy-core's own current (pandas/legacy) summary output;
+    cross-library byte-parity with cellpy is addressed separately (Phase 4).
+    Regenerate intentionally with ``dev/regenerate_test_data.py`` if a change to
+    the summary is expected.
+    """
+    summary = _summary(ARBIN_RAW)
+    expected = pd.read_parquet(ARBIN_SUMMARY)
+    assert_frame_equal(
+        summary,
         expected.reset_index(drop=True),
         check_dtype=False,
     )

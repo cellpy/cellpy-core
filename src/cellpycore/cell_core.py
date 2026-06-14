@@ -24,8 +24,23 @@ class Data:
     def __init__(self):
         self.meta_test_dependent: Meta = MockMetaTestDependent()
         self.raw: Optional[DataFrame] = None
+        # The step table and the per-cycle summary produced by the engine.
+        # (``cycle``/``step`` are kept as legacy aliases for backwards
+        # compatibility; the engine reads/writes ``steps``/``summary``.)
+        self.steps: Optional[DataFrame] = None
+        self.summary: Optional[DataFrame] = None
         self.cycle: Optional[DataFrame] = None
         self.step: Optional[DataFrame] = None
+
+    @property
+    def has_steps(self) -> bool:
+        """True if a step table has been computed."""
+        return self.steps is not None
+
+    @property
+    def has_summary(self) -> bool:
+        """True if a summary has been computed."""
+        return self.summary is not None
 
 
 class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready

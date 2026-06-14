@@ -11,6 +11,7 @@ and stays loader-free.
 |------|----------------------|-------|------|
 | `arbin_cc_raw.parquet` | `testdata/data/20160805_test001_45_cc_01.res` | 10 261 rows, 18 cols, 18 cycles | Canonical golden oracle |
 | `arbin_cc_steps_expected.parquet` | *(derived)* | 103 steps | Frozen snapshot of the current engine's step table |
+| `arbin_cc_summary_expected.parquet` | *(derived)* | 18 cycles, 27 cols | Frozen snapshot of the current per-cycle summary |
 | `arbin_small_raw.parquet` | `testdata/data/20200624_test001_cc_01.h5` | 47 rows, 1 cycle, 3 steps | Tiny fast fixture (no ODBC) |
 
 All raw frames use the legacy `HeadersNormal` column naming (`data_point`,
@@ -47,5 +48,6 @@ cd ../cellpy-core && uv run python dev/regenerate_test_data.py
 
 Set `CELLPY_REPO` if the cellpy checkout is not the sibling `../cellpy`.
 
-Regenerate the `*_steps_expected.parquet` snapshot **intentionally** (and review
-the diff) only when a step-table change is expected.
+Regenerate the `*_steps_expected.parquet` / `*_summary_expected.parquet` snapshots
+**intentionally** (and review the diff) only when a step-table or summary change is
+expected.
