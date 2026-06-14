@@ -103,6 +103,24 @@ tracked in **issue #13**.
   from cellpy and break the parity guarantee). A holistic classification review, if wanted,
   belongs in its own issue.
 
+### Phase 3a data-model fix + summary oracle (done)
+
+- Phase 3 is **split**: 3a = make the summary path runnable + freeze a regression oracle;
+  3b = polars-native rewrite of `selectors.py` + summary functions + bridge.
+- **Data-model fix (decision: `add_attrs`).** `Data` declared only `raw`/`cycle`/`step`, but
+  the engine reads/writes `data.steps`/`data.summary`/`data.has_steps`. `has_steps` was never
+  defined, so the summary path raised `AttributeError` and had never run. `Data` now declares
+  `steps`/`summary` and exposes `has_steps`/`has_summary` properties (`cycle`/`step` kept as
+  legacy aliases). Once fixed, the legacy pandas summary runs and reproduces the cellpy golden
+  cyc-1 `data_point` (1457).
+- **Oracle (decision: `freeze_now`).** Froze cellpy-core's *current* pandas summary output as
+  `arbin_cc_summary_expected.parquet` (18×27) via the legacy bridge. This locks the upcoming
+  3b refactor; **cross-library byte-parity with cellpy is deferred to Phase 4** (the snapshot
+  is cellpy-core's own output, not a cellpy reference, though cyc-1 datapoint already matches).
+- `dev/regenerate_test_data.py` stage B was rewritten to drive the step table through the
+  bridge (its old direct `make_step_table(schema=legacy)` call broke after Phase 2) and to emit
+  the summary snapshot.
+
 ### Phase 1 native-schema changes (PR #16, merged)
 
 - `RawCols`: rename the 4 `step_cumulative_*` capacity/energy columns to `cumulative_*`;

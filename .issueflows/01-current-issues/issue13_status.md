@@ -57,8 +57,30 @@ Phased migration (see `issue13_plan.md`). **Phases 1–2 complete; Phases 3–4 
   cellpy); classification left unchanged to preserve parity.
 - **Tests:** `uv run pytest` → 26 passed.
 
+## Phase 3a — data-model fix + summary oracle (DONE)
+
+Phase 3 is split: **3a** lands the data-model fix + a summary regression oracle (legacy
+pandas summary made to run); **3b** is the polars-native rewrite of `selectors.py` + the
+summary functions + bridge.
+
+- **Finding:** the summary path was never runnable — `Data` declared only `raw`/`cycle`/`step`,
+  but the engine uses `data.steps`/`data.summary`/`data.has_steps` dynamically; `has_steps`
+  was undefined → `AttributeError`. Once fixed, the existing legacy pandas summary runs
+  (18 cycles × 27 cols; +scaled = 64) and reproduces the cellpy golden cyc-1 `data_point`
+  (1457).
+- `src/cellpycore/cell_core.py`: `Data` now declares `steps`/`summary` and exposes
+  `has_steps`/`has_summary` properties.
+- `dev/regenerate_test_data.py`: stage B fixed (its `make_step_table` call broke after Phase 2)
+  to use the bridge, and now also writes `arbin_cc_summary_expected.parquet`.
+- `tests/data/arbin_cc_summary_expected.parquet`: new frozen summary oracle (cellpy-core's
+  own current output; cellpy byte-parity deferred to Phase 4).
+- `tests/test_golden.py`: + `test_arbin_summary_matches_cellpy_goldens` (counts + cyc-1
+  datapoint) and `test_arbin_summary_matches_snapshot`.
+- **Tests:** `uv run pytest` → 28 passed.
+
 ## Remaining
 
-- **Phase 3:** polars-native summary path (`summarizers` summary fns + all of `selectors.py`)
-  + bridge `make_core_summary` / `add_scaled_summary_columns`.
+- **Phase 3b:** polars-native rewrite of `selectors.py` + summary functions in `summarizers.py`
+  + `OldCellpyCellCore.make_core_summary` / `add_scaled_summary_columns` bridge; keep the new
+  summary oracle green.
 - **Phase 4:** cross-repo parity tests vs cellpy's `make_step_table` / `make_summary`.

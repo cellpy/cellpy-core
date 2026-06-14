@@ -89,13 +89,12 @@ def stage_a_export_raw() -> bool:
 
 
 def stage_b_engine_snapshot() -> bool:
-    """Run the current cellpy-core engine on the raw parquet and snapshot steps."""
+    """Run the current cellpy-core engine on the raw parquet and snapshot the
+    step table and the per-cycle summary (both via the legacy bridge, so the
+    frames are in legacy ``HeadersStepTable`` / ``HeadersSummary`` naming)."""
     try:
         import pandas as pd
-        from cellpycore import summarizers
         from cellpycore.cell_core import Data, OldCellpyCellCore
-        from cellpycore.config import Schema
-        from cellpycore.legacy import HeadersNormal, HeadersStepTable, HeadersSummary
     except Exception as exc:  # noqa: BLE001 - diagnostic only
         print(f"[stage B] cellpycore not importable ({exc}); skipping snapshot.")
         return False
@@ -113,22 +112,44 @@ def stage_b_engine_snapshot() -> bool:
         return False
 
     raw = pd.read_parquet(raw_path)
-    schema = Schema(HeadersNormal(), HeadersSummary(), HeadersStepTable())
+    core = OldCellpyCellCore(initialize=False)
+
+    # --- step table (legacy bridge over the polars engine) ---
     data = Data()
     data.raw = raw
-    result = summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
-    steps = result.steps.reset_index(drop=True)
-    out = DATA_DIR / "arbin_cc_steps_expected.parquet"
-    steps.to_parquet(out)
+    core.make_core_step_table(data, nom_cap=1.0)
+    steps = data.steps.reset_index(drop=True)
+    steps_out = DATA_DIR / "arbin_cc_steps_expected.parquet"
+    steps.to_parquet(steps_out)
+
+    # --- per-cycle summary ---
+    data_s = Data()
+    data_s.raw = raw
+    core.make_core_step_table(data_s, nom_cap=1.0)
+    core.make_core_summary(data_s, find_ir=True, find_end_voltage=True)
+    summary = data_s.summary.reset_index(drop=True)
+    summary_out = DATA_DIR / "arbin_cc_summary_expected.parquet"
+    summary.to_parquet(summary_out)
 
     n_steps = len(steps)
-    max_cycle = int(steps[schema.step.cycle].max())
-    print(f"[stage B] wrote {out.name}  ({n_steps} steps)")
+    max_cycle = int(steps["cycle"].max())
+    n_cycles = len(summary)
+    cyc1_dp = int(summary["data_point"].iloc[0])
+    print(f"[stage B] wrote {steps_out.name}  ({n_steps} steps)")
+    print(f"[stage B] wrote {summary_out.name}  ({n_cycles} cycles, {summary.shape[1]} cols)")
     print(
         f"[stage B] golden check: n_steps={n_steps} (expect {ARBIN_GOLDEN['n_steps']}), "
-        f"max_cycle={max_cycle} (expect {ARBIN_GOLDEN['n_cycles']})"
+        f"max_cycle={max_cycle} (expect {ARBIN_GOLDEN['n_cycles']}), "
+        f"n_cycles={n_cycles} (expect {ARBIN_GOLDEN['n_cycles']}), "
+        f"summary_cyc1_data_point={cyc1_dp} (expect {ARBIN_GOLDEN['summary_cyc1_data_point']})"
     )
-    if n_steps != ARBIN_GOLDEN["n_steps"] or max_cycle != ARBIN_GOLDEN["n_cycles"]:
+    ok = (
+        n_steps == ARBIN_GOLDEN["n_steps"]
+        and max_cycle == ARBIN_GOLDEN["n_cycles"]
+        and n_cycles == ARBIN_GOLDEN["n_cycles"]
+        and cyc1_dp == ARBIN_GOLDEN["summary_cyc1_data_point"]
+    )
+    if not ok:
         print("[stage B] WARNING: engine output does not match the cellpy goldens!")
     return True
 
