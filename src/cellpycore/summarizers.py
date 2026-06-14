@@ -337,6 +337,103 @@ def make_step_table(
     return data
 
 
+def _add_end_potentials(summary: "pl.DataFrame", steps: "pl.DataFrame", schema: Schema):
+    """Join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``.
+
+    Mirrors legacy ``end_voltage_to_summary``: the last charge/discharge step in
+    each cycle (ordered by ``test_time_first``) contributes its ``potential_last``.
+    """
+    shdr, chdr = schema.step, schema.cycle
+    steps_sorted = steps.sort(shdr.test_time_first)
+
+    def _end(prefix: str, out_name: str) -> "pl.DataFrame":
+        return (
+            steps_sorted.filter(pl.col(shdr.step_type).str.starts_with(prefix))
+            .group_by(shdr.cycle_num, maintain_order=True)
+            .agg(pl.col(shdr.potential_last).last().alias(out_name))
+        )
+
+    discharge_end = _end("discharge", chdr.potential_end_discharge)
+    charge_end = _end("charge", chdr.potential_end_charge)
+    summary = summary.join(discharge_end, on=chdr.cycle_num, how="left")
+    summary = summary.join(charge_end, on=chdr.cycle_num, how="left")
+    return summary
+
+
+def make_summary(
+    data: Data,
+    schema: Optional[Schema] = None,
+    final_data_points: Optional[Sequence] = None,
+) -> Data:
+    """Polars-native per-cycle summary (the clean native ``CycleCols`` subset).
+
+    One row per cycle, built from the cycle-end raw values plus the step table.
+    Capacities are cycle-cumulative per direction, so the cycle-end raw value is
+    the per-cycle total. Assumes full-/cathode-cell convention (charge first).
+
+    The legacy-only summary columns (cumulated CE, shifted capacities, RIC,
+    C-rates, IR, normalized cycle index) are deliberately **not** produced here;
+    the legacy bridge (``OldCellpyCellCore``) adds those for cellpy compatibility.
+    """
+    if schema is None:
+        schema = default_schema()
+    nhdr, shdr, chdr = schema.raw, schema.step, schema.cycle
+
+    raw = data.raw
+    if not isinstance(raw, pl.DataFrame):
+        raw = pl.from_pandas(raw)
+    steps = data.steps
+    if not isinstance(steps, pl.DataFrame):
+        steps = pl.from_pandas(steps)
+
+    # cycle-end datapoint per cycle = the last step's last datapoint
+    if final_data_points is None:
+        finals = (
+            steps.sort(shdr.datapoint_num_last)
+            .group_by(shdr.cycle_num, maintain_order=True)
+            .agg(pl.col(shdr.datapoint_num_last).last().alias("__fp"))
+        )
+        final_data_points = finals["__fp"].to_list()
+
+    selected = raw.filter(
+        pl.col(nhdr.datapoint_num).is_in(list(final_data_points))
+    ).sort(nhdr.cycle_num)
+
+    summary = selected.select(
+        pl.col(nhdr.cycle_num).alias(chdr.cycle_num),
+        pl.col(nhdr.datapoint_num).alias(chdr.datapoint_num_last),
+        pl.col(nhdr.test_time).alias(chdr.last_test_time),
+        pl.col(nhdr.cumulative_charge_capacity).alias(chdr.charge_capacity),
+        pl.col(nhdr.cumulative_discharge_capacity).alias(chdr.discharge_capacity),
+    )
+
+    cc = pl.col(chdr.charge_capacity)
+    dc = pl.col(chdr.discharge_capacity)
+    summary = summary.with_columns(
+        (100.0 * dc / cc).alias(chdr.coulombic_efficiency),
+        (cc - dc).alias(chdr.coulombic_difference),
+        (cc.shift(1) - cc).alias(chdr.charge_capacity_loss),
+        (dc.shift(1) - dc).alias(chdr.discharge_capacity_loss),
+    )
+    summary = summary.with_columns(
+        cc.cum_sum().alias(chdr.test_cumulated_charge_capacity),
+        dc.cum_sum().alias(chdr.test_cumulated_discharge_capacity),
+        pl.col(chdr.coulombic_difference)
+        .cum_sum()
+        .alias(chdr.test_cumulated_coulombic_difference),
+        pl.col(chdr.charge_capacity_loss)
+        .cum_sum()
+        .alias(chdr.test_cumulated_charge_capacity_loss),
+        pl.col(chdr.discharge_capacity_loss)
+        .cum_sum()
+        .alias(chdr.test_cumulated_discharge_capacity_loss),
+    )
+
+    summary = _add_end_potentials(summary, steps, schema)
+    data.summary = summary
+    return data
+
+
 def generate_absolute_summary_columns(
     data: Data,
     schema: Optional[Schema] = None,

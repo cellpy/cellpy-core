@@ -168,6 +168,33 @@ def test_raw_limits_affect_classification():
     assert "charge" not in _types(res_huge.steps)
 
 
+def test_make_summary_native_schema():
+    """The native polars summary engine emits the clean CycleCols subset only."""
+    nhdr = RawCols()
+    schema = _native_schema()
+    chdr = schema.cycle
+
+    data = _data_with_raw(nhdr)
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_summary(data, schema=schema)
+    s = data.summary
+
+    assert s.height == 2  # one row per cycle
+    for col in (
+        chdr.cycle_num, chdr.charge_capacity, chdr.discharge_capacity,
+        chdr.coulombic_efficiency, chdr.coulombic_difference,
+        chdr.test_cumulated_charge_capacity, chdr.potential_end_charge,
+    ):
+        assert col in s.columns
+
+    # legacy-only cruft must NOT leak into the native summary (it lives in the bridge)
+    for col in (
+        "cumulated_ric", "shifted_charge_capacity", "charge_c_rate",
+        "normalized_cycle_index", "cumulated_coulombic_efficiency", "ir_charge",
+    ):
+        assert col not in s.columns
+
+
 def test_generate_specific_columns_takes_factor_by_value():
     """generate_specific_summary_columns multiplies by the given factor (no pint)."""
     data = Data()

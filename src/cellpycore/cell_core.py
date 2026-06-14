@@ -182,71 +182,17 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             Data object with the summary.
         """
 
-        from cellpycore import selectors, summarizers
+        from cellpycore import summarizers
 
-        schema = self.schema
-
+        # The native summary engine is polars-native on the native schema and
+        # produces the clean ``CycleCols`` subset. The legacy-only summary
+        # columns (IR, C-rates, RIC, shifted/normalized capacities, …) are added
+        # only on the legacy bridge (``OldCellpyCellCore.make_core_summary``).
         time_00 = time.time()
-        logger.debug("start making summary")
-
-        if selector is None:
-            selector = selectors.create_selector(
-                data, schema, final_data_points=final_data_points
-            )
-        summary = selector()
-        column_names = summary.columns
-        # TODO @jepe: use pandas.DataFrame properties instead (.len, .reset_index), but maybe first
-        #  figure out if this is really needed and why it was implemented in the first place.
-        summary_length = len(summary[column_names[0]])
-        summary.index = list(range(summary_length))
-
-        if select_columns:
-            logger.debug("keeping only selected set of columns")
-            columns_to_keep = [
-                schema.raw.charge_capacity_txt,
-                schema.raw.cycle_index_txt,
-                schema.raw.data_point_txt,
-                schema.raw.datetime_txt,
-                schema.raw.discharge_capacity_txt,
-                schema.raw.test_time_txt,
-            ]
-            for cn in column_names:
-                if not columns_to_keep.count(cn):
-                    try:
-                        summary.pop(cn)
-                    except KeyError:
-                        logger.debug(f"could not pop {cn}")
-
-        data.summary = summary
-
-        if self.cycle_mode == config.CyclingMode.ANODE:
-            logger.info(
-                "Assuming cycling in anode half-data (discharge before charge) mode"
-            )
-            _first_step_txt = schema.cycle.discharge_capacity
-            _second_step_txt = schema.cycle.charge_capacity
-        else:
-            logger.info("Assuming cycling in full-data / cathode mode")
-            _first_step_txt = schema.cycle.charge_capacity
-            _second_step_txt = schema.cycle.discharge_capacity
-
-        # ---------------- absolute -------------------------------
-
-        data = summarizers.generate_absolute_summary_columns(
-            data, schema, _first_step_txt, _second_step_txt
+        logger.debug("start making summary (native polars engine)")
+        data = summarizers.make_summary(
+            data, self.schema, final_data_points=final_data_points
         )
-
-        # TODO @jepe: refactor this to method:
-        if find_end_voltage:
-            data = summarizers.end_voltage_to_summary(data, schema)
-
-        if find_ir and (schema.raw.internal_resistance_txt in data.raw.columns):
-            data = summarizers.ir_to_summary(data, schema)
-
-        data = summarizers.c_rates_to_summary(
-            data, schema, current_conversion_factor=current_conversion_factor
-        )
-
         logger.debug(f"(dt: {(time.time() - time_00):4.2f}s)")
         return data
 
@@ -541,4 +487,136 @@ class OldCellpyCellCore(CellpyCellCore):
         if from_data_point is not None:
             return legacy_steps
         data.steps = legacy_steps
+        return data
+
+    # ---- legacy <-> native bridge for the polars summary engine -------------
+    # The native engine (summarizers.make_summary) produces the clean native
+    # CycleCols subset. cellpy expects the full legacy HeadersSummary frame, so
+    # this bridge renames native->legacy and computes the legacy-only "extras"
+    # (cumulated CE, shifted capacities, RIC, IR, C-rates) that the curated
+    # native cycle schema deliberately omits. Those extras reuse the (legacy)
+    # pandas helpers, which is appropriate: they are legacy cruft.
+
+    def _legacy_to_native_step_rename(self) -> dict:
+        return {v: k for k, v in self._native_to_legacy_step_rename().items()}
+
+    def _native_to_legacy_summary_rename(self) -> dict:
+        leg, nat = self.cycle_cols, config.CycleCols()
+        return {
+            nat.cycle_num: leg.cycle_index,
+            nat.datapoint_num_last: leg.data_point,
+            nat.last_test_time: leg.test_time,
+            nat.charge_capacity: leg.charge_capacity,
+            nat.discharge_capacity: leg.discharge_capacity,
+            nat.coulombic_efficiency: leg.coulombic_efficiency,
+            nat.coulombic_difference: leg.coulombic_difference,
+            nat.charge_capacity_loss: leg.charge_capacity_loss,
+            nat.discharge_capacity_loss: leg.discharge_capacity_loss,
+            nat.test_cumulated_charge_capacity: leg.cumulated_charge_capacity,
+            nat.test_cumulated_discharge_capacity: leg.cumulated_discharge_capacity,
+            nat.test_cumulated_coulombic_difference: leg.cumulated_coulombic_difference,
+            nat.test_cumulated_charge_capacity_loss: leg.cumulated_charge_capacity_loss,
+            nat.test_cumulated_discharge_capacity_loss: leg.cumulated_discharge_capacity_loss,
+            nat.potential_end_charge: leg.end_voltage_charge,
+            nat.potential_end_discharge: leg.end_voltage_discharge,
+        }
+
+    def _legacy_summary_column_order(self, find_end_voltage: bool) -> list:
+        leg = self.cycle_cols
+        order = [
+            leg.ir_charge, leg.ir_discharge, leg.data_point, leg.test_time,
+            leg.datetime, leg.cycle_index, leg.charge_capacity,
+            leg.discharge_capacity, leg.coulombic_efficiency,
+            leg.cumulated_coulombic_efficiency, leg.cumulated_charge_capacity,
+            leg.cumulated_discharge_capacity, leg.discharge_capacity_loss,
+            leg.charge_capacity_loss, leg.coulombic_difference,
+            leg.cumulated_coulombic_difference, leg.cumulated_discharge_capacity_loss,
+            leg.cumulated_charge_capacity_loss, leg.shifted_charge_capacity,
+            leg.shifted_discharge_capacity, leg.cumulated_ric, leg.cumulated_ric_sei,
+            leg.cumulated_ric_disconnect,
+        ]
+        if find_end_voltage:
+            order += [leg.end_voltage_discharge, leg.end_voltage_charge]
+        order += [leg.charge_c_rate, leg.discharge_c_rate]
+        return order
+
+    def _add_legacy_summary_extras(
+        self, data: Data, find_ir: bool, current_conversion_factor: float
+    ) -> None:
+        from cellpycore import summarizers
+
+        leg = self.cycle_cols
+        s = data.summary
+        cc = s[leg.charge_capacity]
+        dc = s[leg.discharge_capacity]
+        s[leg.cumulated_coulombic_efficiency] = s[leg.coulombic_efficiency].cumsum()
+        s[leg.shifted_charge_capacity] = (cc - dc).cumsum()
+        s[leg.shifted_discharge_capacity] = s[leg.shifted_charge_capacity] + cc
+        s[leg.cumulated_ric] = ((cc.shift(1) - dc) / dc.shift(1)).cumsum()
+        s[leg.cumulated_ric_sei] = ((cc - dc.shift(1)) / dc.shift(1)).cumsum()
+        s[leg.cumulated_ric_disconnect] = ((dc.shift(1) - dc) / dc.shift(1)).cumsum()
+        data.summary = s
+
+        legacy_schema = config.Schema(self.raw_cols, self.cycle_cols, self.step_cols)
+        if find_ir and (self.raw_cols.internal_resistance_txt in data.raw.columns):
+            data = summarizers.ir_to_summary(data, legacy_schema)
+        data = summarizers.c_rates_to_summary(
+            data, legacy_schema, current_conversion_factor=current_conversion_factor
+        )
+
+    def make_core_summary(
+        self,
+        data: Data,
+        selector: Optional[Callable] = None,
+        find_ir: bool = True,
+        find_end_voltage: bool = False,
+        select_columns: bool = True,
+        final_data_points: Optional[Iterable[int]] = None,
+        current_conversion_factor: float = 1.0,
+    ) -> Data:
+        """Build the per-cycle summary via the polars engine, in/out in legacy form.
+
+        Runs the native ``make_summary`` engine, renames native->legacy, then adds
+        the legacy-only extras to reproduce the legacy ``HeadersSummary`` frame.
+        """
+        import polars as pl
+
+        from cellpycore import summarizers
+
+        native_raw = pl.from_pandas(
+            data.raw.rename(columns=self._legacy_to_native_raw_rename(data.raw.columns))
+        )
+        native_steps = pl.from_pandas(
+            data.steps.rename(columns=self._legacy_to_native_step_rename())
+        )
+        nd = Data()
+        nd.raw = native_raw
+        nd.steps = native_steps
+        summarizers.make_summary(
+            nd, config.default_schema(), final_data_points=final_data_points
+        )
+
+        leg = self.cycle_cols
+        summary = nd.summary.to_pandas().rename(
+            columns=self._native_to_legacy_summary_rename()
+        )
+
+        # date_time passthrough (native raw carries epoch time, not date_time)
+        dp_txt = self.raw_cols.data_point_txt
+        dt_txt = self.raw_cols.datetime_txt
+        if dt_txt in data.raw.columns:
+            dt_map = data.raw[[dp_txt, dt_txt]].drop_duplicates(subset=[dp_txt])
+            dt_map = dt_map.rename(columns={dp_txt: leg.data_point})
+            summary = summary.merge(dt_map, on=leg.data_point, how="left")
+
+        summary.index = list(range(len(summary)))
+        data.summary = summary
+
+        self._add_legacy_summary_extras(
+            data, find_ir=find_ir, current_conversion_factor=current_conversion_factor
+        )
+
+        order = self._legacy_summary_column_order(find_end_voltage)
+        order = [c for c in order if c in data.summary.columns]
+        data.summary = data.summary[order]
         return data
