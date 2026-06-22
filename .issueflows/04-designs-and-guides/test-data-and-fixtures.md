@@ -70,6 +70,11 @@ This gives #13 a real-data, cross-library oracle: the polars rewrite must keep
 
 - Once the native schema/engine lands (#13), add **native-schema** parquet
   fixtures (RawCols naming) + expected **native** `StepCols`/cycle output.
+  - *Partly done (#29):* `tests/data/arbin_cc_harmonized_raw.parquet` is the raw
+    side in `RawCols` naming, produced by `dev/make_harmonized_raw.py` (a pure-
+    polars rename of `arbin_cc_raw.parquet`; headers read from `RawCols` so the
+    fixture tracks the schema). Native expected `StepCols`/cycle output is still
+    to come.
 - Add a real cycling non-Arbin fixture (Maccor/Neware/Biologics) for parser
   diversity.
 - Consider asserting summary goldens once the summary pipeline is exercised on

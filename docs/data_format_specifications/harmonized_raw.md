@@ -17,6 +17,11 @@ Original cycler files are converted to this format, in order to unify the format
 - Time columns (`test_time`, etc.) are in **seconds**.
 - The cycler step mode column is **`step_mode`**. There is no `channel_status` column
   (it was dropped in issue #10).
+- **`epoch_time_utc`** is float **seconds since the Unix epoch, UTC**. When an importer
+  only has the cycler's wall-clock timestamp (often a *naive*, timezone-less datetime,
+  e.g. legacy Arbin `date_time`), it is converted to epoch seconds by treating the naive
+  timestamp as UTC. (Example: `dev/make_harmonized_raw.py` does this when building the
+  `arbin_cc_harmonized_raw.parquet` test fixture.)
 - Capacity / energy columns are **cumulative per cycle, per direction** — see *Capacity
   convention* below. (Renamed from `step_cumulative_*` in issue #13; the old name was
   misleading.)

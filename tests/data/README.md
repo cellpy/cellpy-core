@@ -14,9 +14,15 @@ and stays loader-free.
 | `arbin_cc_summary_expected.parquet` | *(derived)* | 18 cycles, 27 cols | Frozen snapshot of the current per-cycle summary |
 | `arbin_cc_steptypes_cellpy.csv` | `testdata/data/steps.csv` | 103 steps, 4 cols | **Independent** cellpy step-type golden (cross-repo parity, Phase 4) |
 | `arbin_small_raw.parquet` | `testdata/data/20200624_test001_cc_01.h5` | 47 rows, 1 cycle, 3 steps | Tiny fast fixture (no ODBC) |
+| `arbin_cc_harmonized_raw.parquet` | *(derived from `arbin_cc_raw.parquet`)* | 10 261 rows, 28 cols, 18 cycles | Same data in the **harmonized** schema (`RawCols` naming) |
 
-All raw frames use the legacy `HeadersNormal` column naming (`data_point`,
-`voltage`, `charge_capacity`, …) that the engine currently consumes.
+The original raw frames use the legacy `HeadersNormal` column naming
+(`data_point`, `voltage`, `charge_capacity`, …) that the engine currently
+consumes. `arbin_cc_harmonized_raw.parquet` is the one exception: it is the same
+Arbin data renamed into the **harmonized raw** schema
+(`cellpycore.config.RawCols`: `datapoint_num`, `potential`,
+`cumulative_charge_capacity`, …) — see
+[`docs/data_format_specifications/harmonized_raw.md`](../../docs/data_format_specifications/harmonized_raw.md).
 
 ## Golden numbers
 
@@ -57,3 +63,12 @@ Set `CELLPY_REPO` if the cellpy checkout is not the sibling `../cellpy`.
 Regenerate the `*_steps_expected.parquet` / `*_summary_expected.parquet` snapshots
 **intentionally** (and review the diff) only when a step-table or summary change is
 expected.
+
+`arbin_cc_harmonized_raw.parquet` is produced separately (pure-polars, no cellpy
+needed) by `dev/make_harmonized_raw.py`, which renames `arbin_cc_raw.parquet` into
+the `RawCols` schema. Re-run it after any `RawCols` change so the fixture tracks
+the schema:
+
+```bash
+uv run python dev/make_harmonized_raw.py
+```
