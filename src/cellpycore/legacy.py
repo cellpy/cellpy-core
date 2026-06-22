@@ -5,6 +5,8 @@ import logging
 import numbers
 from typing import List
 
+from cellpycore.config import STEP_TYPES  # noqa: F401  (re-exported; see note below)
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,24 +24,11 @@ class NoDataFound(CellpyError):
 
 
 # Canonical list of step-type labels produced by step-type detection in
-# ``summarizers.make_step_table`` (mirrors cellpy). ``CAPACITY_MODIFIERS`` lists
+# ``summarizers.make_step_table`` (mirrors cellpy). The vocabulary is now
+# defined once as ``config.StepType``; ``STEP_TYPES`` is imported from there
+# (above) so this module keeps its historical name. ``CAPACITY_MODIFIERS`` lists
 # step labels that modify the running capacity (reserved for future use).
 CAPACITY_MODIFIERS = ["reset"]
-STEP_TYPES = [
-    "charge",
-    "discharge",
-    "cv_charge",
-    "cv_discharge",
-    "taper_charge",
-    "taper_discharge",
-    "charge_cv",
-    "discharge_cv",
-    "ocvrlx_up",
-    "ocvrlx_down",
-    "ir",
-    "rest",
-    "not_known",
-]
 
 
 # -----------------------------------------------------------------------------

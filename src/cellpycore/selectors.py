@@ -3,7 +3,7 @@ import functools
 from typing import Any, Callable, Iterable, List, Optional, Union, TypeVar
 import logging
 
-from cellpycore.config import StepCols, RawCols, Schema, default_schema
+from cellpycore.config import StepCols, RawCols, Schema, default_schema, STEP_TYPES
 from cellpycore.cell_core import Data
 
 DataFrame = TypeVar("DataFrame")
@@ -13,23 +13,6 @@ logger = logging.getLogger(__name__)
 FIRST = "_first"
 LAST = "_last"
 DELTA = "_diff"
-
-# TODO: move this to a settings file
-STEP_TYPES = [
-    "charge",
-    "discharge",
-    "cv_charge",
-    "cv_discharge",
-    "taper_charge",
-    "taper_discharge",
-    "charge_cv",
-    "discharge_cv",
-    "ocvrlx_up",
-    "ocvrlx_down",
-    "ir",
-    "rest",
-    "not_known",
-]
 
 
 def create_selector(

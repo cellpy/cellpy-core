@@ -75,6 +75,125 @@ class TestMode(StrEnum):
     INVERTED = "inverted"
 
 
+class StepType(StrEnum):
+    """Canonical step-type labels for the ``step_type`` column of the step table.
+
+    This is the single source of truth for the step-type vocabulary (the
+    ``STEP_TYPES`` list below is derived from it). It mirrors old cellpy's
+    ``CellpyCell.list_of_step_types`` so cross-repo step-type parity is
+    preserved.
+
+    Like the other enums in this module it is a *reference* vocabulary: the step
+    table stores plain strings and the engine does not validate against this
+    enum, so unknown values are still allowed. Extend by adding members rather
+    than introducing free-form strings elsewhere.
+
+    Note:
+        Not every member is emitted by the built-in classifier. ``_classify_steps``
+        in ``summarizers.py`` currently emits only ``charge``, ``discharge``,
+        ``cv_charge``, ``cv_discharge``, ``ocvrlx_up``, ``ocvrlx_down``, ``ir``
+        and ``rest``. The remaining members (``taper_charge``,
+        ``taper_discharge``, ``charge_cv``, ``discharge_cv``, ``not_known``)
+        come from explicit step specifications, overrides, or legacy data.
+
+        Known discrepancy (not reconciled here to preserve golden-test parity):
+        the classifier labels uncategorized steps with the empty string ``""``,
+        not ``not_known``. Unifying ``""`` and ``NOT_KNOWN`` is a follow-up.
+
+    Attributes:
+        CHARGE (``"charge"``): Constant-current (or general) charge step.
+        DISCHARGE (``"discharge"``): Constant-current (or general) discharge step.
+        CV_CHARGE (``"cv_charge"``): Constant-voltage portion of a charge step.
+        CV_DISCHARGE (``"cv_discharge"``): Constant-voltage portion of a discharge step.
+        TAPER_CHARGE (``"taper_charge"``): Tapering (CV tail) charge step.
+        TAPER_DISCHARGE (``"taper_discharge"``): Tapering (CV tail) discharge step.
+        CHARGE_CV (``"charge_cv"``): Charge step that includes a CV phase.
+        DISCHARGE_CV (``"discharge_cv"``): Discharge step that includes a CV phase.
+        OCVRLX_UP (``"ocvrlx_up"``): Open-circuit voltage relaxation, rising potential.
+        OCVRLX_DOWN (``"ocvrlx_down"``): Open-circuit voltage relaxation, falling potential.
+        IR (``"ir"``): Internal-resistance (instantaneous) step.
+        REST (``"rest"``): Rest / pause step (no current, stable potential).
+        NOT_KNOWN (``"not_known"``): Uncategorized step (see Note about ``""``).
+    """
+
+    CHARGE = "charge"
+    DISCHARGE = "discharge"
+    CV_CHARGE = "cv_charge"
+    CV_DISCHARGE = "cv_discharge"
+    TAPER_CHARGE = "taper_charge"
+    TAPER_DISCHARGE = "taper_discharge"
+    CHARGE_CV = "charge_cv"
+    DISCHARGE_CV = "discharge_cv"
+    OCVRLX_UP = "ocvrlx_up"
+    OCVRLX_DOWN = "ocvrlx_down"
+    IR = "ir"
+    REST = "rest"
+    NOT_KNOWN = "not_known"
+
+
+# Canonical list of step-type labels, derived from ``StepType`` so there is a
+# single source of truth. Kept as a plain list (and named ``STEP_TYPES``) for
+# backwards compatibility with existing importers.
+STEP_TYPES = [member.value for member in StepType]
+
+
+class StepMode(StrEnum):
+    """Control mode of a step for the ``step_mode`` column of the raw table.
+
+    Describes how the cycler regulated the step (constant current, constant
+    voltage, constant power). Like the other enums here it is a *reference*
+    vocabulary: the raw table stores plain strings and unknown values are
+    allowed; extend by adding members.
+
+    Not produced by the engine yet (only the mock-data helper sets a value).
+
+    Note:
+        Absence / "no specific mode" is represented by a null value in the
+        table, not by the literal string ``"None"``. The spec table in
+        ``docs/data_format_specifications/harmonized_raw.md`` lists ``"None"``
+        as a sample value; that is documentation shorthand for "missing" and is
+        intentionally not a member here.
+
+    Attributes:
+        CC (``"CC"``): Constant current.
+        CV (``"CV"``): Constant voltage.
+        CP (``"CP"``): Constant power.
+    """
+
+    CC = "CC"
+    CV = "CV"
+    CP = "CP"
+
+
+class CycleType(StrEnum):
+    """Cycle classification for the ``cycle_type`` column of the raw table.
+
+    A *reference* vocabulary (plain strings stored in the table, unknown values
+    allowed, extend by adding members). Values keep the capitalization used in
+    the spec table in ``docs/data_format_specifications/harmonized_raw.md``.
+
+    Not used by the engine yet.
+
+    Note:
+        This may migrate into per-test metadata as ``test_type`` rather than
+        staying a per-row raw column (see
+        ``.issueflows/04-designs-and-guides/test-metadata-and-merging.md``).
+        ``GITT`` also appears as a ``test_type`` example, so ``cycle_type`` and
+        ``test_type`` may later be unified into one vocabulary.
+
+    Attributes:
+        STANDARD (``"Standard"``): Ordinary cycling.
+        GITT (``"GITT"``): Galvanostatic Intermittent Titration Technique.
+        ICI (``"ICI"``): Intermittent Current Interruption.
+        CHARACTERIZATION (``"Characterization"``): Characterization cycle.
+    """
+
+    STANDARD = "Standard"
+    GITT = "GITT"
+    ICI = "ICI"
+    CHARACTERIZATION = "Characterization"
+
+
 @dataclass
 class BaseCols:
     """Shared base for all column-header objects.
@@ -260,7 +379,11 @@ class StepCols(Cols):
     cycle_num: str = "cycle_num"
     step_num: str = "step_num"
     sub_step_num: str = "sub_step_num"
+    # ``step_type`` values draw from the ``StepType`` vocabulary.
     step_type: str = "step_type"
+    # ``sub_step_type`` is currently reserved and left unpopulated (the step
+    # engine writes null). When used it is expected to draw from the same
+    # ``StepType`` vocabulary; its exact semantics are still TBD.
     sub_step_type: str = "sub_step_type"
     mask: str = "mask"
     datapoint_num_first: str = "datapoint_num_first"
