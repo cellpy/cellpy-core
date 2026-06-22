@@ -191,6 +191,9 @@ tracked in **issue #13**.
   convenience and convert). `ir_to_summary` is **behaviour-preserving** (the legacy
   off-by-one IR quirk is kept oracle-locked; a real fix is a separate issue) and is
   self-contained (no longer depends on the pandas `selectors.get_step_numbers`).
+  **Update (issue #23):** the IR quirk is now **fixed** behind a pluggable
+  `SummaryExtractor` (default `LastIRExtractor` = last datapoint of the last
+  charge/discharge step, missing → NaN). See `summary-extractors.md`.
 - **Anode mode** added to `make_summary` via the existing `config.TestMode` enum
   (`NORMAL`/`INVERTED`). `INVERTED` flips only `coulombic_efficiency`
   (`100*charge/discharge`) and `coulombic_difference` (`discharge-charge`);

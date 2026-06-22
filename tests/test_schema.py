@@ -291,7 +291,7 @@ def test_c_rates_to_summary_native():
 
 
 def test_ir_to_summary_native():
-    """ir_to_summary adds ir_charge/ir_discharge filling 0.0 where absent (native)."""
+    """ir_to_summary adds ir_charge/ir_discharge (native, default extractor)."""
     nhdr = RawCols()
     schema = _native_schema()
     chdr = schema.cycle
@@ -303,9 +303,96 @@ def test_ir_to_summary_native():
 
     assert chdr.ir_charge in data.summary.columns
     assert chdr.ir_discharge in data.summary.columns
-    # the fixture has a zero internal_resistance column -> all zeros, no nulls
+    # the fixture has a zero internal_resistance column and every cycle has a
+    # charge + discharge step -> all zeros, no missing values.
     assert data.summary[chdr.ir_charge].null_count() == 0
     assert set(data.summary[chdr.ir_charge].to_list()) == {0.0}
+
+
+def _ir_raw_steps(nhdr: RawCols, shdr: StepCols):
+    """Hand-built native raw + steps exercising the IR-extraction rules.
+
+    cycle 1: charge step 1 (ir 10->11), discharge step 2 (ir 5->6),
+             charge step 3 (ir 20->22)  -> last charge step is 3, last dp 22.
+    cycle 2: discharge step 1 (ir 30->33) only -> no charge step (ir_charge NaN).
+    """
+    rows = [
+        (1, 1, "charge", [10.0, 11.0]),
+        (1, 2, "discharge", [5.0, 6.0]),
+        (1, 3, "charge", [20.0, 22.0]),
+        (2, 1, "discharge", [30.0, 33.0]),
+    ]
+    raw_records, step_records = [], []
+    dp = 0
+    for cyc, step, stype, irs in rows:
+        step_records.append(
+            {shdr.cycle_num: cyc, shdr.step_num: step, shdr.step_type: stype}
+        )
+        for ir in irs:
+            raw_records.append(
+                {
+                    nhdr.cycle_num: cyc,
+                    nhdr.step_num: step,
+                    nhdr.datapoint_num: dp,
+                    nhdr.internal_resistance: ir,
+                }
+            )
+            dp += 1
+    return pl.DataFrame(raw_records), pl.DataFrame(step_records)
+
+
+def test_ir_to_summary_last_step_and_nan():
+    """Default extractor picks the last datapoint of the last charge/discharge
+    step per cycle and yields NaN when a direction's step is absent."""
+    import math
+
+    nhdr, shdr, chdr = RawCols(), StepCols(), CycleCols()
+    schema = Schema(raw=nhdr, cycle=chdr, step=shdr)
+    raw, steps = _ir_raw_steps(nhdr, shdr)
+
+    data = Data()
+    data.raw = raw
+    data.steps = steps
+    data.summary = pl.DataFrame({chdr.cycle_num: [1, 2]})
+
+    summarizers.ir_to_summary(data, schema)
+    out = data.summary.sort(chdr.cycle_num)
+
+    charge = out[chdr.ir_charge].to_list()
+    discharge = out[chdr.ir_discharge].to_list()
+    assert charge[0] == 22.0  # last datapoint of the last charge step (step 3)
+    assert math.isnan(charge[1])  # cycle 2 has no charge step -> NaN, not 0.0
+    assert discharge[0] == 6.0  # last datapoint of the (only) discharge step
+    assert discharge[1] == 33.0
+
+
+def test_ir_to_summary_accepts_custom_extractor():
+    """A custom SummaryExtractor passed via ir_extractor overrides the default."""
+    from cellpycore.extractors import SummaryExtractor
+
+    nhdr, shdr, chdr = RawCols(), StepCols(), CycleCols()
+    schema = Schema(raw=nhdr, cycle=chdr, step=shdr)
+    raw, steps = _ir_raw_steps(nhdr, shdr)
+
+    class ConstIR(SummaryExtractor):
+        def __call__(self, *, raw, steps, summary, schema):
+            return pl.DataFrame(
+                {
+                    schema.cycle.cycle_num: [1, 2],
+                    schema.cycle.ir_charge: [1.5, 2.5],
+                    schema.cycle.ir_discharge: [3.5, 4.5],
+                }
+            )
+
+    data = Data()
+    data.raw = raw
+    data.steps = steps
+    data.summary = pl.DataFrame({chdr.cycle_num: [1, 2]})
+
+    summarizers.ir_to_summary(data, schema, ir_extractor=ConstIR())
+    out = data.summary.sort(chdr.cycle_num)
+    assert out[chdr.ir_charge].to_list() == [1.5, 2.5]
+    assert out[chdr.ir_discharge].to_list() == [3.5, 4.5]
 
 
 def test_native_add_scaled_summary_columns_end_to_end():

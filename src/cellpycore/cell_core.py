@@ -164,6 +164,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         select_columns: bool = True,
         final_data_points: Optional[Iterable[int]] = None,
         current_conversion_factor: float = 1.0,
+        ir_extractor: Optional[Callable] = None,
     ) -> Data:
         """Make the core summary.
 
@@ -177,6 +178,9 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             current_conversion_factor: Precomputed factor that converts the raw
                 current unit to the desired output current unit for the C-rate
                 columns (by value; default 1.0 = no conversion).
+            ir_extractor: Optional ``SummaryExtractor`` controlling how the per-cycle
+                internal-resistance columns are derived. Defaults to
+                ``extractors.LastIRExtractor`` when ``None``.
 
         Returns:
             Data object with the summary.
@@ -202,7 +206,9 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             test_mode=test_mode,
         )
         if find_ir and (self.schema.raw.internal_resistance in data.raw.columns):
-            data = summarizers.ir_to_summary(data, self.schema)
+            data = summarizers.ir_to_summary(
+                data, self.schema, ir_extractor=ir_extractor
+            )
         data = summarizers.c_rates_to_summary(
             data, self.schema, current_conversion_factor=current_conversion_factor
         )
@@ -585,12 +591,16 @@ class OldCellpyCellCore(CellpyCellCore):
         select_columns: bool = True,
         final_data_points: Optional[Iterable[int]] = None,
         current_conversion_factor: float = 1.0,
+        ir_extractor: Optional[Callable] = None,
     ) -> Data:
         """Build the per-cycle summary via the polars engine, in/out in legacy form.
 
         Runs the native ``make_summary`` engine plus the now-native polars C-rate /
         IR helpers, renames native->legacy, then adds the remaining pandas-only
         legacy cruft to reproduce the legacy ``HeadersSummary`` frame.
+
+        ``ir_extractor`` is forwarded to ``summarizers.ir_to_summary`` (defaults to
+        ``extractors.LastIRExtractor`` when ``None``).
         """
         import polars as pl
 
@@ -614,7 +624,7 @@ class OldCellpyCellCore(CellpyCellCore):
         # native polars frame before the single native->legacy rename. Their native
         # names match the legacy names, so they survive the rename untouched.
         if find_ir and (native_schema.raw.internal_resistance in nd.raw.columns):
-            summarizers.ir_to_summary(nd, native_schema)
+            summarizers.ir_to_summary(nd, native_schema, ir_extractor=ir_extractor)
         summarizers.c_rates_to_summary(
             nd, native_schema, current_conversion_factor=current_conversion_factor
         )
