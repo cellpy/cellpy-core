@@ -365,6 +365,41 @@ class CycleCols(Cols):
     cc_charge_capacity: str = "cc_charge_capacity"
     cc_charge_energy: str = "cc_charge_energy"
     cc_charge_time: str = "cc_charge_time"
+    # Derived/scaled columns produced by the standalone native summary path
+    # (``add_scaled_summary_columns`` + the C-rate / IR helpers). These were
+    # previously legacy-only "bridge extras" (see step-table-polars-migration.md,
+    # Phase 3b); issue #21 brings them onto the native schema so the native path
+    # is self-sufficient. ``ir_charge`` / ``ir_discharge`` are the behaviour-
+    # preserving single-value IR targets (the four ``ir_start/end_*`` columns
+    # above remain reserved for the richer future IR model).
+    normalized_cycle_index: str = "normalized_cycle_index"
+    charge_c_rate: str = "charge_c_rate"
+    discharge_c_rate: str = "discharge_c_rate"
+    ir_charge: str = "ir_charge"
+    ir_discharge: str = "ir_discharge"
+
+    @property
+    def specific_columns(self) -> list:
+        """Summary columns that get specific (per mass / area / volume) variants.
+
+        Returns the capacity-like columns that ``generate_specific_summary_columns``
+        scales into ``{col}_gravimetric`` / ``{col}_areal`` / ``{col}_absolute``
+        variants. Mirrors the legacy ``HeadersSummary.specific_columns`` list using
+        the native column names (the native schema has no ``shifted_*`` columns, so
+        those legacy entries are dropped).
+        """
+        return [
+            self.discharge_capacity,
+            self.charge_capacity,
+            self.test_cumulated_charge_capacity,
+            self.test_cumulated_discharge_capacity,
+            self.coulombic_difference,
+            self.test_cumulated_coulombic_difference,
+            self.discharge_capacity_loss,
+            self.charge_capacity_loss,
+            self.test_cumulated_discharge_capacity_loss,
+            self.test_cumulated_charge_capacity_loss,
+        ]
 
 
 class StepCols(Cols):

@@ -12,6 +12,7 @@ import pytest
 
 from cellpycore import selectors, summarizers
 from cellpycore.cell_core import CellpyCellCore, OldCellpyCellCore, Data
+from cellpycore import config
 from cellpycore.config import RawCols, CycleCols, StepCols, Schema, default_schema
 from cellpycore.legacy import HeadersNormal
 
@@ -47,6 +48,39 @@ def _build_raw(nhdr: RawCols) -> pd.DataFrame:
                     }
                 )
                 dp += 1
+    return pd.DataFrame(records)
+
+
+def _build_cumulative_raw(nhdr: RawCols) -> pd.DataFrame:
+    """2 cycles, each charge then discharge, with cycle-cumulative capacities held.
+
+    Unlike ``_build_raw`` (which ends each cycle on a zero-capacity rest step), the
+    cycle-end datapoint here has non-zero charge/discharge capacities (cc=0.5,
+    dc=0.4), so the per-cycle summary capacities and efficiencies are meaningful.
+    """
+    records = []
+    dp = 0
+    for cyc in (1, 2):
+        for k in range(5):  # charge: cc 0.1..0.5, dc 0
+            records.append({
+                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
+                nhdr.step_time: float(k), nhdr.step_num: 1, nhdr.cycle_num: cyc,
+                nhdr.current: 1.0, nhdr.potential: 3.5 + 0.01 * k,
+                nhdr.cumulative_charge_capacity: 0.1 * (k + 1),
+                nhdr.cumulative_discharge_capacity: 0.0,
+                nhdr.internal_resistance: 0.0,
+            })
+            dp += 1
+        for k in range(5):  # discharge: cc held 0.5, dc 0.08..0.4
+            records.append({
+                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
+                nhdr.step_time: float(k), nhdr.step_num: 2, nhdr.cycle_num: cyc,
+                nhdr.current: -1.0, nhdr.potential: 3.9 - 0.01 * k,
+                nhdr.cumulative_charge_capacity: 0.5,
+                nhdr.cumulative_discharge_capacity: 0.08 * (k + 1),
+                nhdr.internal_resistance: 0.0,
+            })
+            dp += 1
     return pd.DataFrame(records)
 
 
@@ -198,9 +232,103 @@ def test_make_summary_native_schema():
 def test_generate_specific_columns_takes_factor_by_value():
     """generate_specific_summary_columns multiplies by the given factor (no pint)."""
     data = Data()
-    data.summary = pd.DataFrame({"charge_capacity": [1.0, 2.0, 4.0]})
+    data.summary = pl.DataFrame({"charge_capacity": [1.0, 2.0, 4.0]})
     data = summarizers.generate_specific_summary_columns(
         data, mode="gravimetric", specific_columns=["charge_capacity"],
         specific_converter=10.0,
     )
-    assert list(data.summary["charge_capacity_gravimetric"]) == [10.0, 20.0, 40.0]
+    assert data.summary["charge_capacity_gravimetric"].to_list() == [10.0, 20.0, 40.0]
+
+
+def test_make_summary_anode_flips_coulombic_columns():
+    """TestMode.INVERTED (anode) flips CE and coulombic_difference references."""
+    nhdr = RawCols()
+    schema = _native_schema()
+    chdr = schema.cycle
+
+    def _summ(test_mode):
+        data = Data()
+        data.raw = _build_cumulative_raw(nhdr)
+        summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+        summarizers.make_summary(data, schema=schema, test_mode=test_mode)
+        return data.summary
+
+    s_n = _summ(config.TestMode.NORMAL)
+    s_a = _summ(config.TestMode.INVERTED)
+
+    cc = s_n[chdr.charge_capacity].to_list()
+    dc = s_n[chdr.discharge_capacity].to_list()
+    ce_normal = s_n[chdr.coulombic_efficiency].to_list()
+    ce_anode = s_a[chdr.coulombic_efficiency].to_list()
+    cd_normal = s_n[chdr.coulombic_difference].to_list()
+    cd_anode = s_a[chdr.coulombic_difference].to_list()
+
+    assert cc == pytest.approx([0.5, 0.5])
+    assert dc == pytest.approx([0.4, 0.4])
+    for i in range(len(cc)):
+        assert ce_normal[i] == pytest.approx(100.0 * dc[i] / cc[i])
+        assert ce_anode[i] == pytest.approx(100.0 * cc[i] / dc[i])
+        assert cd_normal[i] == pytest.approx(cc[i] - dc[i])
+        assert cd_anode[i] == pytest.approx(dc[i] - cc[i])
+
+
+def test_c_rates_to_summary_native():
+    """c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)."""
+    nhdr = RawCols()
+    schema = _native_schema()
+    chdr = schema.cycle
+
+    data = _data_with_raw(nhdr)
+    summarizers.make_step_table(data, schema=schema, nom_cap=2.0)
+    summarizers.make_summary(data, schema=schema)
+    summarizers.c_rates_to_summary(data, schema, nom_cap=1.0)
+
+    assert chdr.charge_c_rate in data.summary.columns
+    assert chdr.discharge_c_rate in data.summary.columns
+    # both directions present in every cycle of the fixture -> no nulls
+    assert data.summary[chdr.charge_c_rate].null_count() == 0
+    assert data.summary[chdr.discharge_c_rate].null_count() == 0
+
+
+def test_ir_to_summary_native():
+    """ir_to_summary adds ir_charge/ir_discharge filling 0.0 where absent (native)."""
+    nhdr = RawCols()
+    schema = _native_schema()
+    chdr = schema.cycle
+
+    data = _data_with_raw(nhdr)
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_summary(data, schema=schema)
+    summarizers.ir_to_summary(data, schema)
+
+    assert chdr.ir_charge in data.summary.columns
+    assert chdr.ir_discharge in data.summary.columns
+    # the fixture has a zero internal_resistance column -> all zeros, no nulls
+    assert data.summary[chdr.ir_charge].null_count() == 0
+    assert set(data.summary[chdr.ir_charge].to_list()) == {0.0}
+
+
+def test_native_add_scaled_summary_columns_end_to_end():
+    """The native CellpyCellCore add_scaled path runs on the polars summary."""
+    cell = CellpyCellCore(initialize=False)
+    nhdr = cell.schema.raw
+    chdr = cell.schema.cycle
+
+    data = _data_with_raw(nhdr)
+    cell.make_core_step_table(data, nom_cap=1.0)
+    cell.make_core_summary(data)
+    cell.add_scaled_summary_columns(
+        data,
+        nom_cap_abs=1.0,
+        normalization_cycles=None,
+        specific_converters={"gravimetric": 10.0, "areal": 2.0, "absolute": 1.0},
+    )
+
+    assert chdr.normalized_cycle_index in data.summary.columns
+    assert f"{chdr.charge_capacity}_gravimetric" in data.summary.columns
+    assert f"{chdr.charge_capacity}_areal" in data.summary.columns
+    # gravimetric variant is 10x the absolute charge_capacity
+    base = data.summary[chdr.charge_capacity].to_list()
+    grav = data.summary[f"{chdr.charge_capacity}_gravimetric"].to_list()
+    for b, g in zip(base, grav):
+        assert g == pytest.approx(10.0 * b)

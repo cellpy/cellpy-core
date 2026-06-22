@@ -182,6 +182,42 @@ tracked in **issue #13**.
 - The legacy `Headers*` mirrors in `legacy.py` are **unchanged** (cellpy contract); the
   legacy/golden path is unaffected by these native-schema edits.
 
+### Issue #21 — complete the native summary path (revises Phase 3b)
+
+- **Helpers ported to polars-native.** `c_rates_to_summary`, `ir_to_summary`,
+  `equivalent_cycles_to_summary`, `generate_specific_summary_columns` and
+  `_calculate_nominal_capacity_from_cycles` are now polars on the native schema
+  (no more pandas / legacy `*_txt` attribute access; they accept a pandas frame for
+  convenience and convert). `ir_to_summary` is **behaviour-preserving** (the legacy
+  off-by-one IR quirk is kept oracle-locked; a real fix is a separate issue) and is
+  self-contained (no longer depends on the pandas `selectors.get_step_numbers`).
+- **Anode mode** added to `make_summary` via the existing `config.TestMode` enum
+  (`NORMAL`/`INVERTED`). `INVERTED` flips only `coulombic_efficiency`
+  (`100*charge/discharge`) and `coulombic_difference` (`discharge-charge`);
+  capacity-loss / cumulated columns are direction-independent. `CellpyCellCore.make_core_summary`
+  derives the mode from `cycle_mode == "anode"`.
+- **CycleCols extended (Option A — revises the Phase 3b "drop legacy-only columns"
+  decision).** Added `normalized_cycle_index`, `charge_c_rate`, `discharge_c_rate`,
+  `ir_charge`, `ir_discharge` and a `specific_columns` accessor to native `CycleCols`
+  (and `cycle_table.md` + `CYCLE_EXPECTED`). The native path is now self-sufficient:
+  `CellpyCellCore.make_core_summary` adds C-rate/IR natively; `add_scaled_summary_columns`
+  adds `normalized_cycle_index` + gravimetric/areal/absolute variants on the native frame.
+  The `ir_start/end_*` columns remain reserved for the richer future IR model;
+  `ir_charge`/`ir_discharge` are the behaviour-preserving single-value targets.
+  *Alternative considered:* keep these bridge-only (Phase 3b's stance) — rejected by
+  the issue owner in favour of a fully standalone native path.
+- **Bridge restructured to feed polars.** `OldCellpyCellCore.make_core_summary` now runs
+  the native polars `ir_to_summary` / `c_rates_to_summary` on the native frame *before* the
+  single native→legacy rename (their native names equal the legacy names, so they survive
+  untouched). Only the genuinely legacy-only cruft (`cumulated_coulombic_efficiency`,
+  `shifted_*`, `cumulated_ric*`) stays pandas (`_add_legacy_summary_cruft`).
+  `OldCellpyCellCore.add_scaled_summary_columns` is overridden to bridge pandas↔polars +
+  legacy↔native (incl. mapping the produced `{col}_{mode}` specific columns back to legacy
+  names) so cellpy's call on the legacy pandas summary keeps working.
+- **Parity:** `tests/test_golden.py` summary oracle stays byte-green through the bridge
+  (the ported polars C-rate/IR reproduce the legacy values). New native-schema tests in
+  `tests/test_schema.py` cover anode flip, native C-rate/IR, and native `add_scaled`.
+
 ## Related
 
 - Issue #12 (this work's origin): `.issueflows/03-solved-issues/issue12_*` once closed.

@@ -90,3 +90,8 @@ Date: 2025-09-08
 | cc_charge_capacity | float | Ampere-hour (Ah) | 3.1234 | Total cycle charge capacity from cycling in CC-mode |
 | cc_charge_energy | float | Watt-hour (Wh) | 3.1234 | Total cycle charge energy from cycling in CC-mode |
 | cc_charge_time | float | Seconds (s) | 3.1234 | Total cycle charge time cycling in CC-mode |
+| normalized_cycle_index | float | - | 3.14 | Equivalent cycle number (test_cumulated_charge_capacity / nominal capacity) |
+| charge_c_rate | float | C-rate (1/h) | 0.05 | C-rate of the first charge step in the cycle |
+| discharge_c_rate | float | C-rate (1/h) | 0.05 | C-rate of the first discharge step in the cycle |
+| ir_charge | float | Ohm (Ω) | 0.1234 | Internal resistance for the (first) charge step in the cycle |
+| ir_discharge | float | Ohm (Ω) | 0.1234 | Internal resistance for the (first) discharge step in the cycle |
