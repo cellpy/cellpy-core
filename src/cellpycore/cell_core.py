@@ -420,7 +420,10 @@ class OldCellpyCellCore(CellpyCellCore):
 
     def _legacy_step_column_order(self) -> list:
         leg = self.step_cols
-        order = [leg.cycle, leg.step, leg.sub_step]
+        # ``ustep`` is only present when the engine ran with ``usteps=True`` (the
+        # native frame names it literally "ustep" == ``leg.ustep``); it is filtered
+        # out below when absent, so this is a no-op for the default step table.
+        order = [leg.cycle, leg.step, leg.sub_step, leg.ustep]
         bases = [
             leg.point, leg.test_time, leg.step_time, leg.current, leg.voltage,
             leg.charge, leg.discharge, leg.internal_resistance,
@@ -497,10 +500,42 @@ class OldCellpyCellCore(CellpyCellCore):
         native_steps = result if from_data_point is not None else result.steps
 
         legacy_steps = self._native_steps_to_legacy(native_steps, sort_rows=sort_rows)
+        # The native engine only classifies step ``type`` from the specifications;
+        # the legacy ``info`` column is carried here in pandas so NaN entries keep
+        # their legacy ``str(NaN) == "nan"`` behaviour.
+        if step_specifications is not None:
+            legacy_steps = self._apply_spec_info(
+                legacy_steps, step_specifications, short
+            )
         if from_data_point is not None:
             return legacy_steps
         data.steps = legacy_steps
         return data
+
+    def _apply_spec_info(self, legacy_steps, step_specifications, short: bool):
+        """Map the ``info`` column from step specifications onto the step table.
+
+        Mirrors legacy cellpy: in short mode the spec is keyed by ``step`` only
+        (applied across all cycles); otherwise by ``(cycle, step)``. Values are
+        copied verbatim (a missing spec ``info`` stays NaN, i.e. ``"nan"``).
+        """
+        if "info" not in step_specifications.columns:
+            return legacy_steps
+        leg = self.step_cols
+        spec = step_specifications
+        if short:
+            info_by_key = dict(zip(spec["step"], spec["info"]))
+            legacy_steps[leg.info] = legacy_steps[leg.step].map(info_by_key)
+        else:
+            info_by_key = {
+                (c, s): i
+                for c, s, i in zip(spec["cycle"], spec["step"], spec["info"])
+            }
+            legacy_steps[leg.info] = [
+                info_by_key.get((c, s))
+                for c, s in zip(legacy_steps[leg.cycle], legacy_steps[leg.step])
+            ]
+        return legacy_steps
 
     # ---- legacy <-> native bridge for the polars summary engine -------------
     # The native engine (summarizers.make_summary) produces the clean native
@@ -628,7 +663,14 @@ class OldCellpyCellCore(CellpyCellCore):
         dp_txt = self.raw_cols.data_point_txt
         dt_txt = self.raw_cols.datetime_txt
         if dt_txt in data.raw.columns:
-            dt_map = data.raw[[dp_txt, dt_txt]].drop_duplicates(subset=[dp_txt])
+            # cellpy keeps data_point as both the raw index and a column; drop the
+            # index here so the merge key is unambiguous (otherwise pandas raises
+            # "'data_point' is both an index level and a column label").
+            dt_map = (
+                data.raw[[dp_txt, dt_txt]]
+                .reset_index(drop=True)
+                .drop_duplicates(subset=[dp_txt])
+            )
             dt_map = dt_map.rename(columns={dp_txt: leg.data_point})
             summary = summary.merge(dt_map, on=leg.data_point, how="left")
 
