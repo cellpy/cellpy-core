@@ -68,3 +68,42 @@ The multi-scale platform strategy (Stage 0) calls for things the headers do not 
 1. **Align `config.py` `RawCols`/`StepCols`/`CycleCols` with the authoritative docs** (decisions B, C-power, D-mask). Update `_helpers.py`. Add a test asserting config classes match the documented column sets.
 2. **Adopt a unit+dtype-carrying, versioned header object** (SPEED-30), based on the `SuperDuperCols` prototype; then migrate the engine off the legacy `*_txt` headers.
 3. **BattINFO/EMMO column mapping + UUID/identity fields** as part of the Stage-0 schema work.
+
+## Issue #24 — categorical-column enums (decisions)
+
+Continuation of the header review. Added typed vocabularies for the categorical
+columns in `src/cellpycore/config.py`, alongside the existing `TestMode` enum.
+
+1. **Reference, not validating.** All these enums (`TestMode`, `StepType`,
+   `StepMode`, `CycleType`) are `StrEnum`s used as *reference vocabularies*:
+   tables keep storing plain strings, the engine does **not** validate against
+   them, and unknown values stay allowed. Extend by adding members rather than
+   reintroducing free-form strings. (Chosen over closed/validated vocabularies
+   to match the reality that we cannot enumerate every value yet.)
+2. **`StepType` is the single source of truth.** It holds the canonical 13
+   labels (mirroring old cellpy's `list_of_step_types`). The previously
+   duplicated `STEP_TYPES` lists in `selectors.py` and `legacy.py` are now both
+   `from cellpycore.config import STEP_TYPES`, where
+   `STEP_TYPES = [m.value for m in StepType]`. Values/order are unchanged, so
+   `test_limits` (classifier labels ⊆ `STEP_TYPES`) and golden parity hold.
+3. **Known `StepType` gaps (not fixed here, to preserve golden parity):**
+   - `_classify_steps` emits only a subset (`charge`, `discharge`, `cv_charge`,
+     `cv_discharge`, `ocvrlx_up`, `ocvrlx_down`, `ir`, `rest`); `taper_*`,
+     `charge_cv`, `discharge_cv`, `not_known` come from specs/overrides/legacy.
+   - The classifier uses `""` for uncategorized, not `not_known`. **Follow-up:**
+     unify `""` and `NOT_KNOWN`.
+4. **`StepMode` = `CC`/`CV`/`CP`.** Absence is a null value, **not** the literal
+   string `"None"` shown in the spec table (documentation shorthand). Not
+   produced by the engine yet.
+5. **`CycleType` = `Standard`/`GITT`/`ICI`/`Characterization`** (spec
+   capitalization kept). Not used by the engine yet. **Follow-up:** likely
+   migrates to per-test metadata as `test_type`; `GITT` overlaps the `test_type`
+   examples, so `cycle_type` and `test_type` may be unified.
+6. **`sub_step_type` still TBD** (consistent with finding D). Documented in
+   `StepCols` as reserved/unpopulated (engine writes null); when used it is
+   expected to draw from the `StepType` vocabulary.
+
+Deliberately **out of scope** for this pass (deferred): metadata-level enums
+(`TestFamily`/`TestType`, `SourceKind`) and cross-cutting descriptors (capacity
+specifics `gravimetric`/`areal`/`absolute`; batbase-aligned `CellConfiguration`
+/ `FormFactor`).

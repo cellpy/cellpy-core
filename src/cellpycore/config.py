@@ -15,13 +15,194 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 
-class CyclingMode(StrEnum):
-    ANODE = "anode"
-    OTHER = "other"
+class TestMode(StrEnum):
+    """Test mode of an electrochemical experiment (cycling configuration).
+
+    Describes whether a cell test is run in the ordinary configuration
+    (``NORMAL``) or in the inverted "anode mode" configuration (``INVERTED``).
+    This determines the charge/discharge sign conventions the summary / step
+    engine must apply when it processes the data.
+
+    The enum is deliberately binary: for sign-convention purposes only "anode
+    half-cell vs everything else" matters. cellpy's legacy ``cycle_mode`` string
+    carries a wider vocabulary (``"anode"``, ``"cathode"``,
+    ``"full_cell"``/``"fullcell"``, ``"standard"``); all non-anode values
+    collapse to ``NORMAL`` here. If a finer distinction is ever needed, add new
+    members rather than reintroducing free-form strings.
+
+    This is the typed replacement for cellpy's loose ``cycle_mode`` string
+    parameter (``cellpy.parameters.prms.Reader.cycle_mode``); it is defined for
+    that future use and not yet wired up in this package. When cellpy is
+    migrated onto cellpy-core it should pass a ``TestMode`` here instead of a
+    bare string, so the mode is validated and the sign conventions are derived
+    from it.
+
+    Attributes:
+        NORMAL (``"normal"``): The ordinary case (full cells, cathode
+            half-cells). The first step uses the standard (non-inverted)
+            charge/discharge convention. This is the baseline / default mode.
+        INVERTED (``"inverted"``): Anode half-cell ("anode mode"). The electrode
+            under test is the anode, cycled against lithium, so the convention
+            is inverted relative to ``NORMAL`` (the first step is typically a
+            lithiation). This is the case cellpy historically selected with
+            ``cycle_mode="anode"``.
+
+    Note:
+        Name and members intentionally mirror batbase's metadata enum
+        ``ElectroChemicalExperiment.TestMode`` (repo ``ife-bat/batbase``,
+        ``src/runs/models.py``). batbase is the metadata/persistence layer; this
+        enum is the processing-layer counterpart. They describe the same
+        physical reality and must be kept in sync via this mapping::
+
+            TestMode (here)   batbase (stored code)   cellpy cycle_mode
+            INVERTED          INVERTED ("i")          "anode"
+            NORMAL            NORMAL   ("n")          "full_cell" / "standard" / "cathode"
+
+        Two traps to remember:
+
+        - Storage values differ by layer on purpose: this StrEnum uses the
+          self-describing values ``"normal"`` / ``"inverted"``, while batbase
+          persists the short codes ``"n"`` / ``"i"`` (its ``TextChoices`` member
+          names still read ``NORMAL`` / ``INVERTED``). Translate explicitly at
+          the boundary; never compare raw stored values across the two layers.
+        - Default-polarity trap: batbase defaults to ``NORMAL``, but cellpy
+          historically defaulted ``cycle_mode="anode"`` (i.e. ``INVERTED``).
+          When bridging metadata into the engine, map the mode explicitly and
+          do not rely on either side's implicit default.
+    """
+
+    NORMAL = "normal"
+    INVERTED = "inverted"
+
+
+class StepType(StrEnum):
+    """Canonical step-type labels for the ``step_type`` column of the step table.
+
+    This is the single source of truth for the step-type vocabulary (the
+    ``STEP_TYPES`` list below is derived from it). It mirrors old cellpy's
+    ``CellpyCell.list_of_step_types`` so cross-repo step-type parity is
+    preserved.
+
+    Like the other enums in this module it is a *reference* vocabulary: the step
+    table stores plain strings and the engine does not validate against this
+    enum, so unknown values are still allowed. Extend by adding members rather
+    than introducing free-form strings elsewhere.
+
+    Note:
+        Not every member is emitted by the built-in classifier. ``_classify_steps``
+        in ``summarizers.py`` currently emits only ``charge``, ``discharge``,
+        ``cv_charge``, ``cv_discharge``, ``ocvrlx_up``, ``ocvrlx_down``, ``ir``
+        and ``rest``. The remaining members (``taper_charge``,
+        ``taper_discharge``, ``charge_cv``, ``discharge_cv``, ``not_known``)
+        come from explicit step specifications, overrides, or legacy data.
+
+        Known discrepancy (not reconciled here to preserve golden-test parity):
+        the classifier labels uncategorized steps with the empty string ``""``,
+        not ``not_known``. Unifying ``""`` and ``NOT_KNOWN`` is a follow-up.
+
+    Attributes:
+        CHARGE (``"charge"``): Constant-current (or general) charge step.
+        DISCHARGE (``"discharge"``): Constant-current (or general) discharge step.
+        CV_CHARGE (``"cv_charge"``): Constant-voltage portion of a charge step.
+        CV_DISCHARGE (``"cv_discharge"``): Constant-voltage portion of a discharge step.
+        TAPER_CHARGE (``"taper_charge"``): Tapering (CV tail) charge step.
+        TAPER_DISCHARGE (``"taper_discharge"``): Tapering (CV tail) discharge step.
+        CHARGE_CV (``"charge_cv"``): Charge step that includes a CV phase.
+        DISCHARGE_CV (``"discharge_cv"``): Discharge step that includes a CV phase.
+        OCVRLX_UP (``"ocvrlx_up"``): Open-circuit voltage relaxation, rising potential.
+        OCVRLX_DOWN (``"ocvrlx_down"``): Open-circuit voltage relaxation, falling potential.
+        IR (``"ir"``): Internal-resistance (instantaneous) step.
+        REST (``"rest"``): Rest / pause step (no current, stable potential).
+        NOT_KNOWN (``"not_known"``): Uncategorized step (see Note about ``""``).
+    """
+
+    CHARGE = "charge"
+    DISCHARGE = "discharge"
+    CV_CHARGE = "cv_charge"
+    CV_DISCHARGE = "cv_discharge"
+    TAPER_CHARGE = "taper_charge"
+    TAPER_DISCHARGE = "taper_discharge"
+    CHARGE_CV = "charge_cv"
+    DISCHARGE_CV = "discharge_cv"
+    OCVRLX_UP = "ocvrlx_up"
+    OCVRLX_DOWN = "ocvrlx_down"
+    IR = "ir"
+    REST = "rest"
+    NOT_KNOWN = "not_known"
+
+
+# Canonical list of step-type labels, derived from ``StepType`` so there is a
+# single source of truth. Kept as a plain list (and named ``STEP_TYPES``) for
+# backwards compatibility with existing importers.
+STEP_TYPES = [member.value for member in StepType]
+
+
+class StepMode(StrEnum):
+    """Control mode of a step for the ``step_mode`` column of the raw table.
+
+    Describes how the cycler regulated the step (constant current, constant
+    voltage, constant power). Like the other enums here it is a *reference*
+    vocabulary: the raw table stores plain strings and unknown values are
+    allowed; extend by adding members.
+
+    Not produced by the engine yet (only the mock-data helper sets a value).
+
+    Note:
+        Absence / "no specific mode" is represented by a null value in the
+        table, not by the literal string ``"None"``. The spec table in
+        ``docs/data_format_specifications/harmonized_raw.md`` lists ``"None"``
+        as a sample value; that is documentation shorthand for "missing" and is
+        intentionally not a member here.
+
+    Attributes:
+        CC (``"CC"``): Constant current.
+        CV (``"CV"``): Constant voltage.
+        CP (``"CP"``): Constant power.
+    """
+
+    CC = "CC"
+    CV = "CV"
+    CP = "CP"
+
+
+class CycleType(StrEnum):
+    """Cycle classification for the ``cycle_type`` column of the raw table.
+
+    A *reference* vocabulary (plain strings stored in the table, unknown values
+    allowed, extend by adding members). Values keep the capitalization used in
+    the spec table in ``docs/data_format_specifications/harmonized_raw.md``.
+
+    Not used by the engine yet.
+
+    Note:
+        This may migrate into per-test metadata as ``test_type`` rather than
+        staying a per-row raw column (see
+        ``.issueflows/04-designs-and-guides/test-metadata-and-merging.md``).
+        ``GITT`` also appears as a ``test_type`` example, so ``cycle_type`` and
+        ``test_type`` may later be unified into one vocabulary.
+
+    Attributes:
+        STANDARD (``"Standard"``): Ordinary cycling.
+        GITT (``"GITT"``): Galvanostatic Intermittent Titration Technique.
+        ICI (``"ICI"``): Intermittent Current Interruption.
+        CHARACTERIZATION (``"Characterization"``): Characterization cycle.
+    """
+
+    STANDARD = "Standard"
+    GITT = "GITT"
+    ICI = "ICI"
+    CHARACTERIZATION = "Characterization"
 
 
 @dataclass
 class BaseCols:
+    """Shared base for all column-header objects.
+
+    Provides the ``__version__`` field and bracket-notation access
+    (``cols["name"]``) on top of attribute access (``cols.name``), so concrete
+    header classes can be used interchangeably with both styles.
+    """
+
     __version__: str = "0.1.0"
 
     def __getitem__(self, key: str) -> str:
@@ -30,6 +211,14 @@ class BaseCols:
 
 
 class FlexibleCols(BaseCols):
+    """Opt-in base that allows per-attribute name modification.
+
+    Behaves like ``BaseCols`` but routes every attribute access through
+    ``__getattribute__``, so subclasses can transform header names on the fly
+    (e.g. add a prefix/suffix). This flexibility costs some performance, so use
+    it only when dynamic header names are actually needed.
+    """
+
     def __getattribute__(self, key: str) -> str:
         """Modification of the attribute can be done here.
 
@@ -57,10 +246,14 @@ class FlexibleCols(BaseCols):
 
 
 class Cols(BaseCols):
-    # Implement common additonal functionality here (e.g. to_json method).
-    #
-    # If we chose to use custom getattr method, swap the
-    # class inheritance to FlexibleCols (will encure some performance loss).
+    """Standard base for the concrete column-header classes.
+
+    ``CycleCols``, ``StepCols`` and ``RawCols`` inherit from this. Add common
+    functionality shared across all header classes here (e.g. a ``to_json``
+    method). To enable dynamic header names, swap the inheritance to
+    ``FlexibleCols`` (which incurs some performance loss).
+    """
+
     pass
 
 
@@ -84,6 +277,13 @@ class Schema:
 
 
 class CycleCols(Cols):
+    """Column-header definitions for the per-cycle summary table.
+
+    Each attribute maps a logical quantity to the column name used in the
+    per-cycle summary produced by the summary engine (capacities, efficiencies,
+    durations, per-direction current/potential/power statistics, etc.).
+    """
+
     cycle_num: str = "cycle_num"
     mask: str = "mask"
     datapoint_num_first: str = "datapoint_num_first"
@@ -168,10 +368,22 @@ class CycleCols(Cols):
 
 
 class StepCols(Cols):
+    """Column-header definitions for the per-step summary table.
+
+    Each attribute maps a logical quantity to the column name used in the
+    per-step summary (per-step statistics such as mean/std/min/max/first/last/
+    delta for time, current, potential, capacity, energy, power and internal
+    resistance, plus the per-step C-rate estimate).
+    """
+
     cycle_num: str = "cycle_num"
     step_num: str = "step_num"
     sub_step_num: str = "sub_step_num"
+    # ``step_type`` values draw from the ``StepType`` vocabulary.
     step_type: str = "step_type"
+    # ``sub_step_type`` is currently reserved and left unpopulated (the step
+    # engine writes null). When used it is expected to draw from the same
+    # ``StepType`` vocabulary; its exact semantics are still TBD.
     sub_step_type: str = "sub_step_type"
     mask: str = "mask"
     datapoint_num_first: str = "datapoint_num_first"
@@ -246,6 +458,14 @@ class StepCols(Cols):
 
 
 class RawCols(Cols):
+    """Column-header definitions for the harmonized raw data table.
+
+    Each attribute maps a logical quantity to the column name used in the
+    harmonized raw format that cellpy-core consumes. The authoritative spec is
+    ``docs/data_format_specifications/harmonized_raw.md``; the column order here
+    mirrors that spec table.
+    """
+
     # Follows docs/data_format_specifications/harmonized_raw.md (authoritative,
     # 2025-09-17). Column order mirrors the spec table.
     datapoint_num: str = "datapoint_num"

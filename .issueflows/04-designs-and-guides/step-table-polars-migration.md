@@ -146,6 +146,12 @@ tracked in **issue #13**.
   `end_voltage_to_summary`, `selectors.create_selector`, `selectors.summary_selector_exluder` —
   no longer used inside cellpy-core but may be imported by the external `cellpy` repo; prune in a
   later cleanup once cross-repo usage is confirmed.
+  - **Update (issue #24 cleanup):** cross-repo usage was checked against the `cellpy` repo.
+    `create_selector` **is** still used by cellpy (`cellpy/readers/cellreader.py`,
+    `cellpy/tests/test_slim.py`) and `summary_selector_exluder` is called by it, so **both
+    are kept**. `generate_absolute_summary_columns` and `end_voltage_to_summary` are used by
+    neither cellpy-core nor cellpy (cellpy has its own `_`-prefixed methods), so **both were
+    removed**.
 
 ### Phase 3a data-model fix + summary oracle (done)
 

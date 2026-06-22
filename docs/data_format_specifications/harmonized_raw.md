@@ -130,11 +130,13 @@ deferred — see the design note).
   - 'charge', 'discharge', 'rest'
   - limit to those or allow for others?
   - how to deal with 'IR' steps in Arbin or other cycler specific step-types?
+  - *Reference vocabulary now defined as `cellpycore.config.StepType` (issue #24); it is a non-validating reference set, so other values are still allowed.*
 - **step_type_detail**
   - how is this is intended to be used
 - **step_mode**
   - "CV", "CC", "CP", "None"
   - similar to step_type: limit to those, or allow for more?
+  - *Reference vocabulary now defined as `cellpycore.config.StepMode` (`CC`/`CV`/`CP`); "None" means a null/missing value, not a stored string (issue #24).*
 - **Substep Number**
   - in our previous notes we listed "substep number"
   - do we need this? and if so, what would it be used for?
@@ -145,6 +147,7 @@ deferred — see the design note).
   - enough with keeping it, or do we need an updated cycle number?
 - **cycle_type**
   - details to be discussed
+  - *Reference vocabulary now defined as `cellpycore.config.CycleType` (`Standard`/`GITT`/`ICI`/`Characterization`); may later migrate to test metadata as `test_type` (issue #24).*
 - **test_family / test_type** (now in **TestMeta**, not raw columns)
   - `test_family` is the broad classification (e.g. "reference capacity test", "rate test");
     `test_type` is the detailed one within a family (e.g. "GITT", "current interrupt").
