@@ -6,6 +6,7 @@ import polars as pl
 
 from cellpycore.config import Schema, TestMode, default_schema
 from cellpycore.cell_core import Data
+from cellpycore.extractors import LastIRExtractor, SummaryExtractor
 from cellpycore.legacy import CellpyLimits
 
 logger = logging.getLogger(__name__)
@@ -678,33 +679,35 @@ def c_rates_to_summary(
     return data
 
 
-def ir_to_summary(data: Data, schema: Optional[Schema] = None) -> Data:
+def ir_to_summary(
+    data: Data,
+    schema: Optional[Schema] = None,
+    ir_extractor: Optional["SummaryExtractor"] = None,
+) -> Data:
     """Add per-cycle internal-resistance columns (``ir_charge`` / ``ir_discharge``).
 
-    Polars-native, **behaviour-preserving** port of the legacy helper: for each
-    cycle it takes the first charge (resp. discharge) step and reads the
-    internal-resistance value of that step's first raw datapoint. Cycles without a
-    matching step get ``0.0``.
-
-    Note:
-        This reproduces a known legacy correctness quirk (it reads IR from the
-        charge/discharge step itself rather than a dedicated IR step). The
-        behaviour is intentionally kept oracle-locked here; fixing the IR
-        semantics is tracked as its own issue.
+    The per-cycle IR values are produced by a pluggable
+    :class:`~cellpycore.extractors.SummaryExtractor`. The default
+    :class:`~cellpycore.extractors.LastIRExtractor` reads the internal resistance
+    of the last datapoint of each cycle's last charge / discharge step (issue
+    #23, fixing the legacy off-by-one attribution). Cycles for which the extractor
+    yields no value (for example a cycle with no charge step) get ``NaN``.
 
     Args:
         data (Data): The data object (needs ``summary``, ``raw`` and ``steps``).
         schema: The column-header schema to use. Defaults to the native
             cellpy-core schema when not provided.
+        ir_extractor: The extractor that derives the per-cycle IR columns.
+            Defaults to :class:`~cellpycore.extractors.LastIRExtractor`.
 
     Returns:
         Data: The data object with ``ir_charge`` / ``ir_discharge`` added.
     """
     if schema is None:
         schema = default_schema()
-    headers_raw = schema.raw
+    if ir_extractor is None:
+        ir_extractor = LastIRExtractor()
     headers_summary = schema.cycle
-    headers_steps = schema.step
 
     # The engine is polars-native; accept pandas frames for convenience.
     summary = data.summary
@@ -719,50 +722,14 @@ def ir_to_summary(data: Data, schema: Optional[Schema] = None) -> Data:
 
     logger.debug("finding ir")
 
-    # internal resistance at the first raw datapoint of each (cycle, step).
-    # maintain_order (no sort) mirrors the legacy ``.values[0]`` taking the first
-    # matching raw row in the frame's natural order.
-    raw_ir = (
-        raw.group_by(
-            [headers_raw.cycle_num, headers_raw.step_num], maintain_order=True
-        ).agg(pl.col(headers_raw.internal_resistance).first().alias("__ir"))
-    )
+    per_cycle = ir_extractor(raw=raw, steps=steps, summary=summary, schema=schema)
 
-    def _ir_for(step_type: str, out_name: str) -> "pl.DataFrame":
-        first_step = (
-            steps.filter(pl.col(headers_steps.step_type) == step_type)
-            .group_by(headers_steps.cycle_num, maintain_order=True)
-            .agg(pl.col(headers_steps.step_num).first().alias("__step"))
-        )
-        joined = first_step.join(
-            raw_ir,
-            left_on=[headers_steps.cycle_num, "__step"],
-            right_on=[headers_raw.cycle_num, headers_raw.step_num],
-            how="left",
-        )
-        return joined.select(
-            pl.col(headers_steps.cycle_num),
-            pl.col("__ir").alias(out_name),
-        )
-
-    ir_discharge = _ir_for("discharge", headers_summary.ir_discharge)
-    ir_charge = _ir_for("charge", headers_summary.ir_charge)
-
-    summary = summary.join(
-        ir_discharge,
-        left_on=headers_summary.cycle_num,
-        right_on=headers_steps.cycle_num,
-        how="left",
-    )
-    summary = summary.join(
-        ir_charge,
-        left_on=headers_summary.cycle_num,
-        right_on=headers_steps.cycle_num,
-        how="left",
-    )
+    summary = summary.join(per_cycle, on=headers_summary.cycle_num, how="left")
+    # Missing IR (e.g. a cycle without a charge/discharge step) stays NaN rather
+    # than the legacy 0.0, so "no measurement" is distinguishable from a real 0.
     summary = summary.with_columns(
-        pl.col(headers_summary.ir_discharge).fill_null(0.0),
-        pl.col(headers_summary.ir_charge).fill_null(0.0),
+        pl.col(headers_summary.ir_charge).fill_null(float("nan")),
+        pl.col(headers_summary.ir_discharge).fill_null(float("nan")),
     )
     data.summary = summary
     return data
