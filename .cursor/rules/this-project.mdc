@@ -1,5 +1,5 @@
 ---
-description:
+description: cellpy-core project overview, environment/tooling (uv, .venv), repo layout, and docstring conventions.
 globs:
 alwaysApply: true
 ---
@@ -9,3 +9,33 @@ This is a python project. And it uses a python environment (.venv). Rember to ac
 also have uv installed. Use uv if you want. If not, just do the normal "source .venv/Scripts/activate" (assuming you are in the top directory). The project uses the common structure for python projects, where the main code is in the src/cellpycore folder and tests are in the tests folder. And docs are in the docs folder. Again, assuming you are in the top directory of this repository.
 
 This library is to be used as a core part of a larger library (cellpy) that should read cell testing data from battery testers. It implements the core functionallity: finding all the steps and cycles and creating tables containing information pr step or pr cycle. It should run fast. And it should be easy for developers of the full cellpy library to use and extend it. It should be thread safe. It should be understandable.
+
+## Docstrings
+
+Use **Google-style** docstrings everywhere (this matches both `cellpy-core` and the old `cellpy` codebase). Do not use NumPy-style (underlined section headers) or plain reST field lists (`:param:` / `:return:`).
+
+Rules:
+- Start with a one-line summary, then an optional blank line and longer description.
+- Use these section headers (a header line ending in a colon, followed by an indented block): `Args:`, `Returns:`, `Raises:`, `Yields:`, `Attributes:` (for classes / enums), `Example:`, `Note:`.
+- In `Args:`, write each parameter as `name (type): description`. The `(type)` is optional when the signature already has a type hint, but stay consistent within a function.
+- Wrap code-like tokens (types, values, identifiers) in double backticks, e.g. ``` ``pandas.DataFrame`` ```, ``` ``"anode"`` ```.
+- Keep them concise and focused on behavior and intent, not a restatement of the code.
+
+Example:
+
+```python
+def find_steps(data, schema=None):
+    """Find all steps in the raw data and build the step table.
+
+    Args:
+        data (Data): The data object to process.
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+
+    Returns:
+        Data: The data object with the step table added.
+
+    Raises:
+        NoDataFound: If the data object has no raw data.
+    """
+```

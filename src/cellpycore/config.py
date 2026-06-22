@@ -15,13 +15,75 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 
-class CyclingMode(StrEnum):
-    ANODE = "anode"
-    OTHER = "other"
+class TestMode(StrEnum):
+    """Test mode of an electrochemical experiment (cycling configuration).
+
+    Describes whether a cell test is run in the ordinary configuration
+    (``NORMAL``) or in the inverted "anode mode" configuration (``INVERTED``).
+    This determines the charge/discharge sign conventions the summary / step
+    engine must apply when it processes the data.
+
+    The enum is deliberately binary: for sign-convention purposes only "anode
+    half-cell vs everything else" matters. cellpy's legacy ``cycle_mode`` string
+    carries a wider vocabulary (``"anode"``, ``"cathode"``,
+    ``"full_cell"``/``"fullcell"``, ``"standard"``); all non-anode values
+    collapse to ``NORMAL`` here. If a finer distinction is ever needed, add new
+    members rather than reintroducing free-form strings.
+
+    This is the typed replacement for cellpy's loose ``cycle_mode`` string
+    parameter (``cellpy.parameters.prms.Reader.cycle_mode``); it is defined for
+    that future use and not yet wired up in this package. When cellpy is
+    migrated onto cellpy-core it should pass a ``TestMode`` here instead of a
+    bare string, so the mode is validated and the sign conventions are derived
+    from it.
+
+    Attributes:
+        NORMAL (``"normal"``): The ordinary case (full cells, cathode
+            half-cells). The first step uses the standard (non-inverted)
+            charge/discharge convention. This is the baseline / default mode.
+        INVERTED (``"inverted"``): Anode half-cell ("anode mode"). The electrode
+            under test is the anode, cycled against lithium, so the convention
+            is inverted relative to ``NORMAL`` (the first step is typically a
+            lithiation). This is the case cellpy historically selected with
+            ``cycle_mode="anode"``.
+
+    Note:
+        Name and members intentionally mirror batbase's metadata enum
+        ``ElectroChemicalExperiment.TestMode`` (repo ``ife-bat/batbase``,
+        ``src/runs/models.py``). batbase is the metadata/persistence layer; this
+        enum is the processing-layer counterpart. They describe the same
+        physical reality and must be kept in sync via this mapping::
+
+            TestMode (here)   batbase (stored code)   cellpy cycle_mode
+            INVERTED          INVERTED ("i")          "anode"
+            NORMAL            NORMAL   ("n")          "full_cell" / "standard" / "cathode"
+
+        Two traps to remember:
+
+        - Storage values differ by layer on purpose: this StrEnum uses the
+          self-describing values ``"normal"`` / ``"inverted"``, while batbase
+          persists the short codes ``"n"`` / ``"i"`` (its ``TextChoices`` member
+          names still read ``NORMAL`` / ``INVERTED``). Translate explicitly at
+          the boundary; never compare raw stored values across the two layers.
+        - Default-polarity trap: batbase defaults to ``NORMAL``, but cellpy
+          historically defaulted ``cycle_mode="anode"`` (i.e. ``INVERTED``).
+          When bridging metadata into the engine, map the mode explicitly and
+          do not rely on either side's implicit default.
+    """
+
+    NORMAL = "normal"
+    INVERTED = "inverted"
 
 
 @dataclass
 class BaseCols:
+    """Shared base for all column-header objects.
+
+    Provides the ``__version__`` field and bracket-notation access
+    (``cols["name"]``) on top of attribute access (``cols.name``), so concrete
+    header classes can be used interchangeably with both styles.
+    """
+
     __version__: str = "0.1.0"
 
     def __getitem__(self, key: str) -> str:
@@ -30,6 +92,14 @@ class BaseCols:
 
 
 class FlexibleCols(BaseCols):
+    """Opt-in base that allows per-attribute name modification.
+
+    Behaves like ``BaseCols`` but routes every attribute access through
+    ``__getattribute__``, so subclasses can transform header names on the fly
+    (e.g. add a prefix/suffix). This flexibility costs some performance, so use
+    it only when dynamic header names are actually needed.
+    """
+
     def __getattribute__(self, key: str) -> str:
         """Modification of the attribute can be done here.
 
@@ -57,10 +127,14 @@ class FlexibleCols(BaseCols):
 
 
 class Cols(BaseCols):
-    # Implement common additonal functionality here (e.g. to_json method).
-    #
-    # If we chose to use custom getattr method, swap the
-    # class inheritance to FlexibleCols (will encure some performance loss).
+    """Standard base for the concrete column-header classes.
+
+    ``CycleCols``, ``StepCols`` and ``RawCols`` inherit from this. Add common
+    functionality shared across all header classes here (e.g. a ``to_json``
+    method). To enable dynamic header names, swap the inheritance to
+    ``FlexibleCols`` (which incurs some performance loss).
+    """
+
     pass
 
 
@@ -84,6 +158,13 @@ class Schema:
 
 
 class CycleCols(Cols):
+    """Column-header definitions for the per-cycle summary table.
+
+    Each attribute maps a logical quantity to the column name used in the
+    per-cycle summary produced by the summary engine (capacities, efficiencies,
+    durations, per-direction current/potential/power statistics, etc.).
+    """
+
     cycle_num: str = "cycle_num"
     mask: str = "mask"
     datapoint_num_first: str = "datapoint_num_first"
@@ -168,6 +249,14 @@ class CycleCols(Cols):
 
 
 class StepCols(Cols):
+    """Column-header definitions for the per-step summary table.
+
+    Each attribute maps a logical quantity to the column name used in the
+    per-step summary (per-step statistics such as mean/std/min/max/first/last/
+    delta for time, current, potential, capacity, energy, power and internal
+    resistance, plus the per-step C-rate estimate).
+    """
+
     cycle_num: str = "cycle_num"
     step_num: str = "step_num"
     sub_step_num: str = "sub_step_num"
@@ -246,6 +335,14 @@ class StepCols(Cols):
 
 
 class RawCols(Cols):
+    """Column-header definitions for the harmonized raw data table.
+
+    Each attribute maps a logical quantity to the column name used in the
+    harmonized raw format that cellpy-core consumes. The authoritative spec is
+    ``docs/data_format_specifications/harmonized_raw.md``; the column order here
+    mirrors that spec table.
+    """
+
     # Follows docs/data_format_specifications/harmonized_raw.md (authoritative,
     # 2025-09-17). Column order mirrors the spec table.
     datapoint_num: str = "datapoint_num"
