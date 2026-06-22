@@ -185,13 +185,26 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         from cellpycore import summarizers
 
         # The native summary engine is polars-native on the native schema and
-        # produces the clean ``CycleCols`` subset. The legacy-only summary
-        # columns (IR, C-rates, RIC, shifted/normalized capacities, …) are added
-        # only on the legacy bridge (``OldCellpyCellCore.make_core_summary``).
+        # produces the clean ``CycleCols`` subset plus C-rate / IR columns. The
+        # remaining legacy-only cruft (cumulated CE, shifted / RIC capacities) is
+        # added only on the legacy bridge (``OldCellpyCellCore.make_core_summary``).
         time_00 = time.time()
         logger.debug("start making summary (native polars engine)")
+        test_mode = (
+            config.TestMode.INVERTED
+            if self.cycle_mode == "anode"
+            else config.TestMode.NORMAL
+        )
         data = summarizers.make_summary(
-            data, self.schema, final_data_points=final_data_points
+            data,
+            self.schema,
+            final_data_points=final_data_points,
+            test_mode=test_mode,
+        )
+        if find_ir and (self.schema.raw.internal_resistance in data.raw.columns):
+            data = summarizers.ir_to_summary(data, self.schema)
+        data = summarizers.c_rates_to_summary(
+            data, self.schema, current_conversion_factor=current_conversion_factor
         )
         logger.debug(f"(dt: {(time.time() - time_00):4.2f}s)")
         return data
@@ -521,6 +534,9 @@ class OldCellpyCellCore(CellpyCellCore):
             nat.potential_end_discharge: leg.end_voltage_discharge,
         }
 
+    def _legacy_to_native_summary_rename(self) -> dict:
+        return {v: k for k, v in self._native_to_legacy_summary_rename().items()}
+
     def _legacy_summary_column_order(self, find_end_voltage: bool) -> list:
         leg = self.cycle_cols
         order = [
@@ -540,11 +556,14 @@ class OldCellpyCellCore(CellpyCellCore):
         order += [leg.charge_c_rate, leg.discharge_c_rate]
         return order
 
-    def _add_legacy_summary_extras(
-        self, data: Data, find_ir: bool, current_conversion_factor: float
-    ) -> None:
-        from cellpycore import summarizers
+    def _add_legacy_summary_cruft(self, data: Data) -> None:
+        """Add the pandas-only legacy summary columns the native schema omits.
 
+        ``cumulated_coulombic_efficiency``, ``shifted_*`` and ``cumulated_ric*`` are
+        legacy cruft with no native ``CycleCols`` equivalent (unlike the C-rates /
+        IR, which issue #21 moved onto the native schema). They are computed here in
+        pandas, after the native->legacy rename.
+        """
         leg = self.cycle_cols
         s = data.summary
         cc = s[leg.charge_capacity]
@@ -556,13 +575,6 @@ class OldCellpyCellCore(CellpyCellCore):
         s[leg.cumulated_ric_sei] = ((cc - dc.shift(1)) / dc.shift(1)).cumsum()
         s[leg.cumulated_ric_disconnect] = ((dc.shift(1) - dc) / dc.shift(1)).cumsum()
         data.summary = s
-
-        legacy_schema = config.Schema(self.raw_cols, self.cycle_cols, self.step_cols)
-        if find_ir and (self.raw_cols.internal_resistance_txt in data.raw.columns):
-            data = summarizers.ir_to_summary(data, legacy_schema)
-        data = summarizers.c_rates_to_summary(
-            data, legacy_schema, current_conversion_factor=current_conversion_factor
-        )
 
     def make_core_summary(
         self,
@@ -576,13 +588,15 @@ class OldCellpyCellCore(CellpyCellCore):
     ) -> Data:
         """Build the per-cycle summary via the polars engine, in/out in legacy form.
 
-        Runs the native ``make_summary`` engine, renames native->legacy, then adds
-        the legacy-only extras to reproduce the legacy ``HeadersSummary`` frame.
+        Runs the native ``make_summary`` engine plus the now-native polars C-rate /
+        IR helpers, renames native->legacy, then adds the remaining pandas-only
+        legacy cruft to reproduce the legacy ``HeadersSummary`` frame.
         """
         import polars as pl
 
         from cellpycore import summarizers
 
+        native_schema = config.default_schema()
         native_raw = pl.from_pandas(
             data.raw.rename(columns=self._legacy_to_native_raw_rename(data.raw.columns))
         )
@@ -593,7 +607,16 @@ class OldCellpyCellCore(CellpyCellCore):
         nd.raw = native_raw
         nd.steps = native_steps
         summarizers.make_summary(
-            nd, config.default_schema(), final_data_points=final_data_points
+            nd, native_schema, final_data_points=final_data_points
+        )
+
+        # C-rate / IR are now native-schema columns (issue #21): compute them on the
+        # native polars frame before the single native->legacy rename. Their native
+        # names match the legacy names, so they survive the rename untouched.
+        if find_ir and (native_schema.raw.internal_resistance in nd.raw.columns):
+            summarizers.ir_to_summary(nd, native_schema)
+        summarizers.c_rates_to_summary(
+            nd, native_schema, current_conversion_factor=current_conversion_factor
         )
 
         leg = self.cycle_cols
@@ -612,11 +635,67 @@ class OldCellpyCellCore(CellpyCellCore):
         summary.index = list(range(len(summary)))
         data.summary = summary
 
-        self._add_legacy_summary_extras(
-            data, find_ir=find_ir, current_conversion_factor=current_conversion_factor
-        )
+        self._add_legacy_summary_cruft(data)
 
         order = self._legacy_summary_column_order(find_end_voltage)
         order = [c for c in order if c in data.summary.columns]
         data.summary = data.summary[order]
+        return data
+
+    def add_scaled_summary_columns(
+        self,
+        data: Data,
+        nom_cap_abs: float,
+        normalization_cycles: Union[Sequence, int, None],
+        step_txt: Optional[str] = None,
+        specifics: Optional[List[str]] = None,
+        specific_converters: Optional[dict] = None,
+    ) -> Data:
+        """Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam).
+
+        The native helpers are polars-native on the native schema, but cellpy calls
+        this on the legacy pandas summary. So this bridges: legacy pandas summary ->
+        native polars -> native ``equivalent_cycles`` / ``generate_specific`` ->
+        legacy pandas, mapping the produced specific columns back to legacy names.
+        """
+        import polars as pl
+
+        from cellpycore import summarizers
+        from cellpycore.config import default_schema
+
+        native_schema = default_schema()
+        if specifics is None:
+            specifics = ["gravimetric", "areal", "absolute"]
+
+        nd = Data()
+        nd.summary = pl.from_pandas(
+            data.summary.rename(columns=self._legacy_to_native_summary_rename())
+        )
+
+        if step_txt is None:
+            step_txt = (
+                native_schema.cycle.discharge_capacity
+                if self.cycle_mode == "anode"
+                else native_schema.cycle.charge_capacity
+            )
+
+        summarizers.equivalent_cycles_to_summary(
+            nd, native_schema, nom_cap_abs, normalization_cycles, step_txt
+        )
+        specific_columns = native_schema.cycle.specific_columns
+        for mode in specifics:
+            converter = self._resolve_specific_converter(data, mode, specific_converters)
+            summarizers.generate_specific_summary_columns(
+                nd, mode, specific_columns, converter
+            )
+
+        # native -> legacy, incl. the generated ``{col}_{mode}`` specific columns.
+        rename = self._native_to_legacy_summary_rename()
+        for col in specific_columns:
+            legacy_col = rename.get(col, col)
+            for mode in specifics:
+                rename[f"{col}_{mode}"] = f"{legacy_col}_{mode}"
+        result = nd.summary.to_pandas().rename(columns=rename)
+        result.index = list(range(len(result)))
+        data.summary = result
         return data

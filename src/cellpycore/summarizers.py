@@ -4,8 +4,7 @@ from typing import Optional, Sequence, TypeVar, Union
 
 import polars as pl
 
-from cellpycore import selectors
-from cellpycore.config import Schema, default_schema
+from cellpycore.config import Schema, TestMode, default_schema
 from cellpycore.cell_core import Data
 from cellpycore.legacy import CellpyLimits
 
@@ -364,16 +363,34 @@ def make_summary(
     data: Data,
     schema: Optional[Schema] = None,
     final_data_points: Optional[Sequence] = None,
+    test_mode: TestMode = TestMode.NORMAL,
 ) -> Data:
     """Polars-native per-cycle summary (the clean native ``CycleCols`` subset).
 
     One row per cycle, built from the cycle-end raw values plus the step table.
     Capacities are cycle-cumulative per direction, so the cycle-end raw value is
-    the per-cycle total. Assumes full-/cathode-cell convention (charge first).
+    the per-cycle total.
 
-    The legacy-only summary columns (cumulated CE, shifted capacities, RIC,
-    C-rates, IR, normalized cycle index) are deliberately **not** produced here;
-    the legacy bridge (``OldCellpyCellCore``) adds those for cellpy compatibility.
+    Args:
+        data (Data): The data object (needs ``raw`` and ``steps``).
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+        final_data_points: Optional explicit cycle-end datapoints (one per cycle);
+            computed from the step table when not given.
+        test_mode (TestMode): Cell convention. ``TestMode.NORMAL`` (full-/cathode
+            cell, charge first) uses ``CE = 100*discharge/charge`` and
+            ``coulombic_difference = charge - discharge``. ``TestMode.INVERTED``
+            (anode half-cell, discharge first) flips the reference electrode so
+            ``CE = 100*charge/discharge`` and ``coulombic_difference =
+            discharge - charge`` (mirrors legacy ``cycle_mode == "anode"``).
+
+    Returns:
+        Data: The data object with the per-cycle ``summary`` added.
+
+    Note:
+        The legacy-only summary columns (cumulated CE, shifted capacities, RIC)
+        are deliberately **not** produced here; the legacy bridge
+        (``OldCellpyCellCore``) adds those for cellpy compatibility.
     """
     if schema is None:
         schema = default_schema()
@@ -409,9 +426,18 @@ def make_summary(
 
     cc = pl.col(chdr.charge_capacity)
     dc = pl.col(chdr.discharge_capacity)
+    # Coulombic efficiency / difference are referenced to the *first* step of the
+    # cycle: charge for NORMAL (cathode/full), discharge for INVERTED (anode).
+    # Capacity-loss columns are per-direction and mode-independent.
+    if test_mode == TestMode.INVERTED:
+        coulombic_efficiency = (100.0 * cc / dc).alias(chdr.coulombic_efficiency)
+        coulombic_difference = (dc - cc).alias(chdr.coulombic_difference)
+    else:
+        coulombic_efficiency = (100.0 * dc / cc).alias(chdr.coulombic_efficiency)
+        coulombic_difference = (cc - dc).alias(chdr.coulombic_difference)
     summary = summary.with_columns(
-        (100.0 * dc / cc).alias(chdr.coulombic_efficiency),
-        (cc - dc).alias(chdr.coulombic_difference),
+        coulombic_efficiency,
+        coulombic_difference,
         (cc.shift(1) - cc).alias(chdr.charge_capacity_loss),
         (dc.shift(1) - dc).alias(chdr.discharge_capacity_loss),
     )
@@ -434,16 +460,16 @@ def make_summary(
     return data
 
 
-# TODO(#13): NOT polars — pandas (summary[col] assignment). Still used by the
-#  `add_scaled_summary_columns` bridge; port to polars-native (native schema).
 def generate_specific_summary_columns(
     data: Data,
     mode: str,
     specific_columns: Sequence,
     specific_converter: float,
 ) -> Data:
-    """
-    Generate specific summary columns.
+    """Generate specific (per mass / area / volume) summary columns.
+
+    Polars-native: for each source column ``col`` present in the summary, add a
+    ``{col}_{mode}`` column equal to ``specific_converter * col``.
 
     The unit conversion is handled by value: the caller computes the conversion
     factor (e.g. via the consumer's own pint-based machinery) and passes it in,
@@ -451,41 +477,48 @@ def generate_specific_summary_columns(
 
     Args:
         data (Data): The data object.
-        mode (str): The mode of the data (gravimetric, areal or absolute).
-        specific_columns (Sequence): The columns to generate specific summary columns for.
+        mode (str): The mode of the data (``"gravimetric"``, ``"areal"`` or
+            ``"absolute"``).
+        specific_columns (Sequence): The columns to generate specific summary
+            columns for. Columns missing from the summary are skipped.
         specific_converter (float): The precomputed conversion factor to multiply
             the absolute columns by to obtain the specific (per mode) values.
 
     Returns:
         Data: The data object with the specific summary columns added to the summary.
     """
+    # The engine is polars-native; accept a pandas frame for convenience.
     summary = data.summary
-    for col in specific_columns:
-        logger.debug(f"generating specific column {col}_{mode}")
-        summary[f"{col}_{mode}"] = specific_converter * summary[col]
-    data.summary = summary
+    if not isinstance(summary, pl.DataFrame):
+        summary = pl.from_pandas(summary)
+    exprs = [
+        (specific_converter * pl.col(col)).alias(f"{col}_{mode}")
+        for col in specific_columns
+        if col in summary.columns
+    ]
+    data.summary = summary.with_columns(exprs)
     return data
 
 
-# TODO(#13): NOT polars — pandas (.loc/.isin/.empty/.mean). Helper for
-#  `equivalent_cycles_to_summary` / `c_rates_to_summary`; port to polars-native.
 def _calculate_nominal_capacity_from_cycles(
     summary: DataFrame,
     schema: Schema,
     normalization_cycles: Union[Sequence, int],
     step_txt: str,
 ) -> float:
-    """
-    Calculate nominal capacity from specified normalization cycles.
+    """Calculate nominal capacity from specified normalization cycles.
+
+    Polars-native: averages ``step_txt`` over the rows whose cycle number is in
+    ``normalization_cycles``.
 
     Args:
-        summary: The summary DataFrame containing cycle data.
+        summary: The summary ``polars.DataFrame`` containing cycle data.
         schema: The column-header schema to use.
-        normalization_cycles: The cycles to use for normalization (can be int or sequence).
-        step_txt: The header string for the capacity column.
+        normalization_cycles: The cycles to use for normalization (``int`` or sequence).
+        step_txt: The header string for the capacity column to average.
 
     Returns:
-        float: The calculated nominal capacity.
+        float: The calculated nominal capacity (``1.0`` if no reference cycle matches).
     """
     logger.info(
         f"Using these cycles for finding the nominal capacity: {normalization_cycles}"
@@ -493,11 +526,10 @@ def _calculate_nominal_capacity_from_cycles(
     if not isinstance(normalization_cycles, (list, tuple)):
         normalization_cycles = [normalization_cycles]
 
-    cap_ref = summary.loc[
-        summary[schema.raw.cycle_index_txt].isin(normalization_cycles),
-        step_txt,
-    ]
-    if not cap_ref.empty:
+    cap_ref = summary.filter(
+        pl.col(schema.cycle.cycle_num).is_in(list(normalization_cycles))
+    )[step_txt]
+    if cap_ref.len() > 0:
         nom_cap = cap_ref.mean()
     else:
         logger.info("Empty reference cycle(s)")
@@ -506,8 +538,6 @@ def _calculate_nominal_capacity_from_cycles(
     return nom_cap
 
 
-# TODO(#13): NOT polars — pandas (.assign, summary[...]). Still used by the
-#  `add_scaled_summary_columns` bridge (normalized_cycle_index); port to polars-native.
 def equivalent_cycles_to_summary(
     data: Data,
     schema: Optional[Schema] = None,
@@ -515,45 +545,49 @@ def equivalent_cycles_to_summary(
     normalization_cycles: Union[Sequence, int, None] = None,
     step_txt: Optional[str] = None,
 ) -> Data:
-    """
-    Add equivalent cycles column to the summary.
+    """Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary.
+
+    Polars-native: ``normalized_cycle_index = test_cumulated_charge_capacity / nom_cap``.
 
     Args:
         data (Data): The data object.
         schema: The column-header schema to use. Defaults to the native
             cellpy-core schema when not provided.
-        nom_cap (float): The nominal capacity (default: 1.0)
-        normalization_cycles (Union[Sequence, int, None]): The cycles for normalization (default: None)
-        step_txt (str): The header string for the charge or discharge capacity
-            (defaults to the raw charge-capacity header)
+        nom_cap (float): The nominal capacity (default: 1.0).
+        normalization_cycles (Union[Sequence, int, None]): The cycles for
+            normalization; when given, ``nom_cap`` is derived from them.
+        step_txt (str): The summary capacity column used to derive ``nom_cap``
+            from ``normalization_cycles`` (defaults to the native cycle
+            charge-capacity column).
+
+    Returns:
+        Data: The data object with ``normalized_cycle_index`` added to the summary.
     """
     if schema is None:
         schema = default_schema()
     headers_summary = schema.cycle
 
     if step_txt is None:
-        step_txt = schema.raw.charge_capacity_txt
+        step_txt = headers_summary.charge_capacity
 
+    # The engine is polars-native; accept a pandas frame for convenience.
     summary = data.summary
+    if not isinstance(summary, pl.DataFrame):
+        summary = pl.from_pandas(summary)
 
     if normalization_cycles is not None:
         nom_cap = _calculate_nominal_capacity_from_cycles(
             summary, schema, normalization_cycles, step_txt
         )
 
-    normalized_cycle_index_column = {
-        headers_summary.normalized_cycle_index: summary[
-            headers_summary.cumulated_charge_capacity
-        ]
-        / nom_cap
-    }
-    summary = summary.assign(**normalized_cycle_index_column)
-    data.summary = summary
+    data.summary = summary.with_columns(
+        (pl.col(headers_summary.test_cumulated_charge_capacity) / nom_cap).alias(
+            headers_summary.normalized_cycle_index
+        )
+    )
     return data
 
 
-# TODO(#13): NOT polars — pandas (.loc/.rename/.drop_duplicates/.merge/.drop). Still
-#  used by the legacy summary bridge (`_add_legacy_summary_extras`); port to polars-native.
 def c_rates_to_summary(
     data: Data,
     schema: Optional[Schema] = None,
@@ -562,8 +596,12 @@ def c_rates_to_summary(
     step_txt: Optional[str] = None,
     current_conversion_factor: float = 1.0,
 ) -> Data:
-    """
-    Add c-rates to the summary.
+    """Add per-cycle charge / discharge C-rates to the summary.
+
+    Polars-native: takes the first charge (resp. discharge) step's per-step
+    C-rate (``c_rate``) in each cycle, scales it by ``current_conversion_factor /
+    nom_cap``, and joins it onto the summary as ``charge_c_rate`` /
+    ``discharge_c_rate``.
 
     The current-unit conversion is handled by value: the caller computes the
     factor that converts the raw current unit to the desired output current unit
@@ -571,17 +609,20 @@ def c_rates_to_summary(
     unit handling itself.
 
     Args:
-        data (core.Data): The data object.
+        data (core.Data): The data object (needs ``summary`` and ``steps``).
         schema: The column-header schema to use. Defaults to the native
             cellpy-core schema when not provided.
-        nom_cap (float): The nominal capacity (default: 1.0)
-        normalization_cycles (Union[Sequence, int, None]): The cycles for normalization (default: None)
-        step_txt (str): The header string for the charge or discharge capacity
-            (defaults to the raw charge-capacity header)
+        nom_cap (float): The nominal capacity (default: 1.0).
+        normalization_cycles (Union[Sequence, int, None]): The cycles for
+            normalization; when given, ``nom_cap`` is derived from them.
+        step_txt (str): The summary capacity column used to derive ``nom_cap``
+            from ``normalization_cycles`` (defaults to the native cycle
+            charge-capacity column).
         current_conversion_factor (float): The precomputed factor to convert the
             raw current unit to the output current unit (default: 1.0).
+
     Returns:
-        core.Data: The data object with the c-rates added to the summary.
+        core.Data: The data object with the C-rates added to the summary.
     """
     if schema is None:
         schema = default_schema()
@@ -591,123 +632,138 @@ def c_rates_to_summary(
     logger.debug("Extracting C-rates")
 
     if step_txt is None:
-        step_txt = schema.raw.charge_capacity_txt
+        step_txt = headers_summary.charge_capacity
 
+    # The engine is polars-native; accept pandas frames for convenience.
     summary = data.summary
+    if not isinstance(summary, pl.DataFrame):
+        summary = pl.from_pandas(summary)
     steps = data.steps
+    if not isinstance(steps, pl.DataFrame):
+        steps = pl.from_pandas(steps)
 
     if normalization_cycles is not None:
         nom_cap = _calculate_nominal_capacity_from_cycles(
             summary, schema, normalization_cycles, step_txt
         )
 
-    def rate_to_cellpy_units(rate):
-        return rate * current_conversion_factor
+    def _first_rate(step_type: str, out_name: str) -> "pl.DataFrame":
+        # First step of the given type per cycle (mirrors legacy drop_duplicates
+        # keep="first" on the step-table row order).
+        return (
+            steps.filter(pl.col(headers_steps.step_type) == step_type)
+            .group_by(headers_steps.cycle_num, maintain_order=True)
+            .agg(pl.col(headers_steps.c_rate).first().alias(out_name))
+            .with_columns(
+                (pl.col(out_name) / nom_cap * current_conversion_factor).alias(out_name)
+            )
+        )
 
-    charge_steps = steps.loc[
-        steps[headers_steps.type] == "charge",
-        [headers_steps.cycle, headers_steps.rate_avr],
-    ].rename(columns={headers_steps.rate_avr: headers_summary.charge_c_rate})
+    charge = _first_rate("charge", headers_summary.charge_c_rate)
+    discharge = _first_rate("discharge", headers_summary.discharge_c_rate)
 
-    charge_steps = charge_steps.drop_duplicates(
-        subset=[headers_steps.cycle], keep="first"
-    )
-    charge_steps[headers_summary.charge_c_rate] = rate_to_cellpy_units(
-        charge_steps[headers_summary.charge_c_rate] / nom_cap
-    )
-
-    summary = summary.merge(
-        charge_steps,
-        left_on=headers_summary.cycle_index,
-        right_on=headers_steps.cycle,
+    summary = summary.join(
+        charge,
+        left_on=headers_summary.cycle_num,
+        right_on=headers_steps.cycle_num,
         how="left",
-    ).drop(columns=headers_steps.cycle)
-
-    discharge_steps = steps.loc[
-        steps[headers_steps.type] == "discharge",
-        [headers_steps.cycle, headers_steps.rate_avr],
-    ].rename(columns={headers_steps.rate_avr: headers_summary.discharge_c_rate})
-
-    discharge_steps = discharge_steps.drop_duplicates(
-        subset=[headers_steps.cycle], keep="first"
     )
-    discharge_steps[headers_summary.discharge_c_rate] = rate_to_cellpy_units(
-        discharge_steps[headers_summary.discharge_c_rate] / nom_cap
-    )
-    summary = summary.merge(
-        discharge_steps,
-        left_on=headers_summary.cycle_index,
-        right_on=headers_steps.cycle,
+    summary = summary.join(
+        discharge,
+        left_on=headers_summary.cycle_num,
+        right_on=headers_steps.cycle_num,
         how="left",
-    ).drop(columns=headers_steps.cycle)
+    )
     data.summary = summary
     return data
 
 
-# TODO(#13): NOT polars — pandas (.iloc/.loc/.insert/.index row loop). Still used by the
-#  legacy summary bridge (`_add_legacy_summary_extras`); port to polars-native. NOTE the
-#  pre-existing "DOES NOT WORK PROPERLY" bug below — preserve current behaviour (oracle-locked)
-#  when porting; fix correctness in its own issue.
 def ir_to_summary(data: Data, schema: Optional[Schema] = None) -> Data:
-    # should check:  test.charge_steps = None,
-    # test.discharge_steps = None
-    # THIS DOES NOT WORK PROPERLY!!!!
-    # Found a file where it writes IR for cycle n on cycle n+1
-    # This only picks out the data on the last IR step before
+    """Add per-cycle internal-resistance columns (``ir_charge`` / ``ir_discharge``).
+
+    Polars-native, **behaviour-preserving** port of the legacy helper: for each
+    cycle it takes the first charge (resp. discharge) step and reads the
+    internal-resistance value of that step's first raw datapoint. Cycles without a
+    matching step get ``0.0``.
+
+    Note:
+        This reproduces a known legacy correctness quirk (it reads IR from the
+        charge/discharge step itself rather than a dedicated IR step). The
+        behaviour is intentionally kept oracle-locked here; fixing the IR
+        semantics is tracked as its own issue.
+
+    Args:
+        data (Data): The data object (needs ``summary``, ``raw`` and ``steps``).
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+
+    Returns:
+        Data: The data object with ``ir_charge`` / ``ir_discharge`` added.
+    """
     if schema is None:
         schema = default_schema()
     headers_raw = schema.raw
     headers_summary = schema.cycle
+    headers_steps = schema.step
 
+    # The engine is polars-native; accept pandas frames for convenience.
     summary = data.summary
+    if not isinstance(summary, pl.DataFrame):
+        summary = pl.from_pandas(summary)
     raw = data.raw
+    if not isinstance(raw, pl.DataFrame):
+        raw = pl.from_pandas(raw)
+    steps = data.steps
+    if not isinstance(steps, pl.DataFrame):
+        steps = pl.from_pandas(steps)
 
     logger.debug("finding ir")
-    only_zeros = summary[headers_raw.discharge_capacity_txt] * 0.0
-    discharge_steps = selectors.get_step_numbers(
-        data,
-        schema,
-        steptype="discharge",
-        allctypes=False,
+
+    # internal resistance at the first raw datapoint of each (cycle, step).
+    # maintain_order (no sort) mirrors the legacy ``.values[0]`` taking the first
+    # matching raw row in the frame's natural order.
+    raw_ir = (
+        raw.group_by(
+            [headers_raw.cycle_num, headers_raw.step_num], maintain_order=True
+        ).agg(pl.col(headers_raw.internal_resistance).first().alias("__ir"))
     )
-    charge_steps = selectors.get_step_numbers(
-        data,
-        schema,
-        steptype="charge",
-        allctypes=False,
+
+    def _ir_for(step_type: str, out_name: str) -> "pl.DataFrame":
+        first_step = (
+            steps.filter(pl.col(headers_steps.step_type) == step_type)
+            .group_by(headers_steps.cycle_num, maintain_order=True)
+            .agg(pl.col(headers_steps.step_num).first().alias("__step"))
+        )
+        joined = first_step.join(
+            raw_ir,
+            left_on=[headers_steps.cycle_num, "__step"],
+            right_on=[headers_raw.cycle_num, headers_raw.step_num],
+            how="left",
+        )
+        return joined.select(
+            pl.col(headers_steps.cycle_num),
+            pl.col("__ir").alias(out_name),
+        )
+
+    ir_discharge = _ir_for("discharge", headers_summary.ir_discharge)
+    ir_charge = _ir_for("charge", headers_summary.ir_charge)
+
+    summary = summary.join(
+        ir_discharge,
+        left_on=headers_summary.cycle_num,
+        right_on=headers_steps.cycle_num,
+        how="left",
     )
-    ir_indexes = []
-    ir_values = []
-    ir_values2 = []
-    for i in summary.index:
-        # selecting the appropriate cycle
-        cycle = summary.iloc[i][headers_raw.cycle_index_txt]
-        step = discharge_steps[cycle]
-        if step[0]:
-            ir = raw.loc[
-                (raw[headers_raw.cycle_index_txt] == cycle)
-                & (data.raw[headers_raw.step_index_txt] == step[0]),
-                headers_raw.internal_resistance_txt,
-            ]
-            # This will not work if there are more than one item in step
-            ir = ir.values[0]
-        else:
-            ir = 0
-        step2 = charge_steps[cycle]
-        if step2[0]:
-            ir2 = raw[
-                (raw[headers_raw.cycle_index_txt] == cycle)
-                & (data.raw[headers_raw.step_index_txt] == step2[0])
-            ][headers_raw.internal_resistance_txt].values[0]
-        else:
-            ir2 = 0
-        ir_indexes.append(i)
-        ir_values.append(ir)
-        ir_values2.append(ir2)
-    ir_frame = only_zeros + ir_values
-    ir_frame2 = only_zeros + ir_values2
-    summary.insert(0, column=headers_summary.ir_discharge, value=ir_frame)
-    summary.insert(0, column=headers_summary.ir_charge, value=ir_frame2)
+    summary = summary.join(
+        ir_charge,
+        left_on=headers_summary.cycle_num,
+        right_on=headers_steps.cycle_num,
+        how="left",
+    )
+    summary = summary.with_columns(
+        pl.col(headers_summary.ir_discharge).fill_null(0.0),
+        pl.col(headers_summary.ir_charge).fill_null(0.0),
+    )
     data.summary = summary
     return data
 
