@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../cellpy"
+		},
+		{
+			"path": "../batbase"
+		}
+	],
+	"settings": {}
+}
