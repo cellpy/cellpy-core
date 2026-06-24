@@ -11,6 +11,7 @@ from typing import Callable, Iterable, Union, Sequence, Optional, List, TypeVar
 
 
 from cellpycore import config
+from cellpycore import header_mapping
 
 from cellpycore.legacy import NoDataFound
 from cellpycore.legacy import Meta, MockMetaTestDependent
@@ -373,56 +374,16 @@ class OldCellpyCellCore(CellpyCellCore):
     # translate at this seam: legacy pandas raw -> native polars raw -> engine ->
     # native polars steps -> legacy pandas steps. The output frame reproduces the
     # legacy ``HeadersStepTable`` layout byte-for-byte (the golden oracle).
-
-    _NATIVE_STAT_TO_LEGACY = {
-        "mean": "avr",
-        "std": "std",
-        "min": "min",
-        "max": "max",
-        "first": "first",
-        "last": "last",
-        "delta": "delta",
-    }
+    #
+    # The native <-> legacy correspondence is declared once in
+    # ``cellpycore.header_mapping``; the methods below just adapt it to the
+    # DataFrame renames this bridge needs (see tests/test_header_mapping.py).
 
     def _legacy_to_native_raw_rename(self, columns) -> dict:
-        leg, nat = self.raw_cols, config.RawCols()
-        mapping = {
-            leg.data_point_txt: nat.datapoint_num,
-            leg.test_time_txt: nat.test_time,
-            leg.step_time_txt: nat.step_time,
-            leg.cycle_index_txt: nat.cycle_num,
-            leg.step_index_txt: nat.step_num,
-            leg.current_txt: nat.current,
-            leg.voltage_txt: nat.potential,
-            leg.charge_capacity_txt: nat.cumulative_charge_capacity,
-            leg.discharge_capacity_txt: nat.cumulative_discharge_capacity,
-            leg.internal_resistance_txt: nat.internal_resistance,
-        }
-        return {k: v for k, v in mapping.items() if k in columns}
+        return header_mapping.legacy_to_native_raw(columns)
 
     def _native_to_legacy_step_rename(self) -> dict:
-        leg, nat = self.step_cols, config.StepCols()
-        base_map = {
-            "datapoint_num": leg.point,
-            "test_time": leg.test_time,
-            "step_time": leg.step_time,
-            "current": leg.current,
-            "potential": leg.voltage,
-            "charge_capacity": leg.charge,
-            "discharge_capacity": leg.discharge,
-            "internal_resistance": leg.internal_resistance,
-        }
-        rename = {}
-        for nbase, lbase in base_map.items():
-            for nstat, lstat in self._NATIVE_STAT_TO_LEGACY.items():
-                rename[f"{nbase}_{nstat}"] = f"{lbase}_{lstat}"
-        rename[nat.cycle_num] = leg.cycle
-        rename[nat.step_num] = leg.step
-        rename[nat.sub_step_num] = leg.sub_step
-        rename[nat.step_type] = leg.type
-        rename[nat.sub_step_type] = leg.sub_type
-        rename[nat.c_rate] = leg.rate_avr
-        return rename
+        return header_mapping.native_to_legacy_step()
 
     def _legacy_step_column_order(self) -> list:
         leg = self.step_cols
@@ -435,7 +396,7 @@ class OldCellpyCellCore(CellpyCellCore):
             leg.charge, leg.discharge, leg.internal_resistance,
         ]
         for base in bases:
-            order += [f"{base}_{stat}" for stat in self._NATIVE_STAT_TO_LEGACY.values()]
+            order += [f"{base}_{stat}" for stat in header_mapping.STAT_SUFFIXES.values()]
         order += [leg.rate_avr, leg.type, leg.sub_type, leg.info]
         return order
 
@@ -552,31 +513,13 @@ class OldCellpyCellCore(CellpyCellCore):
     # pandas helpers, which is appropriate: they are legacy cruft.
 
     def _legacy_to_native_step_rename(self) -> dict:
-        return {v: k for k, v in self._native_to_legacy_step_rename().items()}
+        return header_mapping.legacy_to_native_step()
 
     def _native_to_legacy_summary_rename(self) -> dict:
-        leg, nat = self.cycle_cols, config.CycleCols()
-        return {
-            nat.cycle_num: leg.cycle_index,
-            nat.datapoint_num_last: leg.data_point,
-            nat.last_test_time: leg.test_time,
-            nat.charge_capacity: leg.charge_capacity,
-            nat.discharge_capacity: leg.discharge_capacity,
-            nat.coulombic_efficiency: leg.coulombic_efficiency,
-            nat.coulombic_difference: leg.coulombic_difference,
-            nat.charge_capacity_loss: leg.charge_capacity_loss,
-            nat.discharge_capacity_loss: leg.discharge_capacity_loss,
-            nat.test_cumulated_charge_capacity: leg.cumulated_charge_capacity,
-            nat.test_cumulated_discharge_capacity: leg.cumulated_discharge_capacity,
-            nat.test_cumulated_coulombic_difference: leg.cumulated_coulombic_difference,
-            nat.test_cumulated_charge_capacity_loss: leg.cumulated_charge_capacity_loss,
-            nat.test_cumulated_discharge_capacity_loss: leg.cumulated_discharge_capacity_loss,
-            nat.potential_end_charge: leg.end_voltage_charge,
-            nat.potential_end_discharge: leg.end_voltage_discharge,
-        }
+        return header_mapping.native_to_legacy_summary()
 
     def _legacy_to_native_summary_rename(self) -> dict:
-        return {v: k for k, v in self._native_to_legacy_summary_rename().items()}
+        return header_mapping.legacy_to_native_summary()
 
     def _legacy_summary_column_order(self, find_end_voltage: bool) -> list:
         leg = self.cycle_cols
