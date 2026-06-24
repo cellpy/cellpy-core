@@ -107,3 +107,42 @@ Deliberately **out of scope** for this pass (deferred): metadata-level enums
 (`TestFamily`/`TestType`, `SourceKind`) and cross-cutting descriptors (capacity
 specifics `gravimetric`/`areal`/`absolute`; batbase-aligned `CellConfiguration`
 / `FormFactor`).
+
+## Issue #34 — authoritative header mapping (STEP-09)
+
+Settled the `config.Cols` <-> legacy `Headers*` story. Decisions:
+
+1. **One source of truth.** The native <-> legacy correspondence now lives in
+   `src/cellpycore/header_mapping.py` (per-family `RAW_PAIRS`, `STEP_BASE_PAIRS`
+   + `STEP_SCALAR_PAIRS` + `STAT_SUFFIXES`, `CYCLE_PAIRS`). The four rename dicts
+   that used to be hand-maintained inside `OldCellpyCellCore` (`cell_core.py`)
+   now derive from it; the bridge keeps no literal column maps. Behaviour is
+   byte-identical (golden + schema tests unchanged).
+2. **Mapping is over column-name strings**, not attribute names — that is what
+   DataFrame renames act on, and legacy `HeadersSummary` has two attributes that
+   share a value (`discharge_capacity` / `discharge_capacity_raw`).
+3. **Identity pass-throughs are declared.** Summary `ir_charge`, `ir_discharge`,
+   `charge_c_rate`, `discharge_c_rate`, `normalized_cycle_index` already share a
+   name across native/legacy; they are listed as (identity) pairs so the totality
+   claim holds. As bridge renames they are harmless no-ops.
+4. **"Lossless/total" is modulo documented exceptions.** Each side declares
+   explicit exception sets (`LEGACY_ONLY_*` / `NATIVE_ONLY_*`) for columns with
+   no counterpart — legacy-only cruft (`shifted_*`, `cumulated_ric*`,
+   `cumulated_coulombic_efficiency`, `ocv_*`, temperatures, `aux_` prefix, the
+   step-table `info` / `ustep` / `ir_pct_change` / `test`) and native-only
+   columns (raw `aux_*` / `cumulative_*_energy` / identity & source fields, the
+   step `power_*` / `*_energy` statistics and `mask`, and the rich native cycle
+   statistics). `tests/test_header_mapping.py` asserts, per family, that declared
+   columns == mapped ∪ exceptions (disjoint), so adding a column on either side
+   fails the test until it is deliberately categorised — no silent rename drift.
+5. **`test_id` is intentionally not bridged.** `RawCols.test_id` and
+   `HeadersNormal.test_id_txt` are both `"test_id"`, but the raw bridge does not
+   translate it today; it is recorded as an exception on both sides rather than
+   added to `RAW_PAIRS` (behaviour-preserving). Revisit if/when the bridge needs
+   to carry `test_id` through.
+6. **Step granularity.** The native/legacy step correspondence is declared at
+   *base-signal* level and expanded with `STAT_SUFFIXES` (`mean` -> `avr`, the
+   rest identical). `datapoint_num` / `test_time` participate as base signals but
+   `StepCols` only declares their `_first` / `_last` variants (the engine emits
+   just those two stats), so the step totality test compares at base-signal
+   granularity.

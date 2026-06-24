@@ -72,6 +72,25 @@ package):
 6. Port `tests/test_slim.py` (from 334) as the seam's acceptance test; keep the full
    suite green.
 
+## Regularly run the essential parity smoke tests (cellpy repo)
+
+The integration seam is only as safe as the tests that guard it. In the **`cellpy`**
+repo, run the curated smoke set regularly (after any change to `cellpy-core`, the
+bridge, headers/units, or the summary/step path):
+
+```bash
+uv run pytest -m essential   # ~15 tests, ~12 s
+```
+
+These are tagged with the `essential` pytest marker (registered in
+`cellpy/pyproject.toml`) and cover the read -> step-table -> summary pipeline plus
+the `cellpy` <-> `cellpy-core` header/unit parity contract
+(`tests/test_core_settings_parity.py`). Run them via **uv**, not the conda env:
+the `cellpycore` editable dependency is wired through `[tool.uv.sources]`, which
+conda/pip do not honor, and the conda `cellpy_dev_31x` env may be below the 3.13
+floor both repos require. The full suite is still the source of truth before a
+release/PR; `-m essential` is the fast inner-loop check.
+
 ## Open decisions (resolve early — cheap, unblocking)
 
 - **Python floor.** `cellpy-core` requires `>=3.13`; `cellpy` supports 3.10–3.13.
