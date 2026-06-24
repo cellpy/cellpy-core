@@ -43,7 +43,7 @@ Reconciled against the actual repo state on **2026-06-23**. Status legend: ✅ d
 | STEP-06 Golden fixtures | 🟡 ongoing | `cellpy-core/tests/test_golden.py` in place; extend as more is ported |
 | STEP-07 Build-backend swap | ✅ done | `cellpy` already hatchling+uv; no `setup.py` |
 | STEP-08 Port `make_step_table` | 🟡 largely done | ported + routed; remaining: add `CellpyLimits` to the parity test, retire any dead step-table code in `cellpy` |
-| STEP-09 Harmonize headers | 🟡 in progress | `config.Cols` + spec tests exist; `config.Cols` ↔ legacy `Headers*` mapping not finalized (#4) |
+| STEP-09 Harmonize headers | 🟡 in progress | `config.Cols` + spec tests exist; `config.Cols` ↔ legacy `Headers*` mapping not finalized (#34) |
 | STEP-10 Metadata scaffolding | ⬜ not started | designed in `test-metadata-and-merging.md`; `RawCols.test_id` key exists; no `TestMeta`/`CellMeta` class yet |
 | STEP-11 Timestamp representation | ⬜ not started | `epoch_time_utc` still float seconds (#32) |
 | STEP-12 Unit-handling boundary | 🟡 partly done | `CellpyUnits` schema + `units.py` tooling behind the optional `units` extra; factors cross the seam by value; `cellpy` still keeps duplicate converters |
@@ -202,7 +202,7 @@ detection thresholds (`CellpyLimits`).
 
 **Status:** 🟡 in progress — `config.Cols` (`RawCols` / `StepCols` / `CycleCols`) and their
 spec-conformance tests exist; the `config.Cols` ↔ legacy `Headers*` mapping is not yet
-finalized (#4).
+finalized (#34).
 
 **Codebase:** `cellpy-core` (`config` / `legacy`).
 
