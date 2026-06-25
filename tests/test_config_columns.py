@@ -76,6 +76,8 @@ CYCLE_EXPECTED = [
     "open_circuit_potential_discharge", "cv_share", "cv_charge_capacity",
     "cv_charge_energy", "cv_charge_time", "cc_charge_capacity", "cc_charge_energy",
     "cc_charge_time",
+    "temperature_cell_mean", "temperature_cell_max", "temperature_cell_min",
+    "temperature_cell_last",
     "normalized_cycle_index", "charge_c_rate", "discharge_c_rate",
     "ir_charge", "ir_discharge",
 ]

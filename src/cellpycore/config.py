@@ -365,6 +365,15 @@ class CycleCols(Cols):
     cc_charge_capacity: str = "cc_charge_capacity"
     cc_charge_energy: str = "cc_charge_energy"
     cc_charge_time: str = "cc_charge_time"
+    # Per-cycle cell-temperature statistics, aggregated from the raw
+    # ``aux_temperature_cell`` signal. Declared here (like the per-direction
+    # current/potential/power stats above) ahead of engine support; the summary
+    # engine does not populate them yet. ``_mean`` / ``_last`` map to the legacy
+    # ``temperature_mean`` / ``temperature_last`` summary columns.
+    temperature_cell_mean: str = "temperature_cell_mean"
+    temperature_cell_max: str = "temperature_cell_max"
+    temperature_cell_min: str = "temperature_cell_min"
+    temperature_cell_last: str = "temperature_cell_last"
     # Derived/scaled columns produced by the standalone native summary path
     # (``add_scaled_summary_columns`` + the C-rate / IR helpers). These were
     # previously legacy-only "bridge extras" (see step-table-polars-migration.md,

@@ -109,6 +109,8 @@ CYCLE_PAIRS = [
     ("test_cumulated_discharge_capacity_loss", "cumulated_discharge_capacity_loss"),
     ("potential_end_charge", "end_voltage_charge"),
     ("potential_end_discharge", "end_voltage_discharge"),
+    ("temperature_cell_mean", "temperature_mean"),
+    ("temperature_cell_last", "temperature_last"),
     # Identity pass-throughs (native name already equals the legacy name).
     ("ir_charge", "ir_charge"),
     ("ir_discharge", "ir_discharge"),
@@ -162,7 +164,7 @@ LEGACY_ONLY_CYCLE = frozenset({
     "shifted_discharge_capacity", "ocv_first_min", "ocv_second_min",
     "ocv_first_max", "ocv_second_max", "cumulated_ric_disconnect",
     "cumulated_ric_sei", "cumulated_ric", "low_level", "high_level",
-    "temperature_last", "temperature_mean", "aux_",
+    "aux_",
 })
 
 # Native CycleCols column values with no legacy HeadersSummary counterpart.
@@ -189,7 +191,7 @@ NATIVE_ONLY_CYCLE = frozenset({
     "relaxation_potential_discharge", "open_circuit_potential_charge",
     "open_circuit_potential_discharge", "cv_share", "cv_charge_capacity",
     "cv_charge_energy", "cv_charge_time", "cc_charge_capacity", "cc_charge_energy",
-    "cc_charge_time",
+    "cc_charge_time", "temperature_cell_max", "temperature_cell_min",
 })
 
 

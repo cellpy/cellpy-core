@@ -90,6 +90,10 @@ Date: 2025-09-08
 | cc_charge_capacity | float | Ampere-hour (Ah) | 3.1234 | Total cycle charge capacity from cycling in CC-mode |
 | cc_charge_energy | float | Watt-hour (Wh) | 3.1234 | Total cycle charge energy from cycling in CC-mode |
 | cc_charge_time | float | Seconds (s) | 3.1234 | Total cycle charge time cycling in CC-mode |
+| temperature_cell_mean | float | Degree Celsius (°C) | 25.4 | Arithmetic mean of cell temperature over the cycle (from aux_temperature_cell). |
+| temperature_cell_max | float | Degree Celsius (°C) | 25.4 | Maximum cell temperature over the cycle (from aux_temperature_cell). |
+| temperature_cell_min | float | Degree Celsius (°C) | 25.4 | Minimum cell temperature over the cycle (from aux_temperature_cell). |
+| temperature_cell_last | float | Degree Celsius (°C) | 25.4 | Cell temperature at the end of the cycle (from aux_temperature_cell). |
 | normalized_cycle_index | float | - | 3.14 | Equivalent cycle number (test_cumulated_charge_capacity / nominal capacity) |
 | charge_c_rate | float | C-rate (1/h) | 0.05 | C-rate of the first charge step in the cycle |
 | discharge_c_rate | float | C-rate (1/h) | 0.05 | C-rate of the first discharge step in the cycle |
