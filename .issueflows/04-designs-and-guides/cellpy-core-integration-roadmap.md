@@ -30,7 +30,7 @@ together, one at a time, before implementation.
 
 ## Status at a glance
 
-Reconciled against the actual repo state on **2026-06-23**. Status legend: ✅ done ·
+Reconciled against the actual repo state on **2026-06-25**. Status legend: ✅ done ·
 🟡 partly done / in progress · ⬜ not started.
 
 | Step | Status | Evidence / what remains |
@@ -43,8 +43,8 @@ Reconciled against the actual repo state on **2026-06-23**. Status legend: ✅ d
 | STEP-06 Golden fixtures | 🟡 ongoing | `cellpy-core/tests/test_golden.py` in place; extend as more is ported |
 | STEP-07 Build-backend swap | ✅ done | `cellpy` already hatchling+uv; no `setup.py` |
 | STEP-08 Port `make_step_table` | 🟡 largely done | ported + routed; remaining: add `CellpyLimits` to the parity test, retire any dead step-table code in `cellpy` |
-| STEP-09 Harmonize headers | 🟡 in progress | `config.Cols` + spec tests exist; `config.Cols` ↔ legacy `Headers*` mapping not finalized (#34) |
-| STEP-10 Metadata scaffolding | ⬜ not started | designed in `test-metadata-and-merging.md`; `RawCols.test_id` key exists; no `TestMeta`/`CellMeta` class yet |
+| STEP-09 Harmonize headers | ✅ done | `config.Cols` + spec tests; `header_mapping.py` gives lossless/total `config.Cols` ↔ legacy `Headers*` round-trip (`tests/test_header_mapping.py`) (#34/#35) |
+| STEP-10 Metadata scaffolding | ✅ done | `cellpycore.metadata` (`models.py`/`io.py`); `TestMeta`/`CellMeta`/`TestMetaCollection` + (de)serialize/merge; graceful-degradation guard (`tests/test_metadata.py`) (#37) |
 | STEP-11 Timestamp representation | ⬜ not started | `epoch_time_utc` still float seconds (#32) |
 | STEP-12 Unit-handling boundary | 🟡 partly done | `CellpyUnits` schema + `units.py` tooling behind the optional `units` extra; factors cross the seam by value; `cellpy` still keeps duplicate converters |
 
@@ -200,9 +200,10 @@ detection thresholds (`CellpyLimits`).
 
 ## STEP-09 Harmonize column headers
 
-**Status:** 🟡 in progress — `config.Cols` (`RawCols` / `StepCols` / `CycleCols`) and their
-spec-conformance tests exist; the `config.Cols` ↔ legacy `Headers*` mapping is not yet
-finalized (#34).
+**Status:** ✅ done — `config.Cols` (`RawCols` / `StepCols` / `CycleCols`) and their
+spec-conformance tests exist, and `header_mapping.py` now centralizes a lossless, total
+`config.Cols` ↔ legacy `Headers*` round-trip, covered by `tests/test_header_mapping.py`
+(#34/#35).
 
 **Codebase:** `cellpy-core` (`config` / `legacy`).
 
@@ -217,9 +218,12 @@ Settle the column-header story (`config.Cols` ↔ legacy `Headers*`).
 
 ## STEP-10 Metadata scaffolding in core (population stays opt-in upstream)
 
-**Status:** ⬜ not started — designed in `test-metadata-and-merging.md`; the compact
-`RawCols.test_id` key exists, but no `TestMeta`/`CellMeta` class or helpers are implemented
-yet.
+**Status:** ✅ done — `cellpycore.metadata` ships the scaffolding: `models.py`
+(`CellMeta` / `TestMeta` / `TestMetaCollection`, keyed by `test_id`) and `io.py`
+((de)serialize, `merge_test_meta`, plus `NotImplementedError` HDF5/DB stubs). The
+step/summary engine is untouched and a graceful-degradation guard proves core never
+*requires* populated metadata (`tests/test_metadata.py`). Population stays the consumer's
+opt-in (#37).
 
 **Codebase:** `cellpy-core` (scaffolding); population is `cellpy`'s opt-in later.
 
@@ -303,8 +307,8 @@ flowchart TD
     S05 --> S06["STEP-06 Golden fixtures 🟡"]
     S03 --> S08["STEP-08 Port make_step_table 🟡"]
     S06 --> S08
-    S08 --> S09["STEP-09 Harmonize headers 🟡"]
-    S08 --> S10["STEP-10 Metadata scaffolding ⬜"]
+    S08 --> S09["STEP-09 Harmonize headers ✅"]
+    S08 --> S10["STEP-10 Metadata scaffolding ✅"]
     S08 --> S11["STEP-11 Timestamp representation ⬜"]
     S03 --> S12["STEP-12 Unit-handling boundary 🟡"]
     S07["STEP-07 Build-backend swap ✅"] -.independent.-> S08
@@ -312,7 +316,7 @@ flowchart TD
     classDef done fill:#d4edda,stroke:#28a745,color:#155724;
     classDef partly fill:#fff3cd,stroke:#ffc107,color:#856404;
     classDef todo fill:#f8d7da,stroke:#dc3545,color:#721c24;
-    class S01,S02,S03,S04,S05,S07 done;
-    class S06,S08,S09,S12 partly;
-    class S10,S11 todo;
+    class S01,S02,S03,S04,S05,S07,S09,S10 done;
+    class S06,S08,S12 partly;
+    class S11 todo;
 ```
