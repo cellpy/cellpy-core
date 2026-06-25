@@ -99,6 +99,10 @@ merged, `TestMeta` holds one row per `test_id`.
 Test-level descriptors that are constant within a test (e.g. `test_family`, `test_type`,
 `cycle_mode`) belong here, **not** in the raw columns.
 
+This spec remains authoritative for the field set. The fields below now also have a code home
+as the `TestMeta` / `CellMeta` dataclasses in `cellpycore.metadata` (scaffolding; see
+`.issueflows/04-designs-and-guides/metadata-scaffolding.md`, issue #30).
+
 | Field | Data type | Unit | Sample data | Comment |
 | --- | --- | --- | --- | --- |
 | test_id | int | - | 0 | key; matches `raw.test_id` (the per-test grouping key) |
