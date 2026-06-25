@@ -15,6 +15,7 @@ def create_raw_data() -> DataFrame:
     """
     import polars as pl
     from cellpycore.config import RawCols
+    from cellpycore.timestamps import NS_PER_SECOND
 
     # Create a RawCols instance to get column names
     raw_cols = RawCols()
@@ -24,9 +25,13 @@ def create_raw_data() -> DataFrame:
 
     # Create time series data
     test_time = pl.Series(raw_cols.test_time, range(n_points), dtype=pl.Float64)
+    # epoch_time_utc is int64 nanoseconds since the Unix epoch, UTC (canonical
+    # absolute-timestamp dtype; see cellpycore.timestamps). Start at 2021-01-01 and
+    # advance one second per row.
+    start_epoch_s = 1609459200
     epoch_time_utc = pl.Series(
         raw_cols.epoch_time_utc,
-        range(1609459200, 1609459200 + n_points),
+        [(start_epoch_s + i) * NS_PER_SECOND for i in range(n_points)],
         dtype=pl.Int64,
     )
 

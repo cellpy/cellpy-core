@@ -12,6 +12,7 @@ from pathlib import Path
 import polars as pl
 
 from cellpycore.config import RawCols
+from cellpycore.timestamps import epoch_ns_to_seconds
 
 DATA_DIR = Path(__file__).parent / "data"
 HARMONIZED_RAW = DATA_DIR / "arbin_cc_harmonized_raw.parquet"
@@ -37,6 +38,11 @@ def test_harmonized_row_count_and_key_values():
     # mask defaults to True; source_type is the constant set by the converter.
     assert df[cols.mask].all()
     assert df[cols.source_type].unique().to_list() == ["arbin"]
-    # epoch_time_utc must be real float seconds (2016-era source), not null.
-    assert df[cols.epoch_time_utc].null_count() == 0
-    assert df[cols.epoch_time_utc].min() > 1_400_000_000
+    # epoch_time_utc must be int64 nanoseconds since the Unix epoch UTC (2016-era
+    # source), not null. ~1.47e18 ns; converting back to seconds lands in 2016.
+    epoch = df[cols.epoch_time_utc]
+    assert epoch.dtype == pl.Int64
+    assert epoch.null_count() == 0
+    assert epoch.min() > 1_400_000_000 * 1_000_000_000
+    # ns -> seconds round-trip places the fixture start in the 2016 era.
+    assert 1_400_000_000 < epoch_ns_to_seconds(epoch.min()) < 1_500_000_000

@@ -13,11 +13,11 @@ Date: 2025-09-08
 | mask | boolean | - | True | Selection flag; default True (row is selected / used) |
 | datapoint_num_first | int | - | 123 | First datapoint number in cycle |
 | datapoint_num_last | int | - | 123 | Last datapoint number in cycle | 
-| first_epoch_time_utc | float | Seconds (s) | 1715609528.578140 | UNIX timestamp for first datapoint in cycle (in UTC) |
-| last_epoch_time_utc | float | Seconds (s) | 1715609528.578140 | UNIX timestamp for last datapoint in cycle (in UTC) |
+| first_epoch_time_utc | int64 | Nanoseconds (ns) | 1715609528578140000 | UNIX timestamp for first datapoint in cycle (ns since epoch, UTC); convert to seconds via `cellpycore.timestamps` |
+| last_epoch_time_utc | int64 | Nanoseconds (ns) | 1715609528578140000 | UNIX timestamp for last datapoint in cycle (ns since epoch, UTC); convert to seconds via `cellpycore.timestamps` |
 | first_test_time | float | Seconds (s) | 12.43212 | Seconds since start of test at the beginning of cycle |
 | last_test_time | float | Seconds (s) | 12.43212 | Seconds since start of test at the end of cycle |
-| cycle_duration | float | Seconds (s) | 3600.0 | Duration of cycle (last_epoch_time_utc - first_epoch_time_utc) |
+| cycle_duration | float | Seconds (s) | 3600.0 | Duration of cycle; computed as (last_epoch_time_utc - first_epoch_time_utc) converted from ns to seconds at the boundary |
 | charge_duration | float | Seconds (s) | 1800.0 | Duration of charge steps. |
 | discharge_duration | float | Seconds (s) | 1500.0 | Duration of discharge steps. |
 | rest_duration | float | Seconds (s) | 300.0 | Duration of rest steps. |

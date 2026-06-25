@@ -17,11 +17,15 @@ Original cycler files are converted to this format, in order to unify the format
 - Time columns (`test_time`, etc.) are in **seconds**.
 - The cycler step mode column is **`step_mode`**. There is no `channel_status` column
   (it was dropped in issue #10).
-- **`epoch_time_utc`** is float **seconds since the Unix epoch, UTC**. When an importer
-  only has the cycler's wall-clock timestamp (often a *naive*, timezone-less datetime,
-  e.g. legacy Arbin `date_time`), it is converted to epoch seconds by treating the naive
-  timestamp as UTC. (Example: `dev/make_harmonized_raw.py` does this when building the
-  `arbin_cc_harmonized_raw.parquet` test fixture.)
+- **`epoch_time_utc`** is **int64 nanoseconds since the Unix epoch, UTC**. This matches
+  the internal representation of `polars`/`pandas`/Arrow timestamps, so round-trips to
+  native datetime types are lossless (float epoch seconds cannot hold nanosecond
+  resolution). When an importer only has the cycler's wall-clock timestamp (often a
+  *naive*, timezone-less datetime, e.g. legacy Arbin `date_time`), it is converted to
+  epoch nanoseconds by treating the naive timestamp as UTC. (Example:
+  `dev/make_harmonized_raw.py` does this when building the
+  `arbin_cc_harmonized_raw.parquet` test fixture.) Conversion helpers to/from float
+  seconds UTC and native datetime live in `cellpycore.timestamps`.
 - Capacity / energy columns are **cumulative per cycle, per direction** — see *Capacity
   convention* below. (Renamed from `step_cumulative_*` in issue #13; the old name was
   misleading.)
@@ -35,7 +39,7 @@ Set up a flexible structure that allows for more columns.
 | datapoint_num | int | - | 1234 | index, corrected sequential datapoints |
 | source_datapoint_num | int | - | 1234 | original data point number from data collection |
 | mask | boolean | - | True | default: True (meaning: this value is selected and used) |
-| epoch_time_utc | float | second | 1715609528.578140 | - |
+| epoch_time_utc | int64 | nanosecond | 1715609528578140000 | nanoseconds since the Unix epoch, UTC; convert to seconds via `cellpycore.timestamps` |
 | test_time | float | second | 12.43212 | - |
 | step_time | float | second | 12.43212 | optional value; time elapsed since the start of the current step |
 | source_type | str(10) | - | "Neware" | - |
@@ -150,7 +154,9 @@ deferred — see the design note).
   - in our previous notes we listed "substep number"
   - do we need this? and if so, what would it be used for?
 - **epoch_time_utc**
-  - should this be a float or a datetime object?
+  - ~~should this be a float or a datetime object?~~ **Resolved (issue #32):** stored as
+    **int64 nanoseconds since the Unix epoch, UTC**. Convert to float seconds UTC or a
+    native datetime with the helpers in `cellpycore.timestamps`.
 - **cycle_num**
   - usually provided by the tester
   - enough with keeping it, or do we need an updated cycle number?
