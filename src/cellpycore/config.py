@@ -288,6 +288,8 @@ class CycleCols(Cols):
     mask: str = "mask"
     datapoint_num_first: str = "datapoint_num_first"
     datapoint_num_last: str = "datapoint_num_last"
+    # Absolute timestamps: int64 nanoseconds since the Unix epoch, UTC (see
+    # cellpycore.timestamps for ns <-> seconds / datetime conversion helpers).
     first_epoch_time_utc: str = "first_epoch_time_utc"
     last_epoch_time_utc: str = "last_epoch_time_utc"
     first_test_time: str = "first_test_time"
@@ -506,6 +508,9 @@ class RawCols(Cols):
     datapoint_num: str = "datapoint_num"
     source_datapoint_num: str = "source_datapoint_num"
     mask: str = "mask"
+    # int64 nanoseconds since the Unix epoch, UTC (canonical absolute-timestamp
+    # dtype; see cellpycore.timestamps). ``test_time`` / ``step_time`` below are
+    # relative elapsed *seconds* (float), not absolute timestamps.
     epoch_time_utc: str = "epoch_time_utc"
     test_time: str = "test_time"
     step_time: str = "step_time"

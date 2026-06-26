@@ -36,6 +36,7 @@ from pathlib import Path
 import polars as pl
 
 from cellpycore.config import RawCols
+from cellpycore.timestamps import datetime_to_epoch_ns_expr
 
 CORE_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = CORE_ROOT / "tests" / "data"
@@ -96,11 +97,11 @@ def build_harmonized(raw: pl.DataFrame, cols: RawCols) -> pl.DataFrame:
         for attr in attrs:
             exprs[getattr(cols, attr)] = pl.col(legacy)
 
-    # date_time (naive Datetime) -> epoch_time_utc (float seconds). The naive
-    # tester timestamp is treated as UTC; documented in the spec.
-    exprs[cols.epoch_time_utc] = (pl.col("date_time").dt.epoch("ms") / 1000.0).cast(
-        pl.Float64
-    )
+    # date_time (naive Datetime) -> epoch_time_utc (int64 nanoseconds, UTC). The
+    # naive tester timestamp is treated as UTC; documented in the spec. int64 ns is
+    # the canonical absolute-timestamp dtype (lossless vs the native Datetime), see
+    # ``cellpycore.timestamps``.
+    exprs[cols.epoch_time_utc] = datetime_to_epoch_ns_expr("date_time")
 
     # Generated / constant columns.
     exprs[cols.mask] = pl.lit(True)
