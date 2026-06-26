@@ -30,7 +30,7 @@ together, one at a time, before implementation.
 
 ## Status at a glance
 
-Reconciled against the actual repo state on **2026-06-25**. Status legend: ✅ done ·
+Reconciled against the actual repo state on **2026-06-26**. Status legend: ✅ done ·
 🟡 partly done / in progress · ⬜ not started.
 
 | Step | Status | Evidence / what remains |
@@ -45,7 +45,7 @@ Reconciled against the actual repo state on **2026-06-25**. Status legend: ✅ d
 | STEP-08 Port `make_step_table` | 🟡 largely done | ported + routed; remaining: add `CellpyLimits` to the parity test, retire any dead step-table code in `cellpy` |
 | STEP-09 Harmonize headers | ✅ done | `config.Cols` + spec tests; `header_mapping.py` gives lossless/total `config.Cols` ↔ legacy `Headers*` round-trip (`tests/test_header_mapping.py`) (#34/#35) |
 | STEP-10 Metadata scaffolding | ✅ done | `cellpycore.metadata` (`models.py`/`io.py`); `TestMeta`/`CellMeta`/`TestMetaCollection` + (de)serialize/merge; graceful-degradation guard (`tests/test_metadata.py`) (#37) |
-| STEP-11 Timestamp representation | ⬜ not started | `epoch_time_utc` still float seconds (#32) |
+| STEP-11 Timestamp representation | ✅ done | `epoch_time_utc` + `first/last_epoch_time_utc` are int64-ns UTC; `cellpycore.timestamps` conversion helpers + fixture regenerated (`tests/test_timestamps.py`) (#32, PR #38) |
 | STEP-12 Unit-handling boundary | 🟡 partly done | `CellpyUnits` schema + `units.py` tooling behind the optional `units` extra; factors cross the seam by value; `cellpy` still keeps duplicate converters |
 
 Per-step `Status:` lines below repeat this for context; this table is the quick reference.
@@ -241,8 +241,12 @@ remains the consumer's (cellpy v2.0) opt-in.
 
 ## STEP-11 Settle timestamp representation
 
-**Status:** ⬜ not started — `epoch_time_utc` is still float seconds in the harmonized
-schema/fixtures; the int64-ns move is tracked by #32.
+**Status:** ✅ done — `epoch_time_utc` (raw) and `first/last_epoch_time_utc` (cycle) are
+now **int64 nanoseconds since the Unix epoch, UTC**. `cellpycore.timestamps` provides the
+ns ↔ float-seconds and ns ↔ datetime conversion helpers; the converter
+(`dev/make_harmonized_raw.py`) and mock helper emit int64 ns and the harmonized parquet
+fixture was regenerated. Covered by `tests/test_timestamps.py` and the updated
+`test_harmonized_fixture.py` (#32, PR #38).
 
 **Codebase:** `cellpy-core`.
 
@@ -309,14 +313,13 @@ flowchart TD
     S06 --> S08
     S08 --> S09["STEP-09 Harmonize headers ✅"]
     S08 --> S10["STEP-10 Metadata scaffolding ✅"]
-    S08 --> S11["STEP-11 Timestamp representation ⬜"]
+    S08 --> S11["STEP-11 Timestamp representation ✅"]
     S03 --> S12["STEP-12 Unit-handling boundary 🟡"]
     S07["STEP-07 Build-backend swap ✅"] -.independent.-> S08
 
     classDef done fill:#d4edda,stroke:#28a745,color:#155724;
     classDef partly fill:#fff3cd,stroke:#ffc107,color:#856404;
     classDef todo fill:#f8d7da,stroke:#dc3545,color:#721c24;
-    class S01,S02,S03,S04,S05,S07,S09,S10 done;
+    class S01,S02,S03,S04,S05,S07,S09,S10,S11 done;
     class S06,S08,S12 partly;
-    class S11 todo;
 ```
