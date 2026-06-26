@@ -42,7 +42,7 @@ Reconciled against the actual repo state on **2026-06-26**. Status legend: ✅ d
 | STEP-05 Contract tests | ✅ done | `cellpy/tests/test_core_settings_parity.py` (`CellpyLimits` excluded — see STEP-08) |
 | STEP-06 Golden fixtures | 🟡 ongoing | `cellpy-core/tests/test_golden.py` in place; extend as more is ported |
 | STEP-07 Build-backend swap | ✅ done | `cellpy` already hatchling+uv; no `setup.py` |
-| STEP-08 Port `make_step_table` | 🟡 largely done | ported + routed; remaining: add `CellpyLimits` to the parity test, retire any dead step-table code in `cellpy` |
+| STEP-08 Port `make_step_table` | ✅ done | ported + routed; `CellpyLimits` now in the parity test (`cellpy/tests/test_core_settings_parity.py`); no dead step-table engine left in `cellpy` (`make_step_table` is pure delegation) |
 | STEP-09 Harmonize headers | ✅ done | `config.Cols` + spec tests; `header_mapping.py` gives lossless/total `config.Cols` ↔ legacy `Headers*` round-trip (`tests/test_header_mapping.py`) (#34/#35) |
 | STEP-10 Metadata scaffolding | ✅ done | `cellpycore.metadata` (`models.py`/`io.py`); `TestMeta`/`CellMeta`/`TestMetaCollection` + (de)serialize/merge; graceful-degradation guard (`tests/test_metadata.py`) (#37) |
 | STEP-11 Timestamp representation | ✅ done | `epoch_time_utc` + `first/last_epoch_time_utc` are int64-ns UTC; `cellpycore.timestamps` conversion helpers + fixture regenerated (`tests/test_timestamps.py`) (#32, PR #38) |
@@ -179,10 +179,12 @@ parity. Independent of the integration; translate `package_data`, `entry_points`
 
 ## STEP-08 Port `make_step_table` (+ `CellpyLimits`) into core
 
-**Status:** 🟡 largely done — `summarizers.make_step_table` + `make_core_step_table` are
+**Status:** ✅ done — `summarizers.make_step_table` + `make_core_step_table` are
 implemented and `cellpy.make_step_table` already delegates across the seam; `CellpyLimits`
-lives in `cellpycore.legacy` (`tests/test_limits.py`). Remaining: add `CellpyLimits` to
-the STEP-05 parity test, and retire any dead step-table code left in `cellpy`.
+lives in `cellpycore.legacy` (`tests/test_limits.py`) and is now folded into the STEP-05
+parity test (`cellpy/tests/test_core_settings_parity.py`, 5 classes). Verified that
+`cellpy.make_step_table` is pure orchestration/delegation — no dead step-table engine code
+remains to retire. `cellpy`'s step-table tests stay green routing through core.
 
 **Codebase:** `cellpy-core` (primary); follow-up cleanup in `cellpy`.
 
@@ -309,7 +311,7 @@ flowchart TD
     S03 --> S04["STEP-04 Seam acceptance test ✅"]
     S03 --> S05["STEP-05 Contract tests ✅"]
     S05 --> S06["STEP-06 Golden fixtures 🟡"]
-    S03 --> S08["STEP-08 Port make_step_table 🟡"]
+    S03 --> S08["STEP-08 Port make_step_table ✅"]
     S06 --> S08
     S08 --> S09["STEP-09 Harmonize headers ✅"]
     S08 --> S10["STEP-10 Metadata scaffolding ✅"]
@@ -320,6 +322,6 @@ flowchart TD
     classDef done fill:#d4edda,stroke:#28a745,color:#155724;
     classDef partly fill:#fff3cd,stroke:#ffc107,color:#856404;
     classDef todo fill:#f8d7da,stroke:#dc3545,color:#721c24;
-    class S01,S02,S03,S04,S05,S07,S09,S10,S11 done;
-    class S06,S08,S12 partly;
+    class S01,S02,S03,S04,S05,S07,S08,S09,S10,S11 done;
+    class S06,S12 partly;
 ```
