@@ -1,0 +1,12 @@
+# issue-flow project config. Created by 'issue-flow config add'.
+# Only these keys are read from config.toml; other ISSUEFLOW_* settings are environment-only (see 'issue-flow config add --help').
+
+[issueflow]
+# Scaffolding mode: 'standard' (full workflow) or 'simple' (markdown-only). Switch by re-running 'issue-flow init --mode <id>'.
+mode = "standard"
+
+# Reply in the terse caveman style by default (true/false). Re-run 'issue-flow update' after changing so the rule re-renders.
+caveman_default = true
+
+# Run the grill-me planning interview by default (true/false). Re-run 'issue-flow update' after changing so the rule re-renders.
+grill_me_default = false
