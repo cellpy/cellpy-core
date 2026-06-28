@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 # issue-flow — issue init (`/iflow-init`)
 
-Follow this skill when the user wants to **capture a GitHub issue locally** using the same rules as `.cursor/commands/iflow-init.md`.
+Follow this skill when the user wants to **capture a GitHub issue locally**.
 
 ## When to use
 
@@ -20,12 +20,21 @@ Follow this skill when the user wants to **capture a GitHub issue locally** usin
 
 ## Instructions
 
+> **CLI fast path (optional).** If the `issue-flow` CLI is on `PATH`, two
+> mechanical steps have a deterministic shortcut:
+> - **Fetch + write (steps 3 & 5):** `issue-flow agent capture <N>` (use `--repo owner/repo` to override the resolved remote, `--force` to overwrite). It writes the `## Original issue text` body deterministically and prints the comments payload — you still triage comments (step 3a) and add the curated section yourself.
+> - **Archive (step 4):** `issue-flow agent sweep --except <N>` (add `--dry-run` to preview).
+>
+> The CLI is optional: if it is missing or errors, fall back to the manual
+> instructions below. (`issue-flow` is only present when the user installed it,
+> e.g. `uv tool install issue-flow`.)
+
 1. **Folders** — Ensure `.issueflows/00-tools/`, `.issueflows/01-current-issues/`, `.issueflows/02-partly-solved-issues/`, and `.issueflows/03-solved-issues/` exist (create only if the user allows; never delete issue markdown).
 
 2. **Resolve the reference**
    - **URL** — Parse `owner`, `repo`, issue number.
    - **Number only** — Use `git remote get-url origin` (HTTPS or SSH) to derive `owner/repo`. If parsing fails, ask for a full URL or `owner/repo`.
-   - **Empty / whitespace** — Run `git branch --show-current`. If empty or `main`/`master` (case-insensitive), **stop** and ask for a number, URL, or `owner/repo/#n`. If the branch matches `^\d+-.+`, ask once whether to use that leading issue number; do not proceed without a clear yes/no.
+   - **Empty / whitespace** — Run `git branch --show-current`. If empty or `main`/`master` (case-insensitive), **stop** and ask for a number, URL, or `owner/repo/#n`. If the branch is an **issue-style branch** matching `^\d+-.+`, ask: "You have not provided an issue reference. Should I use issue #NN from the current branch `<branchname>`?" Do not proceed without a clear yes/no.
    - **Archived-issue guard** — Before writing, check `.issueflows/02-partly-solved-issues/` and `.issueflows/03-solved-issues/` for existing `issue<n>_*` files. If the issue is already archived, warn and require a second explicit confirmation before re-opening it in `.issueflows/01-current-issues/`.
 
 3. **Fetch** — `gh issue view <n> --repo owner/repo --json title,body,url,number,comments`. The `comments` field returns an array of `{author.login, body, createdAt, ...}` that step 3a consumes. On failure, report the error and suggest `gh auth login`. After confirming `owner/repo`, change the chat/agent tab title to reflect the issue topic on the form "Issue <issue number> <short description of issue>" (e.g. "Issue 74 cell info").

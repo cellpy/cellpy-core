@@ -11,7 +11,7 @@ disable-model-invocation: true
 # issue-flow — issue status overview (`/iflow-status`)
 
 Follow this skill when the user wants a bird's-eye view of every issue's status
-rather than acting on the single focus issue. Matches `.cursor/commands/iflow-status.md`.
+rather than acting on the single focus issue.
 
 ## When to use
 
@@ -21,6 +21,13 @@ rather than acting on the single focus issue. Matches `.cursor/commands/iflow-st
 Do **not** use this skill to *change* anything. It is read-only and off-path; for acting on the focus issue use `/iflow`, and to choose the next issue use `/iflow-pick`.
 
 ## Instructions
+
+> **CLI fast path (optional).** If the `issue-flow` CLI is on `PATH`, run
+> `issue-flow status` (add `--local` to skip the GitHub query, `--json` for a
+> machine-readable object) — it produces this whole overview deterministically.
+> The CLI is optional: if it is missing or errors, fall back to the manual
+> instructions below. (`issue-flow` is only present when the user installed it,
+> e.g. `uv tool install issue-flow`.)
 
 1. **Context / preflight.** Detect the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`; fall back to `git symbolic-ref --quiet --short refs/remotes/origin/HEAD | sed 's|^origin/||'`, else `main`). Report current branch, clean/dirty tree (`git status --porcelain`), and ahead/behind vs `origin/<default>`. If the branch matches `^(\d+)-.+`, treat the leading digits as the focus issue `N`.
 

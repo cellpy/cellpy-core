@@ -132,13 +132,46 @@ If the issue is fully resolved (no additional subtasks present), move the origin
 
 ### Scripts that can help us when working on issues
 
-If you want, you can put small scripts etc. that you have made and think could be useful in the future in our llm tools folder: `.issueflows/00-tools`. Also, feel free to use the tools in our llm tools folder if you find someone that could be useful.
+`.issueflows/00-tools/` is the project's durable toolbox of reusable helper scripts, with a `README.md` index describing each one.
+
+- **Check it first.** Before writing a new one-off helper for an issue, skim the `00-tools/README.md` index and the folder — a suitable tool may already exist.
+- **Contribute back.** If you build something during an issue that could help on a future one, save it into `.issueflows/00-tools/` and add a one-line entry to the index (name, what it does, when to use it) so the next agent knows whether to reach for it.
+
+
+
+### Optional response styles
+
+A **caveman** Agent Skill is installed under `.cursor/skills/caveman/`. It
+is a terse, "token-greedy" response style that keeps all technical substance
+while dropping filler, articles, and pleasantries. It is **off by default** and
+only kicks in when the user asks for it (e.g. "caveman", "token greedy", "be
+terse"). Turn it off with **"stop caveman"** or **"normal mode"**. Code,
+commits, PRs, security warnings, and destructive-action confirmations are always
+written in normal prose, never caveman. (To make caveman on by default for this
+project, set `caveman_default = true` under `[issueflow]` in
+`.issueflows/config.toml` and re-run `issue-flow update`.)
+
+
+
+
+### Planning aids
+
+A **grill-me** Agent Skill is installed under `.cursor/skills/grill-me/`.
+It runs a relentless planning interview that stress-tests a plan or design —
+one question at a time, each with a recommended answer — until every branch of
+the decision tree is resolved. It is **off by default** and only kicks in when
+you ask for it (e.g. "grill me", "poke holes in this"). Turn it off with **"stop
+grilling"** or **"normal mode"**. (To make grilling on by default during planning
+for this project, set `grill_me_default = true` under `[issueflow]` in
+`.issueflows/config.toml` and re-run `issue-flow update`.)
+
 
 
 ### Designs and guides
 
 Long-lived design docs, design decisions, and project "good practices" live under `.issueflows/04-designs-and-guides/`. Unlike the issue folders, content here is **not** tied to a single issue and is **not** archived when an issue closes — it is the project's durable memory.
 
+- **Project brief:** if `.issueflows/04-designs-and-guides/this-project.md` exists, read it early for project-specific context (what the repo is, stack/runtime, how to run/test, conventions, entry points, and known limitations).
 - **Before planning or implementing**, skim `.issueflows/04-designs-and-guides/` for existing docs relevant to the current issue and follow them (cite them in the plan when they influence the approach).
 - **When a non-trivial design decision is made** during `/iflow-plan` or `/iflow-start`, add or update a markdown file here. Keep entries terse: context, the decision, alternatives considered, and a link back to the issue.
 - **Never overwritten by `issue-flow update`.** The folder is recreated if missing, but existing files are left alone.

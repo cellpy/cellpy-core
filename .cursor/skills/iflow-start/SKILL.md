@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 # issue-flow — issue start (`/iflow-start`)
 
-Follow this skill when the user wants to **begin implementation** from issue notes, matching `.cursor/commands/iflow-start.md` and project rules. Planning itself lives in `/iflow-plan`; this skill is now implementation-only.
+Follow this skill when the user wants to **begin implementation** from issue notes and project rules. Planning itself lives in `/iflow-plan`; this skill is now implementation-only.
 
 ## When to use
 
@@ -17,6 +17,13 @@ Follow this skill when the user wants to **begin implementation** from issue not
 - Work should follow the issue-flow markdown workflow and stay aligned with `.cursor/rules/issueflow-rules.mdc` when present.
 
 ## Instructions
+
+> **CLI fast path (optional).** If the `issue-flow` CLI is on `PATH`, use
+> `issue-flow agent preflight` for the branch status preflight (step 2) and
+> `issue-flow agent sweep --except <N>` for the stale sweep (step 3; add
+> `--dry-run` to preview). The CLI is optional: if it is missing or errors,
+> fall back to the manual instructions below. (`issue-flow` is only present
+> when the user installed it, e.g. `uv tool install issue-flow`.)
 
 1. **Select the issue** — Read `.issueflows/01-current-issues/`. If there is no `*_original.md` (or multiple ambiguous groups), **stop** and ask which issue to use.
 
@@ -31,15 +38,19 @@ Follow this skill when the user wants to **begin implementation** from issue not
      - **Proceed without a plan** — add a short `- Skipped /iflow-plan on <date>` note to `issue<N>_status.md` and continue.
      - **Abort.**
 
-5. **Implement** — Execute the plan (or the explicitly-acknowledged plan-less path). Prefer minimal, focused diffs. Match existing code style and tooling.
+5. **Seed the status file up front** — Before writing code, create `issue<N>_status.md` under `.issueflows/01-current-issues/` (if missing) with an unchecked `- [ ] Done` checkbox and short **What's done** / **Remaining work** sections. It is a living document that should exist *during* the work, not only at `/iflow-close`.
 
-6. **Project conventions**
+6. **Implement** — Execute the plan (or the explicitly-acknowledged plan-less path). Prefer minimal, focused diffs. Match existing code style and tooling.
+
+7. **Project conventions**
    - Use the project's **documented Python toolchain**, not bare `python`. Default to `uv run` (scripts, pytest, tools) and `uv add` / `uv remove` / `uv sync` for dependencies, **unless** the project documents otherwise — e.g. a conda project runs scripts and `pytest` inside the **activated conda environment** (`conda activate <env>` or `conda run -n <env> …`). Honour existing project rules over these defaults.
-   - After meaningful progress, update or create `issue<N>_status.md` under `.issueflows/01-current-issues/` with an explicit `- [ ] Done` checkbox that stays unchecked until fully resolved. Record what has landed and what remains.
+   - **Toolbox** — Before writing a one-off helper script, check `.issueflows/00-tools/` (start with its `README.md` index) for an existing tool. If you build something reusable during this issue, save it into `.issueflows/00-tools/` and add a one-line entry to that README's index (name, what it does, when to use it) for the next agent.
+   - If `.issueflows/04-designs-and-guides/this-project.md` exists, read it for project-specific context before implementing; then skim relevant design docs under `.issueflows/04-designs-and-guides/`.
+   - As you iterate, re-read and keep `issue<N>_status.md` current — move items between **What's done** and **Remaining work**, leaving `- [ ] Done` unchecked until fully resolved.
 
-7. **Hand off** — When the implementation is ready to ship, tell the user to run `/iflow-close` (optionally with `bump`/`patch`/`minor`/`major`). Parking work mid-stream goes through `/iflow-pause`.
+8. **Hand off** — When the implementation is ready to ship, tell the user to run `/iflow-close` (optionally with `bump`/`patch`/`minor`/`major`). Parking work mid-stream goes through `/iflow-pause`.
 
-8. **Reporting** — Summarize what changed, what remains, and where the issue docs live. Include any branch warnings from step 2, any group moves from step 3, and whether the plan was followed or explicitly skipped.
+9. **Reporting** — Summarize what changed, what remains, and where the issue docs live. Include any branch warnings from step 2, any group moves from step 3, and whether the plan was followed or explicitly skipped.
 
 ## Constraints
 
