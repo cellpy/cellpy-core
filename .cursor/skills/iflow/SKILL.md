@@ -1,5 +1,5 @@
 ---
-name: iflow-iflow
+name: iflow
 description: >-
   Run the /iflow smart dispatcher: detect where the focus issue stands in the
   lifecycle (via files in .issueflows/01-current-issues/ and
@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 # issue-flow — iflow smart dispatcher (`/iflow`)
 
-Follow this skill when the user wants to run **the right next step** in the issue-flow lifecycle without remembering which specific command applies. Matches `.cursor/commands/iflow.md`.
+Follow this skill when the user wants to run **the right next step** in the issue-flow lifecycle without remembering which specific command applies.
 
 ## When to use
 
@@ -21,6 +21,14 @@ Follow this skill when the user wants to run **the right next step** in the issu
 Do **not** use this skill for `/iflow-pick`, `/iflow-pause`, `/iflow-cleanup`, `/iflow-yolo`, or `/iflow-fix`. Those are explicit-only commands. (`/iflow-pick` is the front door *before* `/iflow-init`, for when no issue has been chosen yet. `/iflow-fix` runs an interactive iterative-fixes session, driven by `/iflow-fix` + `/iflow-close`.)
 
 ## Instructions
+
+> **CLI fast path (optional).** If the `issue-flow` CLI is on `PATH`, run
+> `issue-flow agent state --json` to resolve the focus issue, its lifecycle
+> stage, and the suggested `next_command` in one deterministic step (covers
+> instructions 1–2), then dispatch to that command. The CLI is optional: if it
+> is not installed or it errors, fall back to the manual instructions below.
+> (`issue-flow` is only present when the user installed it, e.g.
+> `uv tool install issue-flow`.)
 
 1. **Resolve the focus issue number `N`.**
    - `git branch --show-current`. If it matches `^(\d+)-.+`, the leading digits are the **authoritative** `N`.
@@ -37,6 +45,7 @@ Do **not** use this skill for `/iflow-pick`, `/iflow-pause`, `/iflow-cleanup`, `
    - **B** — original exists, no `issue<N>_plan.md` → dispatch to **`/iflow-plan`**. Reason: "no plan file yet".
    - **C** — plan exists, and status file is missing or its `- [x] Done` is unchecked → dispatch to **`/iflow-start`**. Reason: "plan is confirmed but status is not `- [x] Done`".
    - **D** — status file contains `- [x] Done` (case-insensitive on `done`) → dispatch to **`/iflow-close`**. Reason: "status marks the issue `- [x] Done`".
+
 
 3. **Announce and dispatch.** Print one line like `/iflow -> /iflow-plan  (issue #N: no plan file yet)` and then follow the chosen command's playbook. Forward the user's trailing text verbatim.
 
