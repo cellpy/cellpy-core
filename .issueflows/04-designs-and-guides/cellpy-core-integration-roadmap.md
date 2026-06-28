@@ -49,6 +49,9 @@ Reconciled against the actual repo state on **2026-06-26**. Status legend: ✅ d
 | STEP-12 Unit-handling boundary | 🟡 partly done | `CellpyUnits` schema + `units.py` tooling behind the optional `units` extra; factors cross the seam by value; `cellpy` still keeps duplicate converters |
 
 Per-step `Status:` lines below repeat this for context; this table is the quick reference.
+The forward work beyond these twelve steps (STEP-13+) is enumerated in
+[Remaining work (STEP-13+)](#remaining-work-step-13--finalized-2026-06-28-issue-39),
+each tracked as its own GitHub issue (#40–#45).
 
 ## STEP-01 Resolve the Python floor
 
@@ -296,13 +299,34 @@ of `legacy.py` into a first-class core unit-spec module.
 - Goldens (STEP-06) are unchanged whether converters are resolved upstream or delegated to
   core.
 
+## Remaining work (STEP-13+) — finalized 2026-06-28 (issue #39)
+
+The original twelve steps are complete except for the two intentionally-continuous /
+partly-done ones (STEP-06 golden fixtures, STEP-12 unit boundary). Going through the
+roadmap and the companion design docs surfaced the remaining work below. Each item is now
+tracked as its own **cellpy-core** GitHub issue (the cellpy-side delegation work stays on
+jepegit/cellpy). Captured under issue #39.
+
+| Item | Issue | Status | Source / anchor |
+|------|-------|--------|-----------------|
+| Finalize STEP-12 (core): promote `CellpyUnits` out of `legacy.py` into a unit-spec module; add converter-parity + pint-optional guard tests | [#40](https://github.com/cellpy/cellpy-core/issues/40) | ⬜ actionable | STEP-12; `cellpy-core-migration.md` §4 |
+| Per-test metadata: add `test_id` to `StepCols`/`CycleCols` + composite group keys `(test_id, cycle_num, step_num, …)` | [#41](https://github.com/cellpy/cellpy-core/issues/41) | ⬜ actionable | `test-metadata-and-merging.md` |
+| Engine: reset-granularity normalization for step-/test-cumulative raw inputs | [#42](https://github.com/cellpy/cellpy-core/issues/42) | ⬜ future | `step-table-polars-migration.md` |
+| Native schema: add `ref_potential`/`ref_voltage` support | [#43](https://github.com/cellpy/cellpy-core/issues/43) | ⬜ future | `step-table-polars-migration.md` (Phase 1) |
+| Release: tag cellpy-core (and decide PyPI publish) so `cellpy` can pin a release ref | [#44](https://github.com/cellpy/cellpy-core/issues/44) | ⬜ future | `cellpy-core-migration.md` §2/§5 |
+| Cleanup: remove `create_selector`/`summary_selector_exluder` once `cellpy` migrates off them | [#45](https://github.com/cellpy/cellpy-core/issues/45) | ⬜ blocked | `selector-dead-code-deferral.md` |
+
+Not tracked as a discrete issue: **STEP-06** (golden-fixture oracle) is a continuous
+activity — extended per-port against `cellpy`'s published goldens, not a closeable unit.
+The scalar→keyed `meta_test_dependent` replacement (the `# TODO: v2.0` markers in
+`cell_core.py`) stays a deliberate **v2.0 / consumer opt-in** per `cellpy-core-migration.md`
+§4; #41 only lands the `test_id` plumbing into the table schemas + group keys.
+
 ## Implementation Flow
 
-> Placeholder for the visual flow of the roadmap. We will fill this in together with one
-> or more mermaid diagrams (e.g. step dependency graph, the two-repo branch/dev-wiring
-> setup, and the parity-test feedback loop).
-
-Node labels carry the reconciled status (✅ done · 🟡 partly · ⬜ not started).
+The step-dependency graph below carries the reconciled status (✅ done · 🟡 partly ·
+⬜ not started). STEP-13+ (the remaining-work items, see the section above) are tracked as
+their own GitHub issues rather than as nodes here.
 
 ```mermaid
 flowchart TD
