@@ -177,3 +177,6 @@ local/
 
 # marimo
 __marimo__/
+
+# graphify
+graphify-out/cache/

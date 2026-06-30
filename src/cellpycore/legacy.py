@@ -1,11 +1,18 @@
 # contains mocks and legacy code to help with the migration to cellpy core
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import dataclass
 import logging
 import numbers
 from typing import List
 
 from cellpycore.config import STEP_TYPES  # noqa: F401  (re-exported; see note below)
+
+# ``DictLikeClass``/``BaseSettings`` now live in ``cellpycore.settings_base`` and
+# ``CellpyUnits`` in ``cellpycore.units`` (STEP-12 promotion, issue #40). They are
+# re-imported here so existing ``cellpycore.legacy`` imports (and the cellpy<->core
+# settings-parity contract test) keep resolving them from this module.
+from cellpycore.settings_base import BaseSettings, DictLikeClass  # noqa: F401
+from cellpycore.units import CellpyUnits  # noqa: F401
 
 
 logger = logging.getLogger(__name__)
@@ -29,176 +36,6 @@ class NoDataFound(CellpyError):
 # (above) so this module keeps its historical name. ``CAPACITY_MODIFIERS`` lists
 # step labels that modify the running capacity (reserved for future use).
 CAPACITY_MODIFIERS = ["reset"]
-
-
-# -----------------------------------------------------------------------------
-#   Old cellpy "smart" dictionary classes for storing settings etc.
-# -----------------------------------------------------------------------------
-@dataclass
-class DictLikeClass:
-    """Add some dunder-methods so that it does not break old code that used
-    dictionaries for storing settings
-
-    Remarks: it is not a complete dictionary experience - for example,
-    setting new attributes (new keys) is not supported (raises ``KeyError``
-    if using the typical dict setting method) since it uses the
-    ``dataclasses.fields`` method to find its members.
-
-    """
-
-    def __getitem__(self, key):
-        if key not in self._field_names:
-            logging.debug(f"{key} not in fields")
-        try:
-            return getattr(self, key)
-        except AttributeError:
-            raise KeyError(f"missing key: {key}")
-
-    def __setitem__(self, key, value):
-        if key not in self._field_names:
-            raise KeyError(f"creating new key not allowed: {key}")
-        setattr(self, key, value)
-
-    def __missing__(self, key):
-        raise KeyError
-
-    @property
-    def _field_names(self):
-        return [field.name for field in fields(self)]
-
-    def __iter__(self):
-        for field in self._field_names:
-            yield field
-
-    def _value_iter(self):
-        for field in self._field_names:
-            yield getattr(self, field)
-
-    def keys(self):
-        return [key for key in self.__iter__()]
-
-    def values(self):
-        return [v for v in self._value_iter()]
-
-    def items(self):
-        return zip(self.keys(), self.values())
-
-
-@dataclass
-class BaseSettings(DictLikeClass):
-    """Base class for internal cellpy settings.
-
-    Usage::
-
-         @dataclass
-         class MyCoolCellpySetting(BaseSetting):
-             var1: str = "first var"
-             var2: int = 12
-
-    """
-
-    def get(self, key):
-        """Get the value (postfixes not supported)."""
-        if key not in self.keys():
-            logging.critical(f"the column header '{key}' not found")
-            return
-        else:
-            return self[key]
-
-    def to_frame(self):
-        """Converts to pandas dataframe"""
-        import pandas
-
-        df = pandas.DataFrame.from_dict(asdict(self), orient="index")
-        df.index.name = "key"
-        _, n_cols = df.shape
-        if n_cols == 1:
-            columns = ["value"]
-        else:
-            columns = [f"value_{i:02}" for i in range(n_cols)]
-        df.columns = columns
-
-        return df
-
-
-# -----------------------------------------------------------------------------
-#   Old cellpy units class.
-# -----------------------------------------------------------------------------
-@dataclass
-class CellpyUnits(BaseSettings):
-    """These are the units used inside Cellpy.
-
-    At least two sets of units needs to be defined; `cellpy_units` and `raw_units`.
-    The `data.raw` dataframe is given in `raw_units` where the units are defined
-    inside the instrument loader used. Since the `data.steps` dataframe is a summary of
-    the step statistics from the `data.raw` dataframe, this also uses the `raw_units`.
-    The `data.summary` dataframe contains columns with values directly from the `data.raw` dataframe
-    given in `raw_units` as well as calculated columns given in `cellpy_units`.
-
-    Remark that all input to cellpy through user interaction (or utils) should be in `cellpy_units`.
-    This is also true for meta-data collected from the raw files. The instrument loader needs to
-    take care of the translation from its raw units to `cellpy_units` during loading the raw data
-    file for the meta-data (remark that this is not necessary and not recommended for the actual
-    "raw" data that is going to be stored in the `data.raw` dataframe).
-
-    As of 2022.09.29, cellpy does not automatically ensure unit conversion for input of meta-data,
-    but has an internal method (`CellPyData.to_cellpy_units`) that can be used.
-
-    These are the different attributes currently supported for data in the dataframes::
-
-        current: str = "A"
-        charge: str = "mAh"
-        voltage: str = "V"
-        time: str = "sec"
-        resistance: str = "Ohms"
-        power: str = "W"
-        energy: str = "Wh"
-        frequency: str = "hz"
-
-    And here are the different attributes currently supported for meta-data::
-
-        # output-units for specific capacity etc.
-        specific_gravimetric: str = "g"
-        specific_areal: str = "cm**2"  # used for calculating specific capacity etc.
-        specific_volumetric: str = "cm**3"  # used for calculating specific capacity etc.
-
-        # other meta-data
-        nominal_capacity: str = "mAh/g"  # used for calculating rates etc.
-        mass: str = "mg"
-        length: str = "cm"
-        area: str = "cm**2"
-        volume: str = "cm**3"
-        temperature: str = "C"
-
-    """
-
-    current: str = "A"
-    charge: str = "mAh"
-    voltage: str = "V"
-    time: str = "sec"
-    resistance: str = "ohm"
-    power: str = "W"
-    energy: str = "Wh"
-    frequency: str = "hz"
-    mass: str = "mg"  # for mass
-    nominal_capacity: str = "mAh/g"
-    specific_gravimetric: str = "g"  # g in specific capacity etc
-    specific_areal: str = "cm**2"  # m2 in specific capacity etc
-    specific_volumetric: str = "cm**3"  # m3 in specific capacity etc
-
-    length: str = "cm"
-    area: str = "cm**2"
-    volume: str = "cm**3"
-    temperature: str = "C"
-    pressure: str = "bar"
-
-    def update(self, new_units: dict):
-        """Update the units."""
-
-        logging.debug(f"{new_units=}")
-        for k in new_units:
-            if k in self.keys():
-                self[k] = new_units[k]
 
 
 # -----------------------------------------------------------------------------
