@@ -2,7 +2,21 @@
 
 ## Installing
 
-only available on <https://github.com/cellpy/cellpy-core>
+Available on PyPI as [`cellpycore`](https://pypi.org/project/cellpycore/):
+
+```bash
+pip install cellpycore
+```
+
+Source: <https://github.com/cellpy/cellpy-core>
+
+## Documentation
+
+- [Using cellpy-core standalone (slim-consumer guide)](docs/standalone-use.md) —
+  get step tables and per-cycle summaries from a native-schema polars frame
+  without full cellpy.
+- [Harmonized raw format specification](docs/data_format_specifications/harmonized_raw.md)
+- [The Data object](docs/data-object-definition.md)
 
 ## Developing
 

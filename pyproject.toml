@@ -1,6 +1,6 @@
 [project]
 name = "cellpycore"
-version = "0.1.1"
+version = "0.1.2"
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
 description = "Add your description here"

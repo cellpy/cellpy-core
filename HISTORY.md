@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-02
+
 - Add `summarizers.normalize_capacity_granularity` + `config.ResetGranularity`
   (`CYCLE`/`STEP`/`TEST`) to normalize step-cumulative or test-cumulative raw capacity /
   energy columns to the mandated cycle-cumulative convention before aggregation; a
@@ -40,3 +42,7 @@ All notable changes to this project will be documented in this file.
   before any derived column (prefix match on step type, e.g. `["cv_"]` for a non-CV summary),
   forwarded by both `make_core_summary` signatures — natively replacing the exclusion feature
   lost with the removed pandas selector pair; parity locked by a pandas-oracle test (#54).
+- Document standalone use of cellpy-core: new slim-consumer guide
+  (`docs/standalone-use.md`) covering the native `CellpyCellCore` +
+  `Data.from_raw_frame` pipeline, the class-free `summarizers` alternative, and the
+  caller contract; linked from the README together with a fixed PyPI install note (#56).
