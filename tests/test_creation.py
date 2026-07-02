@@ -1,5 +1,3 @@
-import pytest
-
 from cellpycore.cell_core import Data
 
 def test_data_creation(mock_data_empty: Data):
