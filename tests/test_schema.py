@@ -115,6 +115,12 @@ def test_no_module_header_globals():
         assert not hasattr(selectors, name), f"selectors.{name} should not exist"
 
 
+def test_no_legacy_selector_functions():
+    """The pandas selector pair was removed once cellpy migrated off it (#45)."""
+    for name in ("create_selector", "summary_selector_exluder"):
+        assert not hasattr(selectors, name), f"selectors.{name} should not exist"
+
+
 def test_schema_property_reflects_headers():
     """CellpyCellCore.schema bundles the (possibly overridden) header instances."""
     native = CellpyCellCore(initialize=False)

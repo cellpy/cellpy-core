@@ -159,7 +159,6 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
     def make_core_summary(
         self,
         data: Data,
-        selector: Optional[Callable] = None,
         find_ir: bool = True,
         find_end_voltage: bool = False,
         select_columns: bool = True,
@@ -171,7 +170,6 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
 
         Args:
             data: The data to make the summary from.
-            selector: The selector to use.
             find_ir: Whether to find the IR.
             find_end_voltage: Whether to find the end voltage.
             select_columns: Whether to select only the minimum columns that are needed.
@@ -563,7 +561,6 @@ class OldCellpyCellCore(CellpyCellCore):
     def make_core_summary(
         self,
         data: Data,
-        selector: Optional[Callable] = None,
         find_ir: bool = True,
         find_end_voltage: bool = False,
         select_columns: bool = True,
