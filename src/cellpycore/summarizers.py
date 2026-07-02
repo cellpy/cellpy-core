@@ -4,7 +4,7 @@ from typing import Optional, Sequence, TypeVar, Union
 
 import polars as pl
 
-from cellpycore.config import Schema, TestMode, default_schema
+from cellpycore.config import ResetGranularity, Schema, TestMode, default_schema
 from cellpycore.cell_core import Data
 from cellpycore.extractors import LastIRExtractor, SummaryExtractor
 from cellpycore.legacy import CellpyLimits
@@ -75,6 +75,93 @@ def _group_keys(frame: "pl.DataFrame", base_keys: list, test_id_col: str) -> lis
     if test_id_col in frame.columns:
         return [test_id_col, *base_keys]
     return list(base_keys)
+
+
+# The four cumulative raw columns (per direction) that carry a reset-granularity
+# convention. Whichever are present get normalized to cycle-cumulative.
+_CUMULATIVE_ATTRS = (
+    "cumulative_charge_capacity",
+    "cumulative_discharge_capacity",
+    "cumulative_charge_energy",
+    "cumulative_discharge_energy",
+)
+
+
+def normalize_capacity_granularity(
+    data: Data,
+    schema: Optional[Schema] = None,
+    granularity: ResetGranularity = ResetGranularity.CYCLE,
+) -> Data:
+    """Normalize cumulative raw capacity / energy columns to cycle-cumulative.
+
+    The engine mandates **cycle-cumulative** raw capacity / energy (reset at each
+    cycle boundary; see ``docs/data_format_specifications/harmonized_raw.md``).
+    Cyclers that instead deliver **step-cumulative** (reset per step) or
+    **test-cumulative** (never reset) raw can be normalized here before
+    aggregation. The transform is granularity-agnostic: for each present column,
+    the per-row increment within the *source* reset group is reconstructed and
+    re-accumulated over ``(test_id, cycle_num)``, which is provably an identity
+    for a ``CYCLE`` input.
+
+    Args:
+        data (Data): The data object (its ``raw`` frame is rewritten in place).
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+        granularity (ResetGranularity): The reset granularity of the source raw.
+            ``ResetGranularity.CYCLE`` (the default and mandated convention)
+            returns ``data`` untouched.
+
+    Returns:
+        Data: The data object with the cumulative columns normalized to
+        cycle-cumulative (the same object; ``raw`` matches the input frame's
+        type — polars in, polars out; pandas in, pandas out).
+    """
+    if granularity == ResetGranularity.CYCLE:
+        return data
+
+    if schema is None:
+        schema = default_schema()
+    nhdr = schema.raw
+
+    raw = data.raw
+    # The engine is polars-native; accept a pandas frame for convenience and
+    # return the same type the caller supplied.
+    was_pandas = not isinstance(raw, pl.DataFrame)
+    if was_pandas:
+        raw = pl.from_pandas(raw)
+
+    raw = _ensure_test_id(raw, nhdr.test_id)
+    raw = raw.sort(nhdr.datapoint_num)
+
+    if granularity == ResetGranularity.STEP:
+        source_keys = [nhdr.test_id, nhdr.cycle_num, nhdr.step_num]
+    else:  # ResetGranularity.TEST
+        source_keys = [nhdr.test_id]
+    cycle_keys = [nhdr.test_id, nhdr.cycle_num]
+
+    cols = [
+        getattr(nhdr, attr)
+        for attr in _CUMULATIVE_ATTRS
+        if getattr(nhdr, attr) in raw.columns
+    ]
+    if cols:
+        # Two passes (polars disallows a window expr nested inside another
+        # window's aggregation): (1) per-row increment within the source reset
+        # group (first row of the group keeps its own value), then (2)
+        # re-accumulate over the cycle.
+        increments = []
+        for col in cols:
+            diff = pl.col(col) - pl.col(col).shift(1).over(source_keys)
+            increments.append(
+                pl.when(diff.is_null()).then(pl.col(col)).otherwise(diff).alias(col)
+            )
+        raw = raw.with_columns(increments)
+        raw = raw.with_columns(
+            [pl.col(col).cum_sum().over(cycle_keys).alias(col) for col in cols]
+        )
+
+    data.raw = raw.to_pandas() if was_pandas else raw
+    return data
 
 
 def _delta_expr(base: str) -> pl.Expr:
