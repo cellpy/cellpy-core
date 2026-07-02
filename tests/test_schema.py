@@ -13,7 +13,14 @@ import pytest
 from cellpycore import selectors, summarizers
 from cellpycore.cell_core import CellpyCellCore, OldCellpyCellCore, Data
 from cellpycore import config
-from cellpycore.config import RawCols, CycleCols, StepCols, Schema, default_schema
+from cellpycore.config import (
+    RawCols,
+    CycleCols,
+    StepCols,
+    Schema,
+    ResetGranularity,
+    default_schema,
+)
 from cellpycore.legacy import HeadersNormal
 
 
@@ -531,3 +538,129 @@ def test_single_test_defaults_test_id_to_zero():
 
     assert set(data.steps[shdr.test_id].to_list()) == {0}
     assert set(data.summary[chdr.test_id].to_list()) == {0}
+
+
+# --- issue #42: reset-granularity normalization ----------------------------
+def _build_step_cumulative_raw(nhdr: RawCols) -> pd.DataFrame:
+    """Same increments as ``_build_cumulative_raw`` but counters reset per step.
+
+    Each capacity column restarts at the start of every step, so within the
+    discharge step the (inactive) charge capacity is 0 rather than the held
+    cycle-cumulative 0.5. Normalizing this to cycle-cumulative must reproduce
+    ``_build_cumulative_raw``.
+    """
+    records = []
+    dp = 0
+    for cyc in (1, 2):
+        for k in range(5):  # charge step: cc restarts at 0 -> 0.1..0.5, dc 0
+            records.append({
+                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
+                nhdr.step_time: float(k), nhdr.step_num: 1, nhdr.cycle_num: cyc,
+                nhdr.current: 1.0, nhdr.potential: 3.5 + 0.01 * k,
+                nhdr.cumulative_charge_capacity: 0.1 * (k + 1),
+                nhdr.cumulative_discharge_capacity: 0.0,
+                nhdr.internal_resistance: 0.0,
+            })
+            dp += 1
+        for k in range(5):  # discharge step: cc restarts at 0, dc 0.08..0.4
+            records.append({
+                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
+                nhdr.step_time: float(k), nhdr.step_num: 2, nhdr.cycle_num: cyc,
+                nhdr.current: -1.0, nhdr.potential: 3.9 - 0.01 * k,
+                nhdr.cumulative_charge_capacity: 0.0,
+                nhdr.cumulative_discharge_capacity: 0.08 * (k + 1),
+                nhdr.internal_resistance: 0.0,
+            })
+            dp += 1
+    return pd.DataFrame(records)
+
+
+def _build_test_cumulative_raw(nhdr: RawCols) -> pd.DataFrame:
+    """Same increments as ``_build_cumulative_raw`` but counters never reset.
+
+    Capacities accumulate across the whole test (cycle 2 charge continues from
+    cycle 1's 0.5, etc.). Normalizing to cycle-cumulative must reproduce
+    ``_build_cumulative_raw``.
+    """
+    records = []
+    dp = 0
+    cc = 0.0  # running test-cumulative charge capacity
+    dc = 0.0  # running test-cumulative discharge capacity
+    for cyc in (1, 2):
+        for k in range(5):  # charge: cc grows by 0.1/row, dc held
+            cc += 0.1
+            records.append({
+                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
+                nhdr.step_time: float(k), nhdr.step_num: 1, nhdr.cycle_num: cyc,
+                nhdr.current: 1.0, nhdr.potential: 3.5 + 0.01 * k,
+                nhdr.cumulative_charge_capacity: cc,
+                nhdr.cumulative_discharge_capacity: dc,
+                nhdr.internal_resistance: 0.0,
+            })
+            dp += 1
+        for k in range(5):  # discharge: dc grows by 0.08/row, cc held
+            dc += 0.08
+            records.append({
+                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
+                nhdr.step_time: float(k), nhdr.step_num: 2, nhdr.cycle_num: cyc,
+                nhdr.current: -1.0, nhdr.potential: 3.9 - 0.01 * k,
+                nhdr.cumulative_charge_capacity: cc,
+                nhdr.cumulative_discharge_capacity: dc,
+                nhdr.internal_resistance: 0.0,
+            })
+            dp += 1
+    return pd.DataFrame(records)
+
+
+def _cap_lists(raw) -> tuple:
+    """Return the (charge, discharge) cumulative capacity lists, datapoint-ordered."""
+    nhdr = RawCols()
+    if not isinstance(raw, pl.DataFrame):
+        raw = pl.from_pandas(raw)
+    raw = raw.sort(nhdr.datapoint_num)
+    return (
+        raw[nhdr.cumulative_charge_capacity].to_list(),
+        raw[nhdr.cumulative_discharge_capacity].to_list(),
+    )
+
+
+@pytest.mark.parametrize(
+    "builder, granularity",
+    [
+        (_build_step_cumulative_raw, ResetGranularity.STEP),
+        (_build_test_cumulative_raw, ResetGranularity.TEST),
+    ],
+)
+def test_normalize_capacity_granularity_matches_cycle_oracle(builder, granularity):
+    """STEP / TEST cumulative raw normalizes to the cycle-cumulative oracle."""
+    nhdr = RawCols()
+    schema = _native_schema()
+
+    data = Data()
+    data.raw = builder(nhdr)
+    summarizers.normalize_capacity_granularity(data, schema, granularity)
+
+    got_cc, got_dc = _cap_lists(data.raw)
+    exp_cc, exp_dc = _cap_lists(_build_cumulative_raw(nhdr))
+    assert got_cc == pytest.approx(exp_cc)
+    assert got_dc == pytest.approx(exp_dc)
+
+
+def test_normalize_capacity_granularity_cycle_is_noop():
+    """A CYCLE input is returned untouched (goldens stay byte-stable)."""
+    nhdr = RawCols()
+    schema = _native_schema()
+
+    original = _build_cumulative_raw(nhdr)
+    data = Data()
+    data.raw = original
+    result = summarizers.normalize_capacity_granularity(
+        data, schema, ResetGranularity.CYCLE
+    )
+
+    # untouched: same object, unchanged values
+    assert result.raw is original
+    got_cc, got_dc = _cap_lists(result.raw)
+    exp_cc, exp_dc = _cap_lists(original)
+    assert got_cc == pytest.approx(exp_cc)
+    assert got_dc == pytest.approx(exp_dc)

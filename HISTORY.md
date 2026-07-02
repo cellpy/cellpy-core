@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Add `summarizers.normalize_capacity_granularity` + `config.ResetGranularity`
+  (`CYCLE`/`STEP`/`TEST`) to normalize step-cumulative or test-cumulative raw capacity /
+  energy columns to the mandated cycle-cumulative convention before aggregation; a
+  cycle-cumulative input is an exact no-op so the exercised path stays byte-stable (#42).
 - Add `test_id` to `StepCols`/`CycleCols` and key all per-step/per-cycle aggregation,
   cumulation, and joins on the composite `(test_id, cycle_num, step_num, …)` so a
   merged `Data` holding many tests never mixes cycles across tests (default `test_id=0`

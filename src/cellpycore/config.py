@@ -75,6 +75,31 @@ class TestMode(StrEnum):
     INVERTED = "inverted"
 
 
+class ResetGranularity(StrEnum):
+    """Reset granularity of a cumulative raw capacity / energy column.
+
+    Describes where a cycler's cumulative capacity / energy counter resets to
+    zero. The harmonized raw format mandates ``CYCLE`` (see
+    ``docs/data_format_specifications/harmonized_raw.md`` §Capacity convention);
+    :func:`cellpycore.summarizers.normalize_capacity_granularity` uses this enum
+    to normalize ``STEP`` / ``TEST`` cumulative raw from other cyclers to the
+    mandated ``CYCLE`` convention before aggregation.
+
+    Attributes:
+        CYCLE (``"cycle"``): Counter resets at each cycle boundary (accumulates
+            across a cycle's steps for its direction). The mandated harmonized
+            convention and the default; normalizing a ``CYCLE`` input is a no-op.
+        STEP (``"step"``): Counter resets at each step boundary (accumulates only
+            within a step).
+        TEST (``"test"``): Counter never resets (accumulates across the whole
+            test for its direction).
+    """
+
+    CYCLE = "cycle"
+    STEP = "step"
+    TEST = "test"
+
+
 class StepType(StrEnum):
     """Canonical step-type labels for the ``step_type`` column of the step table.
 
