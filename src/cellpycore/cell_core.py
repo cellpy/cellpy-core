@@ -21,6 +21,82 @@ DataFrame = TypeVar("DataFrame")
 logger = logging.getLogger(__name__)
 
 
+def validate_raw_frame(raw, raw_cols: Optional[config.Cols] = None) -> None:
+    """Validate a native-schema raw frame against ``config.RawCols``.
+
+    Checks that ``raw`` is a polars ``DataFrame`` carrying the load-bearing
+    columns the step/summary engine needs, with sane dtypes. All problems are
+    collected and reported in a single error so the caller sees the full
+    picture at once instead of a deep polars stack trace later.
+
+    Optional columns (``test_id``, ``internal_resistance``, ``ref_potential``,
+    ``step_time``, the ``source_*`` and ``aux_*`` columns, …) are allowed
+    absent and are not dtype-checked.
+
+    Args:
+        raw: The candidate raw frame (must be a ``polars.DataFrame``).
+        raw_cols: The raw column-header schema to validate against. Defaults
+            to the native ``config.RawCols`` when not provided.
+
+    Raises:
+        TypeError: If ``raw`` is not a ``polars.DataFrame``.
+        ValueError: If required columns are missing or load-bearing columns
+            have the wrong dtype. The message lists every problem found.
+    """
+    import polars as pl
+
+    if not isinstance(raw, pl.DataFrame):
+        raise TypeError(
+            "raw must be a polars.DataFrame in the native cellpy-core schema "
+            f"(got {type(raw).__name__}); pandas frames with legacy headers "
+            "belong on the legacy bridge (OldCellpyCellCore)."
+        )
+
+    if raw_cols is None:
+        raw_cols = config.RawCols()
+
+    integer_cols = [raw_cols.datapoint_num, raw_cols.cycle_num, raw_cols.step_num]
+    numeric_cols = [
+        raw_cols.test_time,
+        raw_cols.current,
+        raw_cols.potential,
+        raw_cols.cumulative_charge_capacity,
+        raw_cols.cumulative_discharge_capacity,
+    ]
+    required = integer_cols + [raw_cols.epoch_time_utc] + numeric_cols
+
+    problems = []
+
+    missing = [col for col in required if col not in raw.columns]
+    if missing:
+        problems.append(f"missing required column(s): {', '.join(missing)}")
+
+    schema = raw.schema
+    epoch = raw_cols.epoch_time_utc
+    if epoch not in missing and schema[epoch] != pl.Int64:
+        problems.append(
+            f"column '{epoch}' has dtype {schema[epoch]} but must be Int64 "
+            "(int64 nanoseconds since the Unix epoch, UTC — the STEP-11 "
+            "timestamp contract; see cellpycore.timestamps)"
+        )
+    for col in integer_cols:
+        if col not in missing and not schema[col].is_integer():
+            problems.append(
+                f"column '{col}' has dtype {schema[col]} but must be an integer dtype"
+            )
+    for col in numeric_cols:
+        if col not in missing and not schema[col].is_numeric():
+            problems.append(
+                f"column '{col}' has dtype {schema[col]} but must be numeric"
+            )
+
+    if problems:
+        raise ValueError(
+            "raw frame does not match the native cellpy-core raw schema "
+            "(config.RawCols):\n- " + "\n- ".join(problems)
+        )
+
+
 class Data:
     def __init__(self):
         self.meta_test_dependent: Meta = MockMetaTestDependent()
@@ -32,6 +108,41 @@ class Data:
         self.summary: Optional[DataFrame] = None
         self.cycle: Optional[DataFrame] = None
         self.step: Optional[DataFrame] = None
+
+    @classmethod
+    def from_raw_frame(
+        cls,
+        raw,
+        validate: bool = True,
+        raw_cols: Optional[config.Cols] = None,
+    ) -> "Data":
+        """Create a ``Data`` object from a native-schema raw frame.
+
+        The validating front door for slim consumers that build a polars
+        frame in the native ``config.RawCols`` schema themselves and want
+        step/cycle summaries straight from cellpy-core.
+
+        Args:
+            raw: A ``polars.DataFrame`` in the native raw schema.
+            validate: Whether to check the frame against the schema via
+                ``validate_raw_frame`` before wrapping it. Set to ``False``
+                to skip all checks.
+            raw_cols: The raw column-header schema to validate against.
+                Defaults to the native ``config.RawCols``.
+
+        Returns:
+            A fresh ``Data`` with ``raw`` attached (and the usual
+            ``MockMetaTestDependent`` metadata placeholder).
+
+        Raises:
+            TypeError: If ``raw`` is not a ``polars.DataFrame`` (when validating).
+            ValueError: If the frame does not match the schema (when validating).
+        """
+        if validate:
+            validate_raw_frame(raw, raw_cols)
+        data = cls()
+        data.raw = raw
+        return data
 
     @property
     def has_steps(self) -> bool:
