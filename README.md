@@ -12,11 +12,11 @@ Source: <https://github.com/cellpy/cellpy-core>
 
 ## Documentation
 
-- [Using cellpy-core standalone (slim-consumer guide)](docs/standalone-use.md) —
+- [Using cellpy-core standalone (slim-consumer guide)](https://github.com/cellpy/cellpy-core/blob/main/docs/standalone-use.md) —
   get step tables and per-cycle summaries from a native-schema polars frame
   without full cellpy.
-- [Harmonized raw format specification](docs/data_format_specifications/harmonized_raw.md)
-- [The Data object](docs/data-object-definition.md)
+- [Harmonized raw format specification](https://github.com/cellpy/cellpy-core/blob/main/docs/data_format_specifications/harmonized_raw.md)
+- [The Data object](https://github.com/cellpy/cellpy-core/blob/main/docs/data-object-definition.md)
 
 ## Developing
 
