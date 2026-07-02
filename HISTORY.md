@@ -18,3 +18,6 @@ All notable changes to this project will be documented in this file.
   `StepCols` aggregate set, wired through the polars step engine (aggregated when
   present, skipped when absent); legacy `reference_voltage` stays unbridged to preserve
   the legacy step-frame parity (#43).
+- Add a PyPI release workflow (`.github/workflows/release.yml`: release publish → ruff +
+  pytest → `uv build` → trusted PyPI publish) and fix the ruff F401 failure that blocked
+  the `v0.1.0` release CI (#44).
