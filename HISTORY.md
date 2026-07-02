@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Update the README developer section to uv's project workflow: `uv sync` after
+  cloning, `uv add` for new dependencies, `uv run pytest` for tests (#64).
+
 ## [0.1.2] - 2026-07-02
 
 - Add `summarizers.normalize_capacity_granularity` + `config.ResetGranularity`

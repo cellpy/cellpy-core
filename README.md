@@ -32,22 +32,13 @@ pip install uv
 
 ### Development Workflow
 
-1. Create and activate a virtual environment:
+1. Install all dependencies (creates `.venv` automatically):
 
 ```bash
-uv venv
-source .venv/bin/activate  # On Unix/macOS
-# OR
-.venv\Scripts\activate     # On Windows
+uv sync
 ```
 
-2. Install development dependencies:
-
-```bash
-uv pip install -e ".[dev]"
-```
-
-3. Adding new dependencies:
+2. Adding new dependencies:
 
 ```bash
 # Add a new package
@@ -57,24 +48,17 @@ uv add <package-name>
 uv add --dev <package-name>
 ```
 
-4. Updating dependencies:
+3. Running tests:
 
 ```bash
-# Update all packages
-uv sync
-```
-
-5. Running tests:
-
-```bash
-pytest
+uv run pytest
 ```
 
 ### Common Commands
 
-- List installed packages: `uv pip list`
+- Reinstall dependencies from the lock file: `uv sync`
 - Remove a package: `uv remove <package-name>`
-- Show package info: `uv pip show <package-name>`
-- Export requirements: `uv pip freeze > requirements.txt`
+- Upgrade all packages within constraints: `uv sync --upgrade`
+- Show the dependency tree: `uv tree`
 
 For more information about `uv`, visit the [official documentation](https://github.com/astral-sh/uv).
