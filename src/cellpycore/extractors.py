@@ -93,31 +93,64 @@ class LastIRExtractor(SummaryExtractor):
         headers_steps = schema.step
         headers_cycle = schema.cycle
 
+        # Group per (test, cycle, step) when the frames carry a ``test_id`` key so
+        # merged objects never mix steps/cycles across tests; otherwise fall back
+        # to (cycle, step), byte-identical to the single-test path.
+        use_tid = (
+            headers_raw.test_id in raw.columns
+            and headers_steps.test_id in steps.columns
+        )
+        raw_step_keys = (
+            [headers_raw.test_id, headers_raw.cycle_num, headers_raw.step_num]
+            if use_tid
+            else [headers_raw.cycle_num, headers_raw.step_num]
+        )
+        step_group_keys = (
+            [headers_steps.test_id, headers_steps.cycle_num]
+            if use_tid
+            else [headers_steps.cycle_num]
+        )
+
         # internal resistance of the last raw datapoint of each (cycle, step).
         # maintain_order (no sort) mirrors the raw frame's natural acquisition
         # order, so ``last`` is the chronologically last reading of the step.
-        ir_per_step = raw.group_by(
-            [headers_raw.cycle_num, headers_raw.step_num], maintain_order=True
-        ).agg(pl.col(headers_raw.internal_resistance).last().alias("__ir"))
+        ir_per_step = raw.group_by(raw_step_keys, maintain_order=True).agg(
+            pl.col(headers_raw.internal_resistance).last().alias("__ir")
+        )
 
         def _side(step_type: str, out_name: str) -> "pl.DataFrame":
             last_step = (
                 steps.filter(pl.col(headers_steps.step_type) == step_type)
-                .group_by(headers_steps.cycle_num, maintain_order=True)
+                .group_by(step_group_keys, maintain_order=True)
                 .agg(pl.col(headers_steps.step_num).last().alias("__step"))
             )
-            return last_step.join(
-                ir_per_step,
-                left_on=[headers_steps.cycle_num, "__step"],
-                right_on=[headers_raw.cycle_num, headers_raw.step_num],
-                how="left",
-            ).select(
+            left_keys = (
+                [headers_steps.test_id, headers_steps.cycle_num, "__step"]
+                if use_tid
+                else [headers_steps.cycle_num, "__step"]
+            )
+            select_exprs = [
                 pl.col(headers_steps.cycle_num).alias(headers_cycle.cycle_num),
                 pl.col("__ir").alias(out_name),
-            )
+            ]
+            if use_tid:
+                select_exprs.insert(
+                    0, pl.col(headers_steps.test_id).alias(headers_cycle.test_id)
+                )
+            return last_step.join(
+                ir_per_step,
+                left_on=left_keys,
+                right_on=raw_step_keys,
+                how="left",
+            ).select(select_exprs)
 
         ir_charge = _side("charge", headers_cycle.ir_charge)
         ir_discharge = _side("discharge", headers_cycle.ir_discharge)
+        join_on = (
+            [headers_cycle.test_id, headers_cycle.cycle_num]
+            if use_tid
+            else headers_cycle.cycle_num
+        )
         return ir_charge.join(
-            ir_discharge, on=headers_cycle.cycle_num, how="full", coalesce=True
+            ir_discharge, on=join_on, how="full", coalesce=True
         )

@@ -17,6 +17,7 @@ calculations and to classify steps.
 
 | Column name | Data type | Unit | Sample data | Description |
 | --- | --- | --- | --- | --- |
+| test_id | int | - | 0 | Per-test key (leading component of the composite `(test_id, cycle_num, step_num, …)` group key); `0` for a single unmerged test |
 | cycle_num | int | - | 12 | Cycle number |
 | step_num | int | - | 123 | Step number |
 | sub_step_num | int | - | 123 | Sub-step number |

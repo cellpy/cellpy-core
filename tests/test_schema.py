@@ -419,3 +419,115 @@ def test_native_add_scaled_summary_columns_end_to_end():
     grav = data.summary[f"{chdr.charge_capacity}_gravimetric"].to_list()
     for b, g in zip(base, grav):
         assert g == pytest.approx(10.0 * b)
+
+
+# --- issue #41: per-test key + composite group keys -------------------------
+def _build_merged_raw(nhdr: RawCols) -> pd.DataFrame:
+    """Two tests (test_id 0 and 1) with **overlapping** cycle_num/step_num.
+
+    Each test has 2 cycles; each cycle is charge (step 1, cc 0.1..0.5) then
+    discharge (step 2, dc 0.08..0.4, cc held 0.5). ``datapoint_num`` stays globally
+    unique across the merged object; ``(cycle_num, step_num)`` collide across
+    tests, so anything keyed on cycle alone would mix them.
+    """
+    records = []
+    dp = 0
+    for test_id in (0, 1):
+        # slightly different capacities per test so cross-test leakage is visible
+        scale = 1.0 if test_id == 0 else 2.0
+        for cyc in (1, 2):
+            for k in range(5):  # charge
+                records.append({
+                    nhdr.test_id: test_id, nhdr.datapoint_num: dp,
+                    nhdr.test_time: float(dp), nhdr.step_time: float(k),
+                    nhdr.step_num: 1, nhdr.cycle_num: cyc,
+                    nhdr.current: 1.0, nhdr.potential: 3.5 + 0.01 * k,
+                    nhdr.cumulative_charge_capacity: scale * 0.1 * (k + 1),
+                    nhdr.cumulative_discharge_capacity: 0.0,
+                    nhdr.internal_resistance: 0.0,
+                })
+                dp += 1
+            for k in range(5):  # discharge
+                records.append({
+                    nhdr.test_id: test_id, nhdr.datapoint_num: dp,
+                    nhdr.test_time: float(dp), nhdr.step_time: float(k),
+                    nhdr.step_num: 2, nhdr.cycle_num: cyc,
+                    nhdr.current: -1.0, nhdr.potential: 3.9 - 0.01 * k,
+                    nhdr.cumulative_charge_capacity: scale * 0.5,
+                    nhdr.cumulative_discharge_capacity: scale * 0.08 * (k + 1),
+                    nhdr.internal_resistance: 0.0,
+                })
+                dp += 1
+    return pd.DataFrame(records)
+
+
+def test_merged_object_step_table_isolated_per_test():
+    """A merged object (2 tests, overlapping cycle/step) keeps every step row.
+
+    Without the composite ``(test_id, cycle_num, step_num)`` key the four
+    colliding (cycle, step) pairs shared by the two tests would collapse.
+    """
+    nhdr = RawCols()
+    schema = _native_schema()
+    shdr = schema.step
+
+    data = Data()
+    data.raw = _build_merged_raw(nhdr)
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    steps = data.steps
+
+    # 2 tests * 2 cycles * 2 steps = 8 rows, and test_id present with both tests.
+    assert steps.height == 8
+    assert set(steps[shdr.test_id].to_list()) == {0, 1}
+    # each (test_id, cycle_num, step_num) triple is unique (no cross-test collapse)
+    key = steps.select(shdr.test_id, shdr.cycle_num, shdr.step_num)
+    assert key.n_unique() == 8
+
+
+def test_merged_object_summary_cumulation_resets_per_test():
+    """Per-cycle cumulations restart at each test; no capacity leaks across tests."""
+    nhdr = RawCols()
+    schema = _native_schema()
+    chdr = schema.cycle
+
+    data = Data()
+    data.raw = _build_merged_raw(nhdr)
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_summary(data, schema=schema)
+    s = data.summary.sort([chdr.test_id, chdr.cycle_num])
+
+    # 2 tests * 2 cycles = 4 rows.
+    assert s.height == 4
+    assert s[chdr.test_id].to_list() == [0, 0, 1, 1]
+
+    cc = s[chdr.charge_capacity].to_list()
+    cum = s[chdr.test_cumulated_charge_capacity].to_list()
+    loss = s[chdr.charge_capacity_loss].to_list()
+
+    # test 0: cc = [0.5, 0.5]; test 1: cc = [1.0, 1.0] (scale 2x)
+    assert cc == pytest.approx([0.5, 0.5, 1.0, 1.0])
+    # cumulation restarts per test: first cycle of each test == its own cc
+    assert cum[0] == pytest.approx(cc[0])           # test 0, cycle 1
+    assert cum[1] == pytest.approx(cc[0] + cc[1])   # test 0, cycle 2
+    assert cum[2] == pytest.approx(cc[2])           # test 1, cycle 1 -> RESET
+    assert cum[3] == pytest.approx(cc[2] + cc[3])   # test 1, cycle 2
+    # first-cycle capacity loss is null within each test (shift is per-test)
+    import math
+    assert loss[0] is None or math.isnan(loss[0])
+    assert loss[2] is None or math.isnan(loss[2])
+
+
+def test_single_test_defaults_test_id_to_zero():
+    """A raw frame without test_id yields tables whose test_id column is all 0."""
+    nhdr = RawCols()
+    schema = _native_schema()
+    shdr, chdr = schema.step, schema.cycle
+
+    data = _data_with_raw(nhdr)  # _build_raw has no test_id column
+    assert nhdr.test_id not in data.raw.columns
+
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_summary(data, schema=schema)
+
+    assert set(data.steps[shdr.test_id].to_list()) == {0}
+    assert set(data.summary[chdr.test_id].to_list()) == {0}

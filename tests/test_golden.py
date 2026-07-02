@@ -160,16 +160,18 @@ def test_arbin_step_types_match_cellpy_reference():
 
 @pytest.mark.skipif(not ARBIN_SMALL_RAW.is_file(), reason="small fixture missing")
 def test_small_step_table_runs_on_real_data():
-    """Smoke test: a tiny (47-row, 3-step) real raw frame flows through the engine.
+    """Smoke test: a tiny real raw frame flows through the engine.
 
-    Note: this fixture's ``step 2`` is a degenerate synthetic slice (non-monotonic
-    duplicated ``data_point``, mixed current signs, zero capacity-delta), so the
-    engine leaves its ``type`` blank. That matches legacy cellpy classification and
-    is a fixture artifact, not an engine defect; we only assert the structural
-    result here.
+    This fixture is actually a *merged* object holding three ``test_id`` values
+    (1, 2, 3), all at ``cycle_index == 1`` with overlapping ``step_index``. With
+    the composite ``(test_id, cycle_num, step_num)`` group key (issue #41) the
+    steps of the three tests stay isolated instead of collapsing on the shared
+    ``(cycle, step)`` pairs: test 1 has 1 step, tests 2 and 3 have 3 steps each,
+    so 7 step rows in total. (Before the composite key this incorrectly returned
+    3 rows.)
     """
     schema = _legacy_schema()
     steps = _step_table(ARBIN_SMALL_RAW)
-    assert len(steps) == 3
+    assert len(steps) == 7
     assert schema.step.type in steps.columns
     assert int(steps[schema.step.cycle].max()) == 1

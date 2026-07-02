@@ -34,6 +34,7 @@ RAW_EXPECTED = [
 
 # --- step_table.md ----------------------------------------------------------
 STEP_EXPECTED = [
+    "test_id",
     "cycle_num", "step_num", "sub_step_num", "step_type", "sub_step_type", "mask",
     "datapoint_num_first", "datapoint_num_last", "test_time_first", "test_time_last",
     *_aggregates("step_time"),
@@ -46,6 +47,7 @@ STEP_EXPECTED = [
 
 # --- cycle_table.md ---------------------------------------------------------
 CYCLE_EXPECTED = [
+    "test_id",
     "cycle_num", "mask", "datapoint_num_first", "datapoint_num_last",
     "first_epoch_time_utc", "last_epoch_time_utc", "first_test_time",
     "last_test_time", "cycle_duration", "charge_duration", "discharge_duration",
