@@ -1,5 +1,18 @@
 # Selector dead-code deferral: keep `create_selector` until cellpy migrates
 
+> **Resolved (2026-07-02, issue #45).** cellpy migrated off
+> `core_selectors.create_selector` (branch `core45-drop-create-selector`:
+> import removed, kwargs deprecated with `DeprecationWarning`), and both
+> `create_selector` and `summary_selector_exluder` were deleted from
+> `src/cellpycore/selectors.py`, together with the never-used `selector`
+> parameter on both `make_core_summary` signatures. Merge order: cellpy PR
+> first, then cellpy-core. The rest of this doc is kept as history.
+>
+> The one capability the old selector had that was never ported (and has been
+> a silent no-op since the core seam): **exclude-types summaries** (non-cv /
+> non-rest / non-ocv / only-cv delta-correction). Re-implementing it natively
+> is tracked in [#54](https://github.com/cellpy/cellpy-core/issues/54).
+
 **Context.** Issue #22 (follow-up to #13) proposed removing four "superseded" pandas
 summary/selector helpers from cellpy-core after the polars summary rewrite:
 

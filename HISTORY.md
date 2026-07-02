@@ -21,3 +21,7 @@ All notable changes to this project will be documented in this file.
 - Add a PyPI release workflow (`.github/workflows/release.yml`: release publish → ruff +
   pytest → `uv build` → trusted PyPI publish) and fix the ruff F401 failure that blocked
   the `v0.1.0` release CI (#44).
+- Remove the superseded pandas selector pair (`selectors.create_selector` /
+  `selectors.summary_selector_exluder`) and the never-used `selector` parameter on both
+  `make_core_summary` signatures, now that cellpy has migrated off them; the exclude-types
+  summary feature they carried is tracked for native reimplementation in #54 (#45).

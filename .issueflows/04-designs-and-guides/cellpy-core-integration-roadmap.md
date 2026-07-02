@@ -314,7 +314,8 @@ jepegit/cellpy). Captured under issue #39.
 | Engine: reset-granularity normalization for step-/test-cumulative raw inputs | [#42](https://github.com/cellpy/cellpy-core/issues/42) | ⬜ future | `step-table-polars-migration.md` |
 | Native schema: add `ref_potential`/`ref_voltage` support | [#43](https://github.com/cellpy/cellpy-core/issues/43) | ⬜ future | `step-table-polars-migration.md` (Phase 1) |
 | Release: tag cellpy-core (and decide PyPI publish) so `cellpy` can pin a release ref | [#44](https://github.com/cellpy/cellpy-core/issues/44) | ⬜ future | `cellpy-core-migration.md` §2/§5 |
-| Cleanup: remove `create_selector`/`summary_selector_exluder` once `cellpy` migrates off them | [#45](https://github.com/cellpy/cellpy-core/issues/45) | ⬜ blocked | `selector-dead-code-deferral.md` |
+| Cleanup: remove `create_selector`/`summary_selector_exluder` once `cellpy` migrates off them | [#45](https://github.com/cellpy/cellpy-core/issues/45) | ✅ done (2026-07-02: cellpy migrated on branch `core45-drop-create-selector`; both functions + dead `selector` param removed) | `selector-dead-code-deferral.md` |
+| Native exclude-types summary support (`exclude_step_types=` on `make_summary`; replaces the removed selector exclusion feature) | [#54](https://github.com/cellpy/cellpy-core/issues/54) | ⬜ future | `selector-dead-code-deferral.md` |
 
 Not tracked as a discrete issue: **STEP-06** (golden-fixture oracle) is a continuous
 activity — extended per-port against `cellpy`'s published goldens, not a closeable unit.
