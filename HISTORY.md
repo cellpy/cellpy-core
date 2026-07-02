@@ -30,3 +30,8 @@ All notable changes to this project will be documented in this file.
   procedure and the cellpy re-pin checklist in
   `.issueflows/04-designs-and-guides/release-procedure.md`, and re-pin cellpy from
   `git+…@main` to the PyPI release (jepegit/cellpy#400) (#44).
+- Add a validating front door for raw frames: `Data.from_raw_frame(df, validate=True)`
+  plus module-level `validate_raw_frame` check a native polars frame against
+  `config.RawCols` (required columns, `epoch_time_utc` int64-ns UTC contract, integer
+  datapoint/cycle/step numbers) and fail fast with one actionable error;
+  `validate=False` skips all checks (#55).
