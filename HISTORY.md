@@ -25,3 +25,8 @@ All notable changes to this project will be documented in this file.
   `selectors.summary_selector_exluder`) and the never-used `selector` parameter on both
   `make_core_summary` signatures, now that cellpy has migrated off them; the exclude-types
   summary feature they carried is tracked for native reimplementation in #54 (#45).
+- Establish and verify the release/PyPI pipeline end-to-end (`release` alias +
+  `release.yml` trusted publishing; `cellpycore` 0.1.1 live on PyPI), document the
+  procedure and the cellpy re-pin checklist in
+  `.issueflows/04-designs-and-guides/release-procedure.md`, and re-pin cellpy from
+  `git+…@main` to the PyPI release (jepegit/cellpy#400) (#44).
