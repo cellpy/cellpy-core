@@ -14,3 +14,7 @@ All notable changes to this project will be documented in this file.
   for a single unmerged test; single-test goldens stay byte-identical) (#41).
 - Promote `CellpyUnits` into `cellpycore.units` (first-class unit-spec module) with a
   `legacy.py` re-export, plus converter-parity and pint-optional guard tests (STEP-12, #40).
+- Add native `ref_potential` (reference-electrode potential) to `RawCols` with the full
+  `StepCols` aggregate set, wired through the polars step engine (aggregated when
+  present, skipped when absent); legacy `reference_voltage` stays unbridged to preserve
+  the legacy step-frame parity (#43).

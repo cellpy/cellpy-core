@@ -124,6 +124,12 @@ def create_raw_data() -> DataFrame:
         raw_cols.internal_resistance, [0.05] * n_points, dtype=pl.Float64
     )
 
+    # Reference-electrode potential (3-electrode setup): the cell potential
+    # shifted by a small constant offset vs the reference electrode.
+    ref_potential = pl.Series(
+        raw_cols.ref_potential, [v - 0.2 for v in potential], dtype=pl.Float64
+    )
+
     # Generate auxiliary temperature data
     temperature_cell = pl.Series(
         raw_cols.aux_temperature_cell,
@@ -165,6 +171,7 @@ def create_raw_data() -> DataFrame:
         raw_cols.potential: potential,
         raw_cols.current: current,
         raw_cols.internal_resistance: internal_resistance,
+        raw_cols.ref_potential: ref_potential,
         raw_cols.aux_temperature_cell: temperature_cell,
         raw_cols.aux_temperature_chamber: temperature_chamber,
         raw_cols.aux_pressure_cell: pressure,

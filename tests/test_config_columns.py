@@ -28,7 +28,7 @@ RAW_EXPECTED = [
     "potential", "current", "cumulative_charge_capacity",
     "cumulative_discharge_capacity", "cumulative_charge_energy",
     "cumulative_discharge_energy", "step_charge_power", "step_discharge_power",
-    "internal_resistance",
+    "internal_resistance", "ref_potential",
     "aux_temperature_cell", "aux_temperature_chamber", "aux_pressure_cell",
 ]
 
@@ -42,6 +42,7 @@ STEP_EXPECTED = [
     *_aggregates("charge_capacity"), *_aggregates("discharge_capacity"),
     *_aggregates("power"), *_aggregates("charge_energy"),
     *_aggregates("discharge_energy"), *_aggregates("internal_resistance"),
+    *_aggregates("ref_potential"),
     "c_rate",
 ]
 
