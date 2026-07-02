@@ -488,11 +488,73 @@ def _add_end_potentials(summary: "pl.DataFrame", steps: "pl.DataFrame", schema: 
     return summary
 
 
+def _subtract_excluded_step_deltas(
+    summary: "pl.DataFrame",
+    steps: "pl.DataFrame",
+    schema: Schema,
+    exclude_step_types: Sequence[str],
+    use_tid: bool,
+) -> "pl.DataFrame":
+    """Subtract excluded steps' per-cycle capacity deltas from the summary.
+
+    Ports the exclusion math of the removed pandas ``summary_selector_exluder``
+    (issue #54): capacities are cycle-cumulative, so removing steps from the
+    summary is not row selection — instead each excluded step's contribution
+    (``last - first``, summed per cycle) is subtracted from the cycle-end
+    charge / discharge capacities, producing a summary "as if" those steps
+    never happened. Steps are excluded when their ``step_type`` starts with any
+    of the given prefixes (e.g. ``"cv_"`` matches ``cv_charge`` and
+    ``cv_discharge``). Cycles without any excluded step get a zero correction.
+
+    Only the capacity columns are corrected: the legacy implementation also
+    adjusted the selected raw rows' current / voltage, but those values feed
+    nothing that survives in the native summary (end potentials come from the
+    step table).
+    """
+    shdr, chdr = schema.step, schema.cycle
+
+    mask = pl.any_horizontal(
+        [pl.col(shdr.step_type).str.starts_with(p) for p in exclude_step_types]
+    )
+    group_keys = _group_keys(steps, [shdr.cycle_num], shdr.test_id)
+    corrections = (
+        steps.filter(mask)
+        .group_by(group_keys, maintain_order=True)
+        .agg(
+            (
+                pl.col(shdr.charge_capacity_last) - pl.col(shdr.charge_capacity_first)
+            )
+            .sum()
+            .alias("__excl_charge"),
+            (
+                pl.col(shdr.discharge_capacity_last)
+                - pl.col(shdr.discharge_capacity_first)
+            )
+            .sum()
+            .alias("__excl_discharge"),
+        )
+    )
+
+    left_on = [chdr.test_id, chdr.cycle_num] if use_tid else [chdr.cycle_num]
+    right_on = [shdr.test_id, shdr.cycle_num] if use_tid else [shdr.cycle_num]
+    summary = summary.join(corrections, left_on=left_on, right_on=right_on, how="left")
+    summary = summary.with_columns(
+        (pl.col(chdr.charge_capacity) - pl.col("__excl_charge").fill_null(0.0)).alias(
+            chdr.charge_capacity
+        ),
+        (
+            pl.col(chdr.discharge_capacity) - pl.col("__excl_discharge").fill_null(0.0)
+        ).alias(chdr.discharge_capacity),
+    )
+    return summary.drop(["__excl_charge", "__excl_discharge"])
+
+
 def make_summary(
     data: Data,
     schema: Optional[Schema] = None,
     final_data_points: Optional[Sequence] = None,
     test_mode: TestMode = TestMode.NORMAL,
+    exclude_step_types: Optional[Sequence[str]] = None,
 ) -> Data:
     """Polars-native per-cycle summary (the clean native ``CycleCols`` subset).
 
@@ -512,6 +574,12 @@ def make_summary(
             (anode half-cell, discharge first) flips the reference electrode so
             ``CE = 100*charge/discharge`` and ``coulombic_difference =
             discharge - charge`` (mirrors legacy ``cycle_mode == "anode"``).
+        exclude_step_types: Optional step-type prefixes to exclude from the
+            summary (e.g. ``["cv_"]`` for a non-CV summary). The excluded
+            steps' per-cycle capacity deltas are subtracted from the cycle-end
+            values before any derived column is computed (see
+            ``_subtract_excluded_step_deltas``). ``None`` (the default) leaves
+            the summary untouched.
 
     Returns:
         Data: The data object with the per-cycle ``summary`` added.
@@ -567,6 +635,14 @@ def make_summary(
     if use_tid:
         select_exprs.insert(0, pl.col(nhdr.test_id).alias(chdr.test_id))
     summary = selected.select(select_exprs)
+
+    # Correct the cycle-end capacities before deriving CE / losses / cumulated
+    # columns, so every downstream column reflects the exclusion (the removed
+    # pandas implementation corrected the selected raw rows at the same stage).
+    if exclude_step_types:
+        summary = _subtract_excluded_step_deltas(
+            summary, steps, schema, exclude_step_types, use_tid
+        )
 
     # Per-test cumulations / shifts: window over ``test_id`` so a merged object
     # never carries capacity/CE from one test into the next.
