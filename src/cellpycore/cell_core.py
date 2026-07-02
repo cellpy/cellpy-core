@@ -276,6 +276,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         final_data_points: Optional[Iterable[int]] = None,
         current_conversion_factor: float = 1.0,
         ir_extractor: Optional[Callable] = None,
+        exclude_step_types: Optional[Iterable[str]] = None,
     ) -> Data:
         """Make the core summary.
 
@@ -291,6 +292,9 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             ir_extractor: Optional ``SummaryExtractor`` controlling how the per-cycle
                 internal-resistance columns are derived. Defaults to
                 ``extractors.LastIRExtractor`` when ``None``.
+            exclude_step_types: Optional step-type prefixes to exclude from the
+                summary (e.g. ``["cv_"]``); forwarded to
+                ``summarizers.make_summary`` (issue #54).
 
         Returns:
             Data object with the summary.
@@ -314,6 +318,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             self.schema,
             final_data_points=final_data_points,
             test_mode=test_mode,
+            exclude_step_types=exclude_step_types,
         )
         if find_ir and (self.schema.raw.internal_resistance in data.raw.columns):
             data = summarizers.ir_to_summary(
@@ -678,6 +683,7 @@ class OldCellpyCellCore(CellpyCellCore):
         final_data_points: Optional[Iterable[int]] = None,
         current_conversion_factor: float = 1.0,
         ir_extractor: Optional[Callable] = None,
+        exclude_step_types: Optional[Iterable[str]] = None,
     ) -> Data:
         """Build the per-cycle summary via the polars engine, in/out in legacy form.
 
@@ -686,7 +692,9 @@ class OldCellpyCellCore(CellpyCellCore):
         legacy cruft to reproduce the legacy ``HeadersSummary`` frame.
 
         ``ir_extractor`` is forwarded to ``summarizers.ir_to_summary`` (defaults to
-        ``extractors.LastIRExtractor`` when ``None``).
+        ``extractors.LastIRExtractor`` when ``None``). ``exclude_step_types`` is
+        forwarded to ``summarizers.make_summary`` (step-type prefixes whose
+        capacity contributions are subtracted from the summary, issue #54).
         """
         import polars as pl
 
@@ -703,7 +711,10 @@ class OldCellpyCellCore(CellpyCellCore):
         nd.raw = native_raw
         nd.steps = native_steps
         summarizers.make_summary(
-            nd, native_schema, final_data_points=final_data_points
+            nd,
+            native_schema,
+            final_data_points=final_data_points,
+            exclude_step_types=exclude_step_types,
         )
 
         # C-rate / IR are now native-schema columns (issue #21): compute them on the

@@ -10,8 +10,13 @@
 >
 > The one capability the old selector had that was never ported (and has been
 > a silent no-op since the core seam): **exclude-types summaries** (non-cv /
-> non-rest / non-ocv / only-cv delta-correction). Re-implementing it natively
-> is tracked in [#54](https://github.com/cellpy/cellpy-core/issues/54).
+> non-rest / non-ocv / only-cv delta-correction). Re-implemented natively in
+> [#54](https://github.com/cellpy/cellpy-core/issues/54):
+> `summarizers.make_summary(exclude_step_types=[...])` subtracts excluded
+> steps' per-cycle capacity deltas (prefix match on `step_type`), forwarded by
+> both `make_core_summary` signatures; parity is locked by a pandas-oracle
+> test in `tests/test_exclude_types.py`. The `selector_type` string mapping
+> stays a cellpy-side follow-up.
 
 **Context.** Issue #22 (follow-up to #13) proposed removing four "superseded" pandas
 summary/selector helpers from cellpy-core after the polars summary rewrite:

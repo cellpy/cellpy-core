@@ -403,7 +403,7 @@
       "label": ".add_scaled_summary_columns()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L328",
+      "source_location": "L333",
       "id": "cellpycore_cell_core_cellpycellcore_add_scaled_summary_columns",
       "community": 68,
       "norm_label": ".add_scaled_summary_columns()"
@@ -412,7 +412,7 @@
       "label": "._resolve_specific_converter()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L386",
+      "source_location": "L391",
       "id": "cellpycore_cell_core_cellpycellcore_resolve_specific_converter",
       "community": 68,
       "norm_label": "._resolve_specific_converter()"
@@ -421,7 +421,7 @@
       "label": ".make_core_step_table()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L405",
+      "source_location": "L410",
       "id": "cellpycore_cell_core_cellpycellcore_make_core_step_table",
       "community": 34,
       "norm_label": ".make_core_step_table()"
@@ -430,7 +430,7 @@
       "label": "OldCellpyCellCore",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L466",
+      "source_location": "L471",
       "id": "cellpycore_cell_core_oldcellpycellcore",
       "community": 16,
       "norm_label": "oldcellpycellcore"
@@ -439,7 +439,7 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L469",
+      "source_location": "L474",
       "id": "cellpycore_cell_core_oldcellpycellcore_init",
       "community": 61,
       "norm_label": ".__init__()"
@@ -448,7 +448,7 @@
       "label": "._legacy_to_native_raw_rename()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L491",
+      "source_location": "L496",
       "id": "cellpycore_cell_core_oldcellpycellcore_legacy_to_native_raw_rename",
       "community": 16,
       "norm_label": "._legacy_to_native_raw_rename()"
@@ -457,7 +457,7 @@
       "label": "._native_to_legacy_step_rename()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L494",
+      "source_location": "L499",
       "id": "cellpycore_cell_core_oldcellpycellcore_native_to_legacy_step_rename",
       "community": 16,
       "norm_label": "._native_to_legacy_step_rename()"
@@ -466,7 +466,7 @@
       "label": "._legacy_step_column_order()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L497",
+      "source_location": "L502",
       "id": "cellpycore_cell_core_oldcellpycellcore_legacy_step_column_order",
       "community": 16,
       "norm_label": "._legacy_step_column_order()"
@@ -475,7 +475,7 @@
       "label": "._native_steps_to_legacy()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L512",
+      "source_location": "L517",
       "id": "cellpycore_cell_core_oldcellpycellcore_native_steps_to_legacy",
       "community": 16,
       "norm_label": "._native_steps_to_legacy()"
@@ -484,7 +484,7 @@
       "label": ".make_core_step_table()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L527",
+      "source_location": "L532",
       "id": "cellpycore_cell_core_oldcellpycellcore_make_core_step_table",
       "community": 16,
       "norm_label": ".make_core_step_table()"
@@ -493,7 +493,7 @@
       "label": "._apply_spec_info()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L591",
+      "source_location": "L596",
       "id": "cellpycore_cell_core_oldcellpycellcore_apply_spec_info",
       "community": 16,
       "norm_label": "._apply_spec_info()"
@@ -502,7 +502,7 @@
       "label": "._legacy_to_native_step_rename()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L624",
+      "source_location": "L629",
       "id": "cellpycore_cell_core_oldcellpycellcore_legacy_to_native_step_rename",
       "community": 16,
       "norm_label": "._legacy_to_native_step_rename()"
@@ -511,7 +511,7 @@
       "label": "._native_to_legacy_summary_rename()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L627",
+      "source_location": "L632",
       "id": "cellpycore_cell_core_oldcellpycellcore_native_to_legacy_summary_rename",
       "community": 16,
       "norm_label": "._native_to_legacy_summary_rename()"
@@ -520,7 +520,7 @@
       "label": "._legacy_to_native_summary_rename()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L630",
+      "source_location": "L635",
       "id": "cellpycore_cell_core_oldcellpycellcore_legacy_to_native_summary_rename",
       "community": 16,
       "norm_label": "._legacy_to_native_summary_rename()"
@@ -529,7 +529,7 @@
       "label": "._legacy_summary_column_order()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L633",
+      "source_location": "L638",
       "id": "cellpycore_cell_core_oldcellpycellcore_legacy_summary_column_order",
       "community": 16,
       "norm_label": "._legacy_summary_column_order()"
@@ -538,7 +538,7 @@
       "label": "._add_legacy_summary_cruft()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L652",
+      "source_location": "L657",
       "id": "cellpycore_cell_core_oldcellpycellcore_add_legacy_summary_cruft",
       "community": 16,
       "norm_label": "._add_legacy_summary_cruft()"
@@ -547,7 +547,7 @@
       "label": ".make_core_summary()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L672",
+      "source_location": "L677",
       "id": "cellpycore_cell_core_oldcellpycellcore_make_core_summary",
       "community": 16,
       "norm_label": ".make_core_summary()"
@@ -556,7 +556,7 @@
       "label": ".add_scaled_summary_columns()",
       "file_type": "code",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L748",
+      "source_location": "L759",
       "id": "cellpycore_cell_core_oldcellpycellcore_add_scaled_summary_columns",
       "community": 16,
       "norm_label": ".add_scaled_summary_columns()"
@@ -646,8 +646,8 @@
       "label": "Make the core summary.          Args:             data: The data to make the",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L280",
-      "id": "cellpycore_cell_core_rationale_280",
+      "source_location": "L281",
+      "id": "cellpycore_cell_core_rationale_281",
       "community": 68,
       "norm_label": "make the core summary.          args:             data: the data to make the"
     },
@@ -655,8 +655,8 @@
       "label": "Add specific summary columns to the summary.          Args:             data:",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L337",
-      "id": "cellpycore_cell_core_rationale_337",
+      "source_location": "L342",
+      "id": "cellpycore_cell_core_rationale_342",
       "community": 68,
       "norm_label": "add specific summary columns to the summary.          args:             data:"
     },
@@ -664,8 +664,8 @@
       "label": "Resolve the specific-capacity conversion factor for a mode.          Prefers t",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L389",
-      "id": "cellpycore_cell_core_rationale_389",
+      "source_location": "L394",
+      "id": "cellpycore_cell_core_rationale_394",
       "community": 68,
       "norm_label": "resolve the specific-capacity conversion factor for a mode.          prefers t"
     },
@@ -673,8 +673,8 @@
       "label": "Make the core step table.          Delegates to ``summarizers.make_step_table`",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L420",
-      "id": "cellpycore_cell_core_rationale_420",
+      "source_location": "L425",
+      "id": "cellpycore_cell_core_rationale_425",
       "community": 34,
       "norm_label": "make the core step table.          delegates to ``summarizers.make_step_table`"
     },
@@ -682,8 +682,8 @@
       "label": "Legacy CellpyCellCore class to make it easier to migrate to cellpy core.",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L467",
-      "id": "cellpycore_cell_core_rationale_467",
+      "source_location": "L472",
+      "id": "cellpycore_cell_core_rationale_472",
       "community": 16,
       "norm_label": "legacy cellpycellcore class to make it easier to migrate to cellpy core."
     },
@@ -691,8 +691,8 @@
       "label": "Build the step table via the polars engine, in/out in legacy form.          Se",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L542",
-      "id": "cellpycore_cell_core_rationale_542",
+      "source_location": "L547",
+      "id": "cellpycore_cell_core_rationale_547",
       "community": 16,
       "norm_label": "build the step table via the polars engine, in/out in legacy form.          se"
     },
@@ -700,8 +700,8 @@
       "label": "Map the ``info`` column from step specifications onto the step table.",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L592",
-      "id": "cellpycore_cell_core_rationale_592",
+      "source_location": "L597",
+      "id": "cellpycore_cell_core_rationale_597",
       "community": 16,
       "norm_label": "map the ``info`` column from step specifications onto the step table."
     },
@@ -709,8 +709,8 @@
       "label": "Add the pandas-only legacy summary columns the native schema omits.          `",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L653",
-      "id": "cellpycore_cell_core_rationale_653",
+      "source_location": "L658",
+      "id": "cellpycore_cell_core_rationale_658",
       "community": 16,
       "norm_label": "add the pandas-only legacy summary columns the native schema omits.          `"
     },
@@ -718,8 +718,8 @@
       "label": "Build the per-cycle summary via the polars engine, in/out in legacy form.",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L682",
-      "id": "cellpycore_cell_core_rationale_682",
+      "source_location": "L688",
+      "id": "cellpycore_cell_core_rationale_688",
       "community": 16,
       "norm_label": "build the per-cycle summary via the polars engine, in/out in legacy form."
     },
@@ -727,8 +727,8 @@
       "label": "Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam).",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L757",
-      "id": "cellpycore_cell_core_rationale_757",
+      "source_location": "L768",
+      "id": "cellpycore_cell_core_rationale_768",
       "community": 16,
       "norm_label": "legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)."
     },
@@ -909,7 +909,7 @@
       "source_file": "src/cellpycore/config.py",
       "source_location": "L548",
       "id": "cellpycore_config_rawcols",
-      "community": 49,
+      "community": 56,
       "norm_label": "rawcols"
     },
     {
@@ -918,7 +918,7 @@
       "source_file": "src/cellpycore/config.py",
       "source_location": "L598",
       "id": "cellpycore_config_default_schema",
-      "community": 62,
+      "community": 0,
       "norm_label": "default_schema()"
     },
     {
@@ -1062,7 +1062,7 @@
       "source_file": "src/cellpycore/config.py",
       "source_location": "L549",
       "id": "cellpycore_config_rationale_549",
-      "community": 49,
+      "community": 56,
       "norm_label": "column-header definitions for the harmonized raw data table.      each attribu"
     },
     {
@@ -1071,7 +1071,7 @@
       "source_file": "src/cellpycore/config.py",
       "source_location": "L599",
       "id": "cellpycore_config_rationale_599",
-      "community": 62,
+      "community": 0,
       "norm_label": "return a schema using the native cellpy-core column definitions.      used as"
     },
     {
@@ -1278,7 +1278,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L21",
       "id": "cellpycore_legacy_cellpyerror",
-      "community": 71,
+      "community": 12,
       "norm_label": "cellpyerror"
     },
     {
@@ -1287,7 +1287,7 @@
       "source_file": "",
       "source_location": "",
       "id": "exception",
-      "community": 71,
+      "community": 12,
       "norm_label": "exception"
     },
     {
@@ -1296,7 +1296,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L27",
       "id": "cellpycore_legacy_nodatafound",
-      "community": 71,
+      "community": 12,
       "norm_label": "nodatafound"
     },
     {
@@ -1359,7 +1359,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L113",
       "id": "cellpycore_legacy_headersnormal",
-      "community": 12,
+      "community": 28,
       "norm_label": "headersnormal"
     },
     {
@@ -1368,7 +1368,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L148",
       "id": "cellpycore_legacy_headerssummary",
-      "community": 66,
+      "community": 17,
       "norm_label": "headerssummary"
     },
     {
@@ -1404,7 +1404,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L256",
       "id": "cellpycore_legacy_headerssteptable",
-      "community": 17,
+      "community": 28,
       "norm_label": "headerssteptable"
     },
     {
@@ -1458,7 +1458,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L22",
       "id": "cellpycore_legacy_rationale_22",
-      "community": 71,
+      "community": 12,
       "norm_label": "base class for other exceptions"
     },
     {
@@ -1467,7 +1467,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L28",
       "id": "cellpycore_legacy_rationale_28",
-      "community": 71,
+      "community": 12,
       "norm_label": "exception raised when no data is found"
     },
     {
@@ -1494,7 +1494,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L114",
       "id": "cellpycore_legacy_rationale_114",
-      "community": 12,
+      "community": 28,
       "norm_label": "headers used for the normal (raw) data (used as column headers for the main data"
     },
     {
@@ -1503,7 +1503,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L149",
       "id": "cellpycore_legacy_rationale_149",
-      "community": 66,
+      "community": 17,
       "norm_label": "headers used for the summary data (used as column headers for the main data pand"
     },
     {
@@ -1521,7 +1521,7 @@
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L257",
       "id": "cellpycore_legacy_rationale_257",
-      "community": 17,
+      "community": 28,
       "norm_label": "headers used for the steps table (used as column headers for the steps pandas da"
     },
     {
@@ -1566,7 +1566,7 @@
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L13",
       "id": "cellpycore_selectors_get_step_numbers",
-      "community": 62,
+      "community": 0,
       "norm_label": "get_step_numbers()"
     },
     {
@@ -1575,7 +1575,7 @@
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L164",
       "id": "cellpycore_selectors_get_cycle_numbers",
-      "community": 62,
+      "community": 0,
       "norm_label": "get_cycle_numbers()"
     },
     {
@@ -1584,7 +1584,7 @@
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L238",
       "id": "cellpycore_selectors_get_rates",
-      "community": 62,
+      "community": 0,
       "norm_label": "get_rates()"
     },
     {
@@ -1602,7 +1602,7 @@
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L28",
       "id": "cellpycore_selectors_rationale_28",
-      "community": 62,
+      "community": 0,
       "norm_label": "get the step numbers of selected type.      returns the selected step_numbers"
     },
     {
@@ -1611,7 +1611,7 @@
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L174",
       "id": "cellpycore_selectors_rationale_174",
-      "community": 62,
+      "community": 0,
       "norm_label": "get a array containing the cycle numbers in the test.      parameters:"
     },
     {
@@ -1620,7 +1620,7 @@
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L245",
       "id": "cellpycore_selectors_rationale_245",
-      "community": 62,
+      "community": 0,
       "norm_label": "get the rates in the test (only valid for constant current).      args:"
     },
     {
@@ -1872,7 +1872,7 @@
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L168",
       "id": "cellpycore_summarizers_delta_expr",
-      "community": 53,
+      "community": 50,
       "norm_label": "_delta_expr()"
     },
     {
@@ -1881,7 +1881,7 @@
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L184",
       "id": "cellpycore_summarizers_classify_from_specifications",
-      "community": 53,
+      "community": 50,
       "norm_label": "_classify_from_specifications()"
     },
     {
@@ -1890,7 +1890,7 @@
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L198",
       "id": "cellpycore_summarizers_classify_steps",
-      "community": 53,
+      "community": 50,
       "norm_label": "_classify_steps()"
     },
     {
@@ -1899,7 +1899,7 @@
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L279",
       "id": "cellpycore_summarizers_make_step_table",
-      "community": 53,
+      "community": 50,
       "norm_label": "make_step_table()"
     },
     {
@@ -1912,10 +1912,19 @@
       "norm_label": "_add_end_potentials()"
     },
     {
-      "label": "make_summary()",
+      "label": "_subtract_excluded_step_deltas()",
       "file_type": "code",
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L491",
+      "id": "cellpycore_summarizers_subtract_excluded_step_deltas",
+      "community": 50,
+      "norm_label": "_subtract_excluded_step_deltas()"
+    },
+    {
+      "label": "make_summary()",
+      "file_type": "code",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L552",
       "id": "cellpycore_summarizers_make_summary",
       "community": 50,
       "norm_label": "make_summary()"
@@ -1924,34 +1933,34 @@
       "label": "generate_specific_summary_columns()",
       "file_type": "code",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L612",
+      "source_location": "L688",
       "id": "cellpycore_summarizers_generate_specific_summary_columns",
-      "community": 75,
+      "community": 50,
       "norm_label": "generate_specific_summary_columns()"
     },
     {
       "label": "_calculate_nominal_capacity_from_cycles()",
       "file_type": "code",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L652",
+      "source_location": "L728",
       "id": "cellpycore_summarizers_calculate_nominal_capacity_from_cycles",
-      "community": 55,
+      "community": 50,
       "norm_label": "_calculate_nominal_capacity_from_cycles()"
     },
     {
       "label": "equivalent_cycles_to_summary()",
       "file_type": "code",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L690",
+      "source_location": "L766",
       "id": "cellpycore_summarizers_equivalent_cycles_to_summary",
-      "community": 55,
+      "community": 50,
       "norm_label": "equivalent_cycles_to_summary()"
     },
     {
       "label": "c_rates_to_summary()",
       "file_type": "code",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L740",
+      "source_location": "L816",
       "id": "cellpycore_summarizers_c_rates_to_summary",
       "community": 50,
       "norm_label": "c_rates_to_summary()"
@@ -1960,7 +1969,7 @@
       "label": "ir_to_summary()",
       "file_type": "code",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L836",
+      "source_location": "L912",
       "id": "cellpycore_summarizers_ir_to_summary",
       "community": 51,
       "norm_label": "ir_to_summary()"
@@ -1969,7 +1978,7 @@
       "label": "_main()",
       "file_type": "code",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L898",
+      "source_location": "L974",
       "id": "cellpycore_summarizers_main",
       "community": 50,
       "norm_label": "_main()"
@@ -2007,7 +2016,7 @@
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L169",
       "id": "cellpycore_summarizers_rationale_169",
-      "community": 53,
+      "community": 50,
       "norm_label": "per-step delta in percent (mirrors legacy cellpy's ``delta``).      ``100 * la"
     },
     {
@@ -2016,7 +2025,7 @@
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L185",
       "id": "cellpycore_summarizers_rationale_185",
-      "community": 53,
+      "community": 50,
       "norm_label": "build a step-type expression from explicit step specifications."
     },
     {
@@ -2025,7 +2034,7 @@
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L207",
       "id": "cellpycore_summarizers_rationale_207",
-      "community": 53,
+      "community": 50,
       "norm_label": "return a polars expression classifying each step into a step type.      mirror"
     },
     {
@@ -2034,7 +2043,7 @@
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L294",
       "id": "cellpycore_summarizers_rationale_294",
-      "community": 53,
+      "community": 50,
       "norm_label": "create a table (v.5) that contains summary information for each step.      thi"
     },
     {
@@ -2047,11 +2056,20 @@
       "norm_label": "join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``."
     },
     {
+      "label": "Subtract excluded steps' per-cycle capacity deltas from the summary.      Port",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L498",
+      "id": "cellpycore_summarizers_rationale_498",
+      "community": 50,
+      "norm_label": "subtract excluded steps' per-cycle capacity deltas from the summary.      port"
+    },
+    {
       "label": "Polars-native per-cycle summary (the clean native ``CycleCols`` subset).",
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L497",
-      "id": "cellpycore_summarizers_rationale_497",
+      "source_location": "L559",
+      "id": "cellpycore_summarizers_rationale_559",
       "community": 50,
       "norm_label": "polars-native per-cycle summary (the clean native ``cyclecols`` subset)."
     },
@@ -2059,35 +2077,35 @@
       "label": "Generate specific (per mass / area / volume) summary columns.      Polars-nati",
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L618",
-      "id": "cellpycore_summarizers_rationale_618",
-      "community": 75,
+      "source_location": "L694",
+      "id": "cellpycore_summarizers_rationale_694",
+      "community": 50,
       "norm_label": "generate specific (per mass / area / volume) summary columns.      polars-nati"
     },
     {
       "label": "Calculate nominal capacity from specified normalization cycles.      Polars-na",
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L658",
-      "id": "cellpycore_summarizers_rationale_658",
-      "community": 55,
+      "source_location": "L734",
+      "id": "cellpycore_summarizers_rationale_734",
+      "community": 50,
       "norm_label": "calculate nominal capacity from specified normalization cycles.      polars-na"
     },
     {
       "label": "Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary.",
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L697",
-      "id": "cellpycore_summarizers_rationale_697",
-      "community": 55,
+      "source_location": "L773",
+      "id": "cellpycore_summarizers_rationale_773",
+      "community": 50,
       "norm_label": "add the ``normalized_cycle_index`` (equivalent cycles) column to the summary."
     },
     {
       "label": "Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t",
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L748",
-      "id": "cellpycore_summarizers_rationale_748",
+      "source_location": "L824",
+      "id": "cellpycore_summarizers_rationale_824",
       "community": 50,
       "norm_label": "add per-cycle charge / discharge c-rates to the summary.      polars-native: t"
     },
@@ -2095,8 +2113,8 @@
       "label": "Add per-cycle internal-resistance columns (``ir_charge`` / ``ir_discharge``).",
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
-      "source_location": "L841",
-      "id": "cellpycore_summarizers_rationale_841",
+      "source_location": "L917",
+      "id": "cellpycore_summarizers_rationale_917",
       "community": 51,
       "norm_label": "add per-cycle internal-resistance columns (``ir_charge`` / ``ir_discharge``)."
     },
@@ -2610,7 +2628,7 @@
       "source_file": "src/cellpycore/metadata/models.py",
       "source_location": "L34",
       "id": "metadata_models_metalevel",
-      "community": 7,
+      "community": 1,
       "norm_label": "metalevel"
     },
     {
@@ -2727,7 +2745,7 @@
       "source_file": "src/cellpycore/metadata/models.py",
       "source_location": "L35",
       "id": "metadata_models_rationale_35",
-      "community": 7,
+      "community": 1,
       "norm_label": "the level a piece of metadata applies to.      attributes:         cell: cell"
     },
     {
@@ -3028,12 +3046,201 @@
       "norm_label": "test_from_raw_frame_rejects_non_polars_input()"
     },
     {
+      "label": "test_exclude_types.py",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L1",
+      "id": "tests_test_exclude_types_py",
+      "community": 0,
+      "norm_label": "test_exclude_types.py"
+    },
+    {
+      "label": "_build_cv_raw()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L23",
+      "id": "tests_test_exclude_types_build_cv_raw",
+      "community": 0,
+      "norm_label": "_build_cv_raw()"
+    },
+    {
+      "label": "_data_with_steps()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L68",
+      "id": "tests_test_exclude_types_data_with_steps",
+      "community": 0,
+      "norm_label": "_data_with_steps()"
+    },
+    {
+      "label": "_pandas_oracle()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L77",
+      "id": "tests_test_exclude_types_pandas_oracle",
+      "community": 0,
+      "norm_label": "_pandas_oracle()"
+    },
+    {
+      "label": "test_exclude_cv_matches_pandas_oracle()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L120",
+      "id": "tests_test_exclude_types_test_exclude_cv_matches_pandas_oracle",
+      "community": 0,
+      "norm_label": "test_exclude_cv_matches_pandas_oracle()"
+    },
+    {
+      "label": "test_derived_columns_use_corrected_capacities()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L151",
+      "id": "tests_test_exclude_types_test_derived_columns_use_corrected_capacities",
+      "community": 0,
+      "norm_label": "test_derived_columns_use_corrected_capacities()"
+    },
+    {
+      "label": "test_exclude_none_and_empty_leave_summary_untouched()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L169",
+      "id": "tests_test_exclude_types_test_exclude_none_and_empty_leave_summary_untouched",
+      "community": 0,
+      "norm_label": "test_exclude_none_and_empty_leave_summary_untouched()"
+    },
+    {
+      "label": "test_unmatched_prefix_gives_zero_correction()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L181",
+      "id": "tests_test_exclude_types_test_unmatched_prefix_gives_zero_correction",
+      "community": 0,
+      "norm_label": "test_unmatched_prefix_gives_zero_correction()"
+    },
+    {
+      "label": "test_cycle_without_excluded_step_is_uncorrected()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L192",
+      "id": "tests_test_exclude_types_test_cycle_without_excluded_step_is_uncorrected",
+      "community": 0,
+      "norm_label": "test_cycle_without_excluded_step_is_uncorrected()"
+    },
+    {
+      "label": "test_only_cv_prefix_semantics()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L205",
+      "id": "tests_test_exclude_types_test_only_cv_prefix_semantics",
+      "community": 0,
+      "norm_label": "test_only_cv_prefix_semantics()"
+    },
+    {
+      "label": "test_merged_tests_corrections_stay_isolated()",
+      "file_type": "code",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L226",
+      "id": "tests_test_exclude_types_test_merged_tests_corrections_stay_isolated",
+      "community": 0,
+      "norm_label": "test_merged_tests_corrections_stay_isolated()"
+    },
+    {
+      "label": "Tests for native exclude-types summary support (issue #54).  ``summarizers.mak",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L1",
+      "id": "tests_test_exclude_types_rationale_1",
+      "community": 0,
+      "norm_label": "tests for native exclude-types summary support (issue #54).  ``summarizers.mak"
+    },
+    {
+      "label": "2 cycles of charge / cv_charge / discharge / cv_discharge raw data.      Capac",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L24",
+      "id": "tests_test_exclude_types_rationale_24",
+      "community": 0,
+      "norm_label": "2 cycles of charge / cv_charge / discharge / cv_discharge raw data.      capac"
+    },
+    {
+      "label": "The removed ``summary_selector_exluder`` math on native names.      Selects th",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L80",
+      "id": "tests_test_exclude_types_rationale_80",
+      "community": 0,
+      "norm_label": "the removed ``summary_selector_exluder`` math on native names.      selects th"
+    },
+    {
+      "label": "exclude_step_types=[\"cv_\"] reproduces the removed pandas implementation.",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L121",
+      "id": "tests_test_exclude_types_rationale_121",
+      "community": 0,
+      "norm_label": "exclude_step_types=[\"cv_\"] reproduces the removed pandas implementation."
+    },
+    {
+      "label": "CE / coulombic difference are computed from the corrected capacities.",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L152",
+      "id": "tests_test_exclude_types_rationale_152",
+      "community": 0,
+      "norm_label": "ce / coulombic difference are computed from the corrected capacities."
+    },
+    {
+      "label": "None (default) and [] are byte-identical to the plain summary.",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L170",
+      "id": "tests_test_exclude_types_rationale_170",
+      "community": 0,
+      "norm_label": "none (default) and [] are byte-identical to the plain summary."
+    },
+    {
+      "label": "A prefix matching no step yields the uncorrected summary (fill_null path).",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L182",
+      "id": "tests_test_exclude_types_rationale_182",
+      "community": 0,
+      "norm_label": "a prefix matching no step yields the uncorrected summary (fill_null path)."
+    },
+    {
+      "label": "Only cycles containing an excluded step get a correction.",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L193",
+      "id": "tests_test_exclude_types_rationale_193",
+      "community": 0,
+      "norm_label": "only cycles containing an excluded step get a correction."
+    },
+    {
+      "label": "exclude [\"charge\", \"discharge\"] drops the plain steps, keeps cv_ ones.      Th",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L206",
+      "id": "tests_test_exclude_types_rationale_206",
+      "community": 0,
+      "norm_label": "exclude [\"charge\", \"discharge\"] drops the plain steps, keeps cv_ ones.      th"
+    },
+    {
+      "label": "In a merged two-test frame the correction never leaks across test_id.",
+      "file_type": "rationale",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L227",
+      "id": "tests_test_exclude_types_rationale_227",
+      "community": 0,
+      "norm_label": "in a merged two-test frame the correction never leaks across test_id."
+    },
+    {
       "label": "test_golden.py",
       "file_type": "code",
       "source_file": "tests/test_golden.py",
       "source_location": "L1",
       "id": "tests_test_golden_py",
-      "community": 16,
+      "community": 11,
       "norm_label": "test_golden.py"
     },
     {
@@ -3042,7 +3249,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L41",
       "id": "tests_test_golden_legacy_schema",
-      "community": 16,
+      "community": 28,
       "norm_label": "_legacy_schema()"
     },
     {
@@ -3051,7 +3258,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L45",
       "id": "tests_test_golden_step_table",
-      "community": 16,
+      "community": 11,
       "norm_label": "_step_table()"
     },
     {
@@ -3060,7 +3267,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L55",
       "id": "tests_test_golden_summary",
-      "community": 16,
+      "community": 11,
       "norm_label": "_summary()"
     },
     {
@@ -3069,7 +3276,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L71",
       "id": "tests_test_golden_test_arbin_step_table_matches_cellpy_goldens",
-      "community": 16,
+      "community": 11,
       "norm_label": "test_arbin_step_table_matches_cellpy_goldens()"
     },
     {
@@ -3078,7 +3285,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L84",
       "id": "tests_test_golden_test_arbin_step_table_matches_snapshot",
-      "community": 16,
+      "community": 11,
       "norm_label": "test_arbin_step_table_matches_snapshot()"
     },
     {
@@ -3087,7 +3294,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L99",
       "id": "tests_test_golden_test_arbin_summary_matches_cellpy_goldens",
-      "community": 16,
+      "community": 11,
       "norm_label": "test_arbin_summary_matches_cellpy_goldens()"
     },
     {
@@ -3096,7 +3303,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L109",
       "id": "tests_test_golden_test_arbin_summary_matches_snapshot",
-      "community": 16,
+      "community": 11,
       "norm_label": "test_arbin_summary_matches_snapshot()"
     },
     {
@@ -3105,7 +3312,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L130",
       "id": "tests_test_golden_test_arbin_step_types_match_cellpy_reference",
-      "community": 16,
+      "community": 11,
       "norm_label": "test_arbin_step_types_match_cellpy_reference()"
     },
     {
@@ -3114,7 +3321,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L162",
       "id": "tests_test_golden_test_small_step_table_runs_on_real_data",
-      "community": 16,
+      "community": 11,
       "norm_label": "test_small_step_table_runs_on_real_data()"
     },
     {
@@ -3123,7 +3330,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L1",
       "id": "tests_test_golden_rationale_1",
-      "community": 16,
+      "community": 11,
       "norm_label": "golden / regression tests on real cycling data vendored as parquet.  the fixtu"
     },
     {
@@ -3132,7 +3339,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L72",
       "id": "tests_test_golden_rationale_72",
-      "community": 16,
+      "community": 11,
       "norm_label": "cellpy-core reproduces cellpy's published step/cycle goldens on real data."
     },
     {
@@ -3141,7 +3348,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L85",
       "id": "tests_test_golden_rationale_85",
-      "community": 16,
+      "community": 11,
       "norm_label": "lock the current engine output so the polars rewrite (issue #13) stays faithful."
     },
     {
@@ -3150,7 +3357,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L100",
       "id": "tests_test_golden_rationale_100",
-      "community": 16,
+      "community": 11,
       "norm_label": "the per-cycle summary has one row per cycle and the expected cyc-1 datapoint."
     },
     {
@@ -3159,7 +3366,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L110",
       "id": "tests_test_golden_rationale_110",
-      "community": 16,
+      "community": 11,
       "norm_label": "lock the current summary output as the regression oracle for the issue #13"
     },
     {
@@ -3168,7 +3375,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L131",
       "id": "tests_test_golden_rationale_131",
-      "community": 16,
+      "community": 11,
       "norm_label": "cross-repo parity (phase 4): cellpy-core reproduces cellpy's own committed"
     },
     {
@@ -3177,7 +3384,7 @@
       "source_file": "tests/test_golden.py",
       "source_location": "L163",
       "id": "tests_test_golden_rationale_163",
-      "community": 16,
+      "community": 11,
       "norm_label": "smoke test: a tiny real raw frame flows through the engine.      this fixture"
     },
     {
@@ -3780,7 +3987,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L141",
       "id": "tests_test_schema_test_default_schema_is_native",
-      "community": 62,
+      "community": 0,
       "norm_label": "test_default_schema_is_native()"
     },
     {
@@ -3807,7 +4014,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L182",
       "id": "tests_test_schema_test_nom_cap_scales_c_rate_by_value",
-      "community": 57,
+      "community": 54,
       "norm_label": "test_nom_cap_scales_c_rate_by_value()"
     },
     {
@@ -3825,7 +4032,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L218",
       "id": "tests_test_schema_test_make_summary_native_schema",
-      "community": 72,
+      "community": 30,
       "norm_label": "test_make_summary_native_schema()"
     },
     {
@@ -3933,7 +4140,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L533",
       "id": "tests_test_schema_test_single_test_defaults_test_id_to_zero",
-      "community": 54,
+      "community": 53,
       "norm_label": "test_single_test_defaults_test_id_to_zero()"
     },
     {
@@ -3978,7 +4185,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L656",
       "id": "tests_test_schema_ref_stat_columns",
-      "community": 28,
+      "community": 21,
       "norm_label": "_ref_stat_columns()"
     },
     {
@@ -3987,7 +4194,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L664",
       "id": "tests_test_schema_test_step_table_aggregates_ref_potential_when_present",
-      "community": 28,
+      "community": 21,
       "norm_label": "test_step_table_aggregates_ref_potential_when_present()"
     },
     {
@@ -3996,7 +4203,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L693",
       "id": "tests_test_schema_test_step_table_skips_ref_potential_when_absent",
-      "community": 28,
+      "community": 67,
       "norm_label": "test_step_table_skips_ref_potential_when_absent()"
     },
     {
@@ -4005,7 +4212,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L711",
       "id": "tests_test_schema_test_mock_raw_data_carries_ref_potential",
-      "community": 49,
+      "community": 56,
       "norm_label": "test_mock_raw_data_carries_ref_potential()"
     },
     {
@@ -4104,7 +4311,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L183",
       "id": "tests_test_schema_rationale_183",
-      "community": 57,
+      "community": 54,
       "norm_label": "c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate."
     },
     {
@@ -4122,7 +4329,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L219",
       "id": "tests_test_schema_rationale_219",
-      "community": 72,
+      "community": 30,
       "norm_label": "the native polars summary engine emits the clean cyclecols subset only."
     },
     {
@@ -4230,7 +4437,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L534",
       "id": "tests_test_schema_rationale_534",
-      "community": 54,
+      "community": 53,
       "norm_label": "a raw frame without test_id yields tables whose test_id column is all 0."
     },
     {
@@ -4275,7 +4482,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L665",
       "id": "tests_test_schema_rationale_665",
-      "community": 28,
+      "community": 21,
       "norm_label": "raw with ref_potential yields all seven ref_potential_* step aggregates."
     },
     {
@@ -4284,7 +4491,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L694",
       "id": "tests_test_schema_rationale_694",
-      "community": 28,
+      "community": 67,
       "norm_label": "raw without ref_potential yields no ref_potential_* columns, engine unaffected."
     },
     {
@@ -4293,7 +4500,7 @@
       "source_file": "tests/test_schema.py",
       "source_location": "L712",
       "id": "tests_test_schema_rationale_712",
-      "community": 49,
+      "community": 56,
       "norm_label": "the synthetic mock raw fixture exercises the ref_potential column."
     },
     {
@@ -4491,7 +4698,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L1",
       "id": "tests_test_units_optional_py",
-      "community": 11,
+      "community": 16,
       "norm_label": "test_units_optional.py"
     },
     {
@@ -4500,7 +4707,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L22",
       "id": "tests_test_units_optional_blockpint",
-      "community": 11,
+      "community": 16,
       "norm_label": "_blockpint"
     },
     {
@@ -4509,7 +4716,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L25",
       "id": "tests_test_units_optional_blockpint_find_spec",
-      "community": 11,
+      "community": 16,
       "norm_label": ".find_spec()"
     },
     {
@@ -4518,7 +4725,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L32",
       "id": "tests_test_units_optional_pint_absent",
-      "community": 11,
+      "community": 16,
       "norm_label": "pint_absent()"
     },
     {
@@ -4527,7 +4734,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L49",
       "id": "tests_test_units_optional_test_cellpycore_imports_without_pint",
-      "community": 11,
+      "community": 16,
       "norm_label": "test_cellpycore_imports_without_pint()"
     },
     {
@@ -4536,7 +4743,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L61",
       "id": "tests_test_units_optional_test_engine_runs_without_pint",
-      "community": 11,
+      "community": 16,
       "norm_label": "test_engine_runs_without_pint()"
     },
     {
@@ -4545,7 +4752,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L77",
       "id": "tests_test_units_optional_test_unit_helpers_raise_clear_error_without_pint",
-      "community": 11,
+      "community": 16,
       "norm_label": "test_unit_helpers_raise_clear_error_without_pint()"
     },
     {
@@ -4554,7 +4761,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L88",
       "id": "tests_test_units_optional_dummydata",
-      "community": 11,
+      "community": 16,
       "norm_label": "_dummydata"
     },
     {
@@ -4563,7 +4770,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L91",
       "id": "tests_test_units_optional_dummydata_init",
-      "community": 11,
+      "community": 16,
       "norm_label": ".__init__()"
     },
     {
@@ -4572,7 +4779,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L1",
       "id": "tests_test_units_optional_rationale_1",
-      "community": 11,
+      "community": 16,
       "norm_label": "optional-extra guard tests for the unit boundary (step-12, issue #40).  the st"
     },
     {
@@ -4581,7 +4788,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L23",
       "id": "tests_test_units_optional_rationale_23",
-      "community": 11,
+      "community": 16,
       "norm_label": "meta_path finder that makes any ``import pint`` raise modulenotfounderror."
     },
     {
@@ -4590,7 +4797,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L50",
       "id": "tests_test_units_optional_rationale_50",
-      "community": 11,
+      "community": 16,
       "norm_label": "importing the package (and re-importing units) must not require pint."
     },
     {
@@ -4599,7 +4806,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L62",
       "id": "tests_test_units_optional_rationale_62",
-      "community": 11,
+      "community": 16,
       "norm_label": "the step + summary engine runs end-to-end with pint blocked."
     },
     {
@@ -4608,7 +4815,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L78",
       "id": "tests_test_units_optional_rationale_78",
-      "community": 11,
+      "community": 16,
       "norm_label": "calling the pint-backed helpers raises a clear, extra-naming error."
     },
     {
@@ -4617,7 +4824,7 @@
       "source_file": "tests/test_units_optional.py",
       "source_location": "L89",
       "id": "tests_test_units_optional_rationale_89",
-      "community": 11,
+      "community": 16,
       "norm_label": "carries the attributes the converter would read before hitting pint."
     },
     {
@@ -6057,7 +6264,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L1",
       "id": "local_data_orchestration_strategy_md",
-      "community": 9,
+      "community": 3,
       "norm_label": "data orchestration strategy.md"
     },
     {
@@ -6066,7 +6273,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L7",
       "id": "local_data_orchestration_strategy_related_documents",
-      "community": 9,
+      "community": 3,
       "norm_label": "related documents"
     },
     {
@@ -6075,7 +6282,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L15",
       "id": "local_data_orchestration_strategy_1_context_and_guiding_principle",
-      "community": 9,
+      "community": 3,
       "norm_label": "1. context and guiding principle"
     },
     {
@@ -6300,7 +6507,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L201",
       "id": "local_data_orchestration_strategy_3_implementation_details",
-      "community": 9,
+      "community": 3,
       "norm_label": "3. implementation details"
     },
     {
@@ -6309,7 +6516,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L203",
       "id": "local_data_orchestration_strategy_batbase_the_relational_database_layer",
-      "community": 9,
+      "community": 3,
       "norm_label": "batbase \u2013 the relational database layer"
     },
     {
@@ -6318,7 +6525,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L205",
       "id": "local_data_orchestration_strategy_phase_0_tasks",
-      "community": 9,
+      "community": 3,
       "norm_label": "phase 0 tasks"
     },
     {
@@ -6327,7 +6534,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L215",
       "id": "local_data_orchestration_strategy_cellpy_the_data_processing_layer",
-      "community": 9,
+      "community": 3,
       "norm_label": "cellpy \u2013 the data processing layer"
     },
     {
@@ -6336,7 +6543,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L217",
       "id": "local_data_orchestration_strategy_phase_0_tasks_217",
-      "community": 9,
+      "community": 3,
       "norm_label": "phase 0 tasks"
     },
     {
@@ -6345,7 +6552,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L227",
       "id": "local_data_orchestration_strategy_odin_linux_servers",
-      "community": 9,
+      "community": 3,
       "norm_label": "odin \u2013 linux servers"
     },
     {
@@ -6354,7 +6561,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L229",
       "id": "local_data_orchestration_strategy_ohma_bess_layer",
-      "community": 9,
+      "community": 3,
       "norm_label": "ohma \u2013 bess layer"
     },
     {
@@ -6363,7 +6570,7 @@
       "source_file": "local/data orchestration strategy.md",
       "source_location": "L231",
       "id": "local_data_orchestration_strategy_4_status",
-      "community": 9,
+      "community": 3,
       "norm_label": "4. status"
     },
     {
@@ -6655,6 +6862,150 @@
       "norm_label": "code:bash (uv run python dev/make_harmonized_raw.py)"
     },
     {
+      "label": "Make the core summary.          Args:             data: The data to make the",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L280",
+      "community": 68,
+      "norm_label": "make the core summary.          args:             data: the data to make the",
+      "id": "cellpycore_cell_core_rationale_280"
+    },
+    {
+      "label": "Add specific summary columns to the summary.          Args:             data:",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L337",
+      "community": 68,
+      "norm_label": "add specific summary columns to the summary.          args:             data:",
+      "id": "cellpycore_cell_core_rationale_337"
+    },
+    {
+      "label": "Resolve the specific-capacity conversion factor for a mode.          Prefers t",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L389",
+      "community": 68,
+      "norm_label": "resolve the specific-capacity conversion factor for a mode.          prefers t",
+      "id": "cellpycore_cell_core_rationale_389"
+    },
+    {
+      "label": "Make the core step table.          Delegates to ``summarizers.make_step_table`",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L420",
+      "community": 34,
+      "norm_label": "make the core step table.          delegates to ``summarizers.make_step_table`",
+      "id": "cellpycore_cell_core_rationale_420"
+    },
+    {
+      "label": "Legacy CellpyCellCore class to make it easier to migrate to cellpy core.",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L467",
+      "community": 16,
+      "norm_label": "legacy cellpycellcore class to make it easier to migrate to cellpy core.",
+      "id": "cellpycore_cell_core_rationale_467"
+    },
+    {
+      "label": "Build the step table via the polars engine, in/out in legacy form.          Se",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L542",
+      "community": 16,
+      "norm_label": "build the step table via the polars engine, in/out in legacy form.          se",
+      "id": "cellpycore_cell_core_rationale_542"
+    },
+    {
+      "label": "Map the ``info`` column from step specifications onto the step table.",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L592",
+      "community": 16,
+      "norm_label": "map the ``info`` column from step specifications onto the step table.",
+      "id": "cellpycore_cell_core_rationale_592"
+    },
+    {
+      "label": "Add the pandas-only legacy summary columns the native schema omits.          `",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L653",
+      "community": 16,
+      "norm_label": "add the pandas-only legacy summary columns the native schema omits.          `",
+      "id": "cellpycore_cell_core_rationale_653"
+    },
+    {
+      "label": "Build the per-cycle summary via the polars engine, in/out in legacy form.",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L682",
+      "community": 16,
+      "norm_label": "build the per-cycle summary via the polars engine, in/out in legacy form.",
+      "id": "cellpycore_cell_core_rationale_682"
+    },
+    {
+      "label": "Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam).",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L757",
+      "community": 16,
+      "norm_label": "legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam).",
+      "id": "cellpycore_cell_core_rationale_757"
+    },
+    {
+      "label": "Polars-native per-cycle summary (the clean native ``CycleCols`` subset).",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L497",
+      "community": 50,
+      "norm_label": "polars-native per-cycle summary (the clean native ``cyclecols`` subset).",
+      "id": "cellpycore_summarizers_rationale_497"
+    },
+    {
+      "label": "Generate specific (per mass / area / volume) summary columns.      Polars-nati",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L618",
+      "community": 50,
+      "norm_label": "generate specific (per mass / area / volume) summary columns.      polars-nati",
+      "id": "cellpycore_summarizers_rationale_618"
+    },
+    {
+      "label": "Calculate nominal capacity from specified normalization cycles.      Polars-na",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L658",
+      "community": 50,
+      "norm_label": "calculate nominal capacity from specified normalization cycles.      polars-na",
+      "id": "cellpycore_summarizers_rationale_658"
+    },
+    {
+      "label": "Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary.",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L697",
+      "community": 50,
+      "norm_label": "add the ``normalized_cycle_index`` (equivalent cycles) column to the summary.",
+      "id": "cellpycore_summarizers_rationale_697"
+    },
+    {
+      "label": "Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L748",
+      "community": 50,
+      "norm_label": "add per-cycle charge / discharge c-rates to the summary.      polars-native: t",
+      "id": "cellpycore_summarizers_rationale_748"
+    },
+    {
+      "label": "Add per-cycle internal-resistance columns (``ir_charge`` / ``ir_discharge``).",
+      "file_type": "rationale",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L841",
+      "community": 51,
+      "norm_label": "add per-cycle internal-resistance columns (``ir_charge`` / ``ir_discharge``).",
+      "id": "cellpycore_summarizers_rationale_841"
+    },
+    {
       "label": "True if a step table has been computed.",
       "file_type": "rationale",
       "source_file": "src/cellpycore/cell_core.py",
@@ -6929,7 +7280,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/config.py",
       "source_location": "L540",
-      "community": 49,
+      "community": 56,
       "norm_label": "column-header definitions for the harmonized raw data table.      each attribu",
       "id": "cellpycore_config_rationale_540"
     },
@@ -6938,7 +7289,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/config.py",
       "source_location": "L590",
-      "community": 62,
+      "community": 0,
       "norm_label": "return a schema using the native cellpy-core column definitions.      used as",
       "id": "cellpycore_config_rationale_590"
     },
@@ -7019,7 +7370,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L206",
-      "community": 62,
+      "community": 0,
       "norm_label": "get the step numbers of selected type.      returns the selected step_numbers",
       "id": "cellpycore_selectors_rationale_206"
     },
@@ -7028,7 +7379,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L352",
-      "community": 62,
+      "community": 0,
       "norm_label": "get a array containing the cycle numbers in the test.      parameters:",
       "id": "cellpycore_selectors_rationale_352"
     },
@@ -7037,7 +7388,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/selectors.py",
       "source_location": "L423",
-      "community": 62,
+      "community": 0,
       "norm_label": "get the rates in the test (only valid for constant current).      args:",
       "id": "cellpycore_selectors_rationale_423"
     },
@@ -7127,7 +7478,7 @@
       "file_type": "rationale",
       "source_file": "tests/test_schema.py",
       "source_location": "L177",
-      "community": 57,
+      "community": 54,
       "norm_label": "c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate.",
       "id": "tests_test_schema_rationale_177"
     },
@@ -7145,7 +7496,7 @@
       "file_type": "rationale",
       "source_file": "tests/test_schema.py",
       "source_location": "L213",
-      "community": 72,
+      "community": 30,
       "norm_label": "the native polars summary engine emits the clean cyclecols subset only.",
       "id": "tests_test_schema_rationale_213"
     },
@@ -7253,7 +7604,7 @@
       "file_type": "rationale",
       "source_file": "tests/test_schema.py",
       "source_location": "L528",
-      "community": 54,
+      "community": 53,
       "norm_label": "a raw frame without test_id yields tables whose test_id column is all 0.",
       "id": "tests_test_schema_rationale_528"
     },
@@ -7298,7 +7649,7 @@
       "file_type": "rationale",
       "source_file": "tests/test_schema.py",
       "source_location": "L659",
-      "community": 28,
+      "community": 21,
       "norm_label": "raw with ref_potential yields all seven ref_potential_* step aggregates.",
       "id": "tests_test_schema_rationale_659"
     },
@@ -7307,7 +7658,7 @@
       "file_type": "rationale",
       "source_file": "tests/test_schema.py",
       "source_location": "L688",
-      "community": 28,
+      "community": 67,
       "norm_label": "raw without ref_potential yields no ref_potential_* columns, engine unaffected.",
       "id": "tests_test_schema_rationale_688"
     },
@@ -7316,7 +7667,7 @@
       "file_type": "rationale",
       "source_file": "tests/test_schema.py",
       "source_location": "L706",
-      "community": 49,
+      "community": 56,
       "norm_label": "the synthetic mock raw fixture exercises the ref_potential column.",
       "id": "tests_test_schema_rationale_706"
     },
@@ -7433,7 +7784,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/config.py",
       "source_location": "L498",
-      "community": 49,
+      "community": 56,
       "norm_label": "column-header definitions for the harmonized raw data table.      each attribu",
       "id": "cellpycore_config_rationale_498"
     },
@@ -7442,7 +7793,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/config.py",
       "source_location": "L546",
-      "community": 62,
+      "community": 0,
       "norm_label": "return a schema using the native cellpy-core column definitions.      used as",
       "id": "cellpycore_config_rationale_546"
     },
@@ -7622,7 +7973,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L15",
-      "community": 71,
+      "community": 12,
       "norm_label": "base class for other exceptions",
       "id": "cellpycore_legacy_rationale_15"
     },
@@ -7631,7 +7982,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L21",
-      "community": 71,
+      "community": 12,
       "norm_label": "exception raised when no data is found",
       "id": "cellpycore_legacy_rationale_21"
     },
@@ -7703,7 +8054,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L277",
-      "community": 12,
+      "community": 28,
       "norm_label": "headers used for the normal (raw) data (used as column headers for the main data",
       "id": "cellpycore_legacy_rationale_277"
     },
@@ -7712,7 +8063,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L312",
-      "community": 66,
+      "community": 17,
       "norm_label": "headers used for the summary data (used as column headers for the main data pand",
       "id": "cellpycore_legacy_rationale_312"
     },
@@ -7730,7 +8081,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/legacy.py",
       "source_location": "L420",
-      "community": 17,
+      "community": 28,
       "norm_label": "headers used for the steps table (used as column headers for the steps pandas da",
       "id": "cellpycore_legacy_rationale_420"
     },
@@ -7766,7 +8117,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L56",
-      "community": 53,
+      "community": 50,
       "norm_label": "per-step delta in percent (mirrors legacy cellpy's ``delta``).      ``100 * la",
       "id": "cellpycore_summarizers_rationale_56"
     },
@@ -7775,7 +8126,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L72",
-      "community": 53,
+      "community": 50,
       "norm_label": "build a step-type expression from explicit step specifications.",
       "id": "cellpycore_summarizers_rationale_72"
     },
@@ -7784,7 +8135,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L94",
-      "community": 53,
+      "community": 50,
       "norm_label": "return a polars expression classifying each step into a step type.      mirror",
       "id": "cellpycore_summarizers_rationale_94"
     },
@@ -7793,7 +8144,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L181",
-      "community": 53,
+      "community": 50,
       "norm_label": "create a table (v.5) that contains summary information for each step.      thi",
       "id": "cellpycore_summarizers_rationale_181"
     },
@@ -7820,7 +8171,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L470",
-      "community": 75,
+      "community": 50,
       "norm_label": "generate specific (per mass / area / volume) summary columns.      polars-nati",
       "id": "cellpycore_summarizers_rationale_470"
     },
@@ -7829,7 +8180,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L510",
-      "community": 55,
+      "community": 50,
       "norm_label": "calculate nominal capacity from specified normalization cycles.      polars-na",
       "id": "cellpycore_summarizers_rationale_510"
     },
@@ -7838,7 +8189,7 @@
       "file_type": "rationale",
       "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L549",
-      "community": 55,
+      "community": 50,
       "norm_label": "add the ``normalized_cycle_index`` (equivalent cycles) column to the summary.",
       "id": "cellpycore_summarizers_rationale_549"
     },
@@ -8000,7 +8351,7 @@
       "file_type": "rationale",
       "source_file": "tests/test_schema.py",
       "source_location": "L170",
-      "community": 57,
+      "community": 54,
       "norm_label": "c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate.",
       "id": "tests_test_schema_rationale_170"
     },
@@ -8018,7 +8369,7 @@
       "file_type": "rationale",
       "source_file": "tests/test_schema.py",
       "source_location": "L206",
-      "community": 72,
+      "community": 30,
       "norm_label": "the native polars summary engine emits the clean cyclecols subset only.",
       "id": "tests_test_schema_rationale_206"
     },
@@ -8607,9 +8958,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cellpycore_cell_core_py",
-      "target": "cellpycore_cell_core_validate_raw_frame",
-      "confidence_score": 1.0
+      "target": "cellpycore_cell_core_validate_raw_frame"
     },
     {
       "relation": "contains",
@@ -8627,9 +8978,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L113",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cellpycore_cell_core_py",
-      "target": "cellpycore_cell_core_from_raw_frame",
-      "confidence_score": 1.0
+      "target": "cellpycore_cell_core_from_raw_frame"
     },
     {
       "relation": "contains",
@@ -8697,9 +9048,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cellpycore_cell_core_rationale_159",
-      "target": "src_cellpycore_cell_core_py",
-      "confidence_score": 1.0
+      "target": "src_cellpycore_cell_core_py"
     },
     {
       "relation": "rationale_for",
@@ -8707,9 +9058,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L160",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cellpycore_cell_core_rationale_160",
-      "target": "src_cellpycore_cell_core_py",
-      "confidence_score": 1.0
+      "target": "src_cellpycore_cell_core_py"
     },
     {
       "relation": "rationale_for",
@@ -8717,9 +9068,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L226",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cellpycore_cell_core_rationale_226",
-      "target": "src_cellpycore_cell_core_py",
-      "confidence_score": 1.0
+      "target": "src_cellpycore_cell_core_py"
     },
     {
       "relation": "rationale_for",
@@ -8727,9 +9078,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L245",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cellpycore_cell_core_rationale_245",
-      "target": "src_cellpycore_cell_core_py",
-      "confidence_score": 1.0
+      "target": "src_cellpycore_cell_core_py"
     },
     {
       "relation": "rationale_for",
@@ -8778,9 +9129,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L142",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cellpycore_cell_core_from_raw_frame",
-      "target": "cellpycore_cell_core_validate_raw_frame",
-      "confidence_score": 1.0
+      "target": "cellpycore_cell_core_validate_raw_frame"
     },
     {
       "relation": "rationale_for",
@@ -8788,9 +9139,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cellpycore_cell_core_rationale_25",
-      "target": "cellpycore_cell_core_validate_raw_frame",
-      "confidence_score": 1.0
+      "target": "cellpycore_cell_core_validate_raw_frame"
     },
     {
       "relation": "method",
@@ -8967,6 +9318,17 @@
       "source_location": "L34",
       "weight": 1.0,
       "source": "tests_test_creation_test_from_raw_frame_round_trip_matches_plain_assignment",
+      "target": "cellpycore_cell_core_data"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_data_with_steps",
       "target": "cellpycore_cell_core_data"
     },
     {
@@ -9292,9 +9654,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L167",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cellpycore_cell_core_rationale_167",
-      "target": "cellpycore_cell_core_cellpycellcore_init",
-      "confidence_score": 1.0
+      "target": "cellpycore_cell_core_cellpycellcore_init"
     },
     {
       "relation": "rationale_for",
@@ -9312,9 +9674,9 @@
       "source_file": "src/cellpycore/cell_core.py",
       "source_location": "L197",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "cellpycore_cell_core_rationale_197",
-      "target": "cellpycore_cell_core_cellpycellcore_initialize",
-      "confidence_score": 1.0
+      "target": "cellpycore_cell_core_cellpycellcore_initialize"
     },
     {
       "relation": "rationale_for",
@@ -9330,11 +9692,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L280",
+      "source_location": "L281",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_280",
+      "source": "cellpycore_cell_core_rationale_281",
       "target": "cellpycore_cell_core_cellpycellcore_make_core_summary",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L280",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_280",
+      "target": "cellpycore_cell_core_cellpycellcore_make_core_summary"
     },
     {
       "relation": "rationale_for",
@@ -9371,11 +9743,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L337",
+      "source_location": "L342",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_337",
+      "source": "cellpycore_cell_core_rationale_342",
       "target": "cellpycore_cell_core_cellpycellcore_add_scaled_summary_columns",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L337",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_337",
+      "target": "cellpycore_cell_core_cellpycellcore_add_scaled_summary_columns"
     },
     {
       "relation": "rationale_for",
@@ -9412,11 +9794,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L389",
+      "source_location": "L394",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_389",
+      "source": "cellpycore_cell_core_rationale_394",
       "target": "cellpycore_cell_core_cellpycellcore_resolve_specific_converter",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L389",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_389",
+      "target": "cellpycore_cell_core_cellpycellcore_resolve_specific_converter"
     },
     {
       "relation": "rationale_for",
@@ -9442,11 +9834,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L420",
+      "source_location": "L425",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_420",
+      "source": "cellpycore_cell_core_rationale_425",
       "target": "cellpycore_cell_core_cellpycellcore_make_core_step_table",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L420",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_420",
+      "target": "cellpycore_cell_core_cellpycellcore_make_core_step_table"
     },
     {
       "relation": "rationale_for",
@@ -9612,9 +10014,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L467",
+      "source_location": "L472",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_467",
+      "source": "cellpycore_cell_core_rationale_472",
       "target": "cellpycore_cell_core_oldcellpycellcore",
       "confidence_score": 1.0
     },
@@ -9751,6 +10153,16 @@
       "source_location": "L67",
       "weight": 1.0,
       "source": "tests_test_units_optional_test_engine_runs_without_pint",
+      "target": "cellpycore_cell_core_oldcellpycellcore"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L467",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_467",
       "target": "cellpycore_cell_core_oldcellpycellcore"
     },
     {
@@ -9898,9 +10310,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L542",
+      "source_location": "L547",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_542",
+      "source": "cellpycore_cell_core_rationale_547",
       "target": "cellpycore_cell_core_oldcellpycellcore_make_core_step_table",
       "confidence_score": 1.0
     },
@@ -9914,6 +10326,16 @@
       "weight": 1.0,
       "source": "cellpycore_cell_core_oldcellpycellcore_make_core_step_table",
       "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L542",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_542",
+      "target": "cellpycore_cell_core_oldcellpycellcore_make_core_step_table"
     },
     {
       "relation": "rationale_for",
@@ -9939,11 +10361,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L592",
+      "source_location": "L597",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_592",
+      "source": "cellpycore_cell_core_rationale_597",
       "target": "cellpycore_cell_core_oldcellpycellcore_apply_spec_info",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L592",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_592",
+      "target": "cellpycore_cell_core_oldcellpycellcore_apply_spec_info"
     },
     {
       "relation": "rationale_for",
@@ -10035,11 +10467,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L653",
+      "source_location": "L658",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_653",
+      "source": "cellpycore_cell_core_rationale_658",
       "target": "cellpycore_cell_core_oldcellpycellcore_add_legacy_summary_cruft",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L653",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_653",
+      "target": "cellpycore_cell_core_oldcellpycellcore_add_legacy_summary_cruft"
     },
     {
       "relation": "rationale_for",
@@ -10065,11 +10507,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L682",
+      "source_location": "L688",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_682",
+      "source": "cellpycore_cell_core_rationale_688",
       "target": "cellpycore_cell_core_oldcellpycellcore_make_core_summary",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L682",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_682",
+      "target": "cellpycore_cell_core_oldcellpycellcore_make_core_summary"
     },
     {
       "relation": "rationale_for",
@@ -10095,9 +10547,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/cell_core.py",
-      "source_location": "L757",
+      "source_location": "L768",
       "weight": 1.0,
-      "source": "cellpycore_cell_core_rationale_757",
+      "source": "cellpycore_cell_core_rationale_768",
       "target": "cellpycore_cell_core_oldcellpycellcore_add_scaled_summary_columns",
       "confidence_score": 1.0
     },
@@ -10111,6 +10563,16 @@
       "weight": 1.0,
       "source": "cellpycore_cell_core_oldcellpycellcore_add_scaled_summary_columns",
       "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/cell_core.py",
+      "source_location": "L757",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cellpycore_cell_core_rationale_757",
+      "target": "cellpycore_cell_core_oldcellpycellcore_add_scaled_summary_columns"
     },
     {
       "relation": "rationale_for",
@@ -11155,6 +11617,83 @@
       "source_location": "L707",
       "weight": 1.0,
       "source": "cellpycore_summarizers_ir_to_summary",
+      "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L122",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_exclude_cv_matches_pandas_oracle",
+      "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L153",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_derived_columns_use_corrected_capacities",
+      "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L171",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_exclude_none_and_empty_leave_summary_untouched",
+      "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L183",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_unmatched_prefix_gives_zero_correction",
+      "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L194",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_cycle_without_excluded_step_is_uncorrected",
+      "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L212",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_only_cv_prefix_semantics",
+      "target": "cellpycore_config_default_schema"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L228",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_merged_tests_corrections_stay_isolated",
       "target": "cellpycore_config_default_schema"
     },
     {
@@ -13065,6 +13604,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L491",
+      "weight": 1.0,
+      "source": "src_cellpycore_summarizers_py",
+      "target": "cellpycore_summarizers_subtract_excluded_step_deltas",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L363",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -13184,6 +13733,17 @@
       "confidence_score": 1.0,
       "source": "cellpycore_summarizers_add_end_potentials",
       "target": "cellpycore_summarizers_group_keys"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L519",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_subtract_excluded_step_deltas",
+      "target": "cellpycore_summarizers_group_keys",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -13372,6 +13932,37 @@
       "target": "cellpycore_summarizers_add_end_potentials"
     },
     {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L643",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_make_summary",
+      "target": "cellpycore_summarizers_subtract_excluded_step_deltas",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L498",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_rationale_498",
+      "target": "cellpycore_summarizers_subtract_excluded_step_deltas",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L559",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_rationale_559",
+      "target": "cellpycore_summarizers_make_summary",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/summarizers.py",
@@ -13390,6 +13981,16 @@
       "confidence_score": 1.0,
       "source": "cellpycore_summarizers_rationale_369",
       "target": "cellpycore_summarizers_make_summary"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L694",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_rationale_694",
+      "target": "cellpycore_summarizers_generate_specific_summary_columns",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -13437,6 +14038,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L734",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_rationale_734",
+      "target": "cellpycore_summarizers_calculate_nominal_capacity_from_cycles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L658",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -13452,6 +14063,16 @@
       "confidence_score": 1.0,
       "source": "cellpycore_summarizers_rationale_510",
       "target": "cellpycore_summarizers_calculate_nominal_capacity_from_cycles"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L773",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_rationale_773",
+      "target": "cellpycore_summarizers_equivalent_cycles_to_summary",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -13477,6 +14098,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L824",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_rationale_824",
+      "target": "cellpycore_summarizers_c_rates_to_summary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
       "source_location": "L748",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -13492,6 +14123,16 @@
       "confidence_score": 1.0,
       "source": "cellpycore_summarizers_rationale_600",
       "target": "cellpycore_summarizers_c_rates_to_summary"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cellpycore/summarizers.py",
+      "source_location": "L917",
+      "weight": 1.0,
+      "source": "cellpycore_summarizers_rationale_917",
+      "target": "cellpycore_summarizers_ir_to_summary",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -15138,9 +15779,9 @@
       "source_file": "tests/test_creation.py",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_creation_py",
-      "target": "tests_test_creation_run_engine",
-      "confidence_score": 1.0
+      "target": "tests_test_creation_run_engine"
     },
     {
       "relation": "contains",
@@ -15148,9 +15789,9 @@
       "source_file": "tests/test_creation.py",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_creation_py",
-      "target": "tests_test_creation_test_from_raw_frame_round_trip_matches_plain_assignment",
-      "confidence_score": 1.0
+      "target": "tests_test_creation_test_from_raw_frame_round_trip_matches_plain_assignment"
     },
     {
       "relation": "contains",
@@ -15158,9 +15799,9 @@
       "source_file": "tests/test_creation.py",
       "source_location": "L43",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_creation_py",
-      "target": "tests_test_creation_test_from_raw_frame_missing_columns_are_all_named",
-      "confidence_score": 1.0
+      "target": "tests_test_creation_test_from_raw_frame_missing_columns_are_all_named"
     },
     {
       "relation": "contains",
@@ -15168,9 +15809,9 @@
       "source_file": "tests/test_creation.py",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_creation_py",
-      "target": "tests_test_creation_test_from_raw_frame_wrong_epoch_dtype_mentions_contract",
-      "confidence_score": 1.0
+      "target": "tests_test_creation_test_from_raw_frame_wrong_epoch_dtype_mentions_contract"
     },
     {
       "relation": "contains",
@@ -15178,9 +15819,9 @@
       "source_file": "tests/test_creation.py",
       "source_location": "L59",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_creation_py",
-      "target": "tests_test_creation_test_from_raw_frame_validate_false_skips_checks",
-      "confidence_score": 1.0
+      "target": "tests_test_creation_test_from_raw_frame_validate_false_skips_checks"
     },
     {
       "relation": "contains",
@@ -15188,9 +15829,9 @@
       "source_file": "tests/test_creation.py",
       "source_location": "L66",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_creation_py",
-      "target": "tests_test_creation_test_from_raw_frame_rejects_non_polars_input",
-      "confidence_score": 1.0
+      "target": "tests_test_creation_test_from_raw_frame_rejects_non_polars_input"
     },
     {
       "relation": "calls",
@@ -15199,8 +15840,373 @@
       "source_file": "tests/test_creation.py",
       "source_location": "L32",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_creation_test_from_raw_frame_round_trip_matches_plain_assignment",
-      "target": "tests_test_creation_run_engine",
+      "target": "tests_test_creation_run_engine"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L68",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_data_with_steps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_pandas_oracle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L120",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_test_exclude_cv_matches_pandas_oracle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L151",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_test_derived_columns_use_corrected_capacities",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L169",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_test_exclude_none_and_empty_leave_summary_untouched",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L181",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_test_unmatched_prefix_gives_zero_correction",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L192",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_test_cycle_without_excluded_step_is_uncorrected",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L205",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_test_only_cv_prefix_semantics",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L226",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_py",
+      "target": "tests_test_exclude_types_test_merged_tests_corrections_stay_isolated",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_1",
+      "target": "tests_test_exclude_types_py",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L124",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_exclude_cv_matches_pandas_oracle",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L155",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_derived_columns_use_corrected_capacities",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L172",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_exclude_none_and_empty_leave_summary_untouched",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_unmatched_prefix_gives_zero_correction",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L196",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_cycle_without_excluded_step_is_uncorrected",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L214",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_only_cv_prefix_semantics",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L232",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_merged_tests_corrections_stay_isolated",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_24",
+      "target": "tests_test_exclude_types_build_cv_raw",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_exclude_cv_matches_pandas_oracle",
+      "target": "tests_test_exclude_types_data_with_steps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L155",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_derived_columns_use_corrected_capacities",
+      "target": "tests_test_exclude_types_data_with_steps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L172",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_exclude_none_and_empty_leave_summary_untouched",
+      "target": "tests_test_exclude_types_data_with_steps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_unmatched_prefix_gives_zero_correction",
+      "target": "tests_test_exclude_types_data_with_steps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L196",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_cycle_without_excluded_step_is_uncorrected",
+      "target": "tests_test_exclude_types_data_with_steps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L214",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_only_cv_prefix_semantics",
+      "target": "tests_test_exclude_types_data_with_steps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L239",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_merged_tests_corrections_stay_isolated",
+      "target": "tests_test_exclude_types_data_with_steps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L130",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_test_exclude_cv_matches_pandas_oracle",
+      "target": "tests_test_exclude_types_pandas_oracle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L80",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_80",
+      "target": "tests_test_exclude_types_pandas_oracle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L121",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_121",
+      "target": "tests_test_exclude_types_test_exclude_cv_matches_pandas_oracle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L152",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_152",
+      "target": "tests_test_exclude_types_test_derived_columns_use_corrected_capacities",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L170",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_170",
+      "target": "tests_test_exclude_types_test_exclude_none_and_empty_leave_summary_untouched",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L182",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_182",
+      "target": "tests_test_exclude_types_test_unmatched_prefix_gives_zero_correction",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L193",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_193",
+      "target": "tests_test_exclude_types_test_cycle_without_excluded_step_is_uncorrected",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L206",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_206",
+      "target": "tests_test_exclude_types_test_only_cv_prefix_semantics",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_exclude_types.py",
+      "source_location": "L227",
+      "weight": 1.0,
+      "source": "tests_test_exclude_types_rationale_227",
+      "target": "tests_test_exclude_types_test_merged_tests_corrections_stay_isolated",
       "confidence_score": 1.0
     },
     {
@@ -20416,5 +21422,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "5a978acae8d42a469317c62afc0e11d72cb54183"
+  "built_at_commit": "db054a342b34c9cb2ba6e7e413629182e9fb061e"
 }

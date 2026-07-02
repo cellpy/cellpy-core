@@ -35,3 +35,8 @@ All notable changes to this project will be documented in this file.
   `config.RawCols` (required columns, `epoch_time_utc` int64-ns UTC contract, integer
   datapoint/cycle/step numbers) and fail fast with one actionable error;
   `validate=False` skips all checks (#55).
+- Add native exclude-types summary support: `summarizers.make_summary(exclude_step_types=[...])`
+  subtracts the excluded steps' per-cycle capacity deltas from the cycle-end summary values
+  before any derived column (prefix match on step type, e.g. `["cv_"]` for a non-CV summary),
+  forwarded by both `make_core_summary` signatures — natively replacing the exclusion feature
+  lost with the removed pandas selector pair; parity locked by a pandas-oracle test (#54).
