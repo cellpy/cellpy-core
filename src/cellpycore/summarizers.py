@@ -49,6 +49,7 @@ _SIGNAL_BASES = (
     ("cumulative_charge_capacity", "charge_capacity"),
     ("cumulative_discharge_capacity", "discharge_capacity"),
     ("internal_resistance", "internal_resistance"),
+    ("ref_potential", "ref_potential"),
 )
 
 
@@ -365,6 +366,7 @@ def make_step_table(
         "cumulative_charge_capacity": nhdr.cumulative_charge_capacity,
         "cumulative_discharge_capacity": nhdr.cumulative_discharge_capacity,
         "internal_resistance": nhdr.internal_resistance,
+        "ref_potential": nhdr.ref_potential,
     }
     signals = [
         (raw_for_base[raw_attr], base)

@@ -61,6 +61,7 @@ Set up a flexible structure that allows for more columns.
 | step_charge_power | float | W | 34.5678 | ** |
 | step_discharge_power | float | W | 34.5678 | ** |
 | internal_resistance | float | ohm | 56.4866 | optional value; instrument-reported internal resistance |
+| ref_potential | float | Volt | 3.4500 | optional value; reference-electrode potential (3-electrode setups); added in issue #43 |
 | aux_temperature_cell | float | degrees celcius | 25.3 | - |
 | aux_temperature_chamber | float | degrees celcius | 25.0 | - |
 | aux_pressure_cell | float | mbar | 123.4 | - |

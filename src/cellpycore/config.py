@@ -525,6 +525,13 @@ class StepCols(Cols):
     internal_resistance_first: str = "internal_resistance_first"
     internal_resistance_last: str = "internal_resistance_last"
     internal_resistance_delta: str = "internal_resistance_delta"
+    ref_potential_mean: str = "ref_potential_mean"
+    ref_potential_std: str = "ref_potential_std"
+    ref_potential_min: str = "ref_potential_min"
+    ref_potential_max: str = "ref_potential_max"
+    ref_potential_first: str = "ref_potential_first"
+    ref_potential_last: str = "ref_potential_last"
+    ref_potential_delta: str = "ref_potential_delta"
     # Per-step C-rate estimate (legacy ``rate_avr``).
     c_rate: str = "c_rate"
 
@@ -570,6 +577,8 @@ class RawCols(Cols):
     step_charge_power: str = "step_charge_power"
     step_discharge_power: str = "step_discharge_power"
     internal_resistance: str = "internal_resistance"
+    # Reference-electrode potential (3-electrode setups); optional value.
+    ref_potential: str = "ref_potential"
     # Auxiliary columns (aux_<quantity>_<name> scheme). Defaults below cover the
     # cell/chamber temperatures and cell pressure named in the spec.
     aux_temperature_cell: str = "aux_temperature_cell"

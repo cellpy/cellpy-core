@@ -176,7 +176,11 @@ tracked in **issue #13**.
 - `RawCols`: rename the 4 `step_cumulative_*` capacity/energy columns to `cumulative_*`;
   add `step_time` and `internal_resistance` (engine inputs present in legacy raw / needed for
   parity). `ref_potential` deferred — **not present** in the golden Arbin data, so not needed
-  for parity yet (note kept here so the gap is tracked).
+  for parity yet (note kept here so the gap is tracked). **Gap closed in issue #43:**
+  `ref_potential` is now a native `RawCols` column with the full `StepCols` aggregate set,
+  native-path only (legacy `reference_voltage` stays unbridged — legacy
+  `HeadersStepTable` has no reference-voltage aggregates, so bridging would break the
+  64-column legacy step-frame parity).
 - `StepCols`: add `step_time` and `internal_resistance` aggregate sets (mean/std/min/max/
   first/last/delta) and a per-step `c_rate` (native name for legacy `rate_avr`).
 - The legacy `Headers*` mirrors in `legacy.py` are **unchanged** (cellpy contract); the

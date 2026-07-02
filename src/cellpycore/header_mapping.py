@@ -134,11 +134,16 @@ LEGACY_ONLY_RAW = frozenset({
 })
 
 # Native RawCols column values with no legacy HeadersNormal counterpart.
+# (``ref_potential`` is deliberately not bridged to legacy ``reference_voltage``:
+# legacy HeadersStepTable has no reference-voltage aggregates, so bridging the
+# raw column would grow the legacy step frame and break byte parity. The signal
+# is native-path only; see issue #43.)
 NATIVE_ONLY_RAW = frozenset({
     "source_datapoint_num", "mask", "epoch_time_utc", "source_type",
     "source_uuid", "test_id", "source_step_num", "step_type", "step_type_detail",
     "step_mode", "cycle_type", "cumulative_charge_energy",
     "cumulative_discharge_energy", "step_charge_power", "step_discharge_power",
+    "ref_potential",
     "aux_temperature_cell", "aux_temperature_chamber", "aux_pressure_cell",
 })
 
@@ -153,7 +158,8 @@ LEGACY_ONLY_STEP = frozenset({"test", "ustep", "info", "ir_pct_change"})
 # statistic columns. ``test_id`` is intentionally not step-bridged (it is dropped
 # from the legacy step table), matching the raw-bridge treatment of ``test_id``.
 NATIVE_ONLY_STEP = frozenset(
-    {"power", "charge_energy", "discharge_energy", "mask", "test_id"}
+    {"power", "charge_energy", "discharge_energy", "mask", "test_id",
+     "ref_potential"}
 )
 
 # Legacy HeadersSummary column values with no native CycleCols counterpart

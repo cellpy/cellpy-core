@@ -91,4 +91,11 @@ calculations and to classify steps.
 | internal_resistance_first | float | ohm | 56.4866 | 
 | internal_resistance_last | float | ohm | 56.4866 | 
 | internal_resistance_delta | float | % | 56.4866 |
+| ref_potential_mean | float | Volt (V) | 3.4500 | Reference-electrode potential aggregates (3-electrode setups); columns present only when raw carries `ref_potential` |
+| ref_potential_std | float | Volt (V) | 3.4500 |
+| ref_potential_min | float | Volt (V) | 3.4500 |
+| ref_potential_max | float | Volt (V) | 3.4500 |
+| ref_potential_first | float | Volt (V) | 3.4500 |
+| ref_potential_last | float | Volt (V) | 3.4500 |
+| ref_potential_delta | float | % | 3.4500 |
 | c_rate | float | 1/h (C) | 0.05 | Per-step C-rate estimate (legacy `rate_avr`) |

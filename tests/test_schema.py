@@ -646,6 +646,74 @@ def test_normalize_capacity_granularity_matches_cycle_oracle(builder, granularit
     assert got_dc == pytest.approx(exp_dc)
 
 
+# --- issue #43: ref_potential (reference electrode) --------------------------
+def _ref_stat_columns(shdr: StepCols) -> list:
+    return [
+        shdr.ref_potential_mean, shdr.ref_potential_std, shdr.ref_potential_min,
+        shdr.ref_potential_max, shdr.ref_potential_first, shdr.ref_potential_last,
+        shdr.ref_potential_delta,
+    ]
+
+
+def test_step_table_aggregates_ref_potential_when_present():
+    """Raw with ref_potential yields all seven ref_potential_* step aggregates."""
+    nhdr = RawCols()
+    schema = _native_schema()
+    shdr = schema.step
+
+    data = Data()
+    raw = _build_raw(nhdr)
+    raw[nhdr.ref_potential] = raw[nhdr.potential] - 0.2
+    data.raw = raw
+
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    steps = data.steps
+
+    for col in _ref_stat_columns(shdr):
+        assert col in steps.columns
+
+    # sanity: min <= mean <= max, and first/last match the raw step boundaries
+    first_step = steps.sort([shdr.cycle_num, shdr.step_num]).head(1)
+    mean = first_step[shdr.ref_potential_mean][0]
+    assert first_step[shdr.ref_potential_min][0] <= mean
+    assert mean <= first_step[shdr.ref_potential_max][0]
+    ref_step1 = raw.loc[
+        (raw[nhdr.cycle_num] == 1) & (raw[nhdr.step_num] == 1), nhdr.ref_potential
+    ]
+    assert first_step[shdr.ref_potential_first][0] == pytest.approx(ref_step1.iloc[0])
+    assert first_step[shdr.ref_potential_last][0] == pytest.approx(ref_step1.iloc[-1])
+
+
+def test_step_table_skips_ref_potential_when_absent():
+    """Raw without ref_potential yields no ref_potential_* columns, engine unaffected."""
+    nhdr = RawCols()
+    schema = _native_schema()
+    shdr = schema.step
+
+    data = _data_with_raw(nhdr)  # _build_raw carries no ref_potential
+    assert nhdr.ref_potential not in data.raw.columns
+
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    steps = data.steps
+
+    for col in _ref_stat_columns(shdr):
+        assert col not in steps.columns
+    # the rest of the engine output is unaffected
+    assert "charge" in _types(steps)
+
+
+def test_mock_raw_data_carries_ref_potential():
+    """The synthetic mock raw fixture exercises the ref_potential column."""
+    from cellpycore._helpers import create_raw_data
+
+    nhdr = RawCols()
+    raw = create_raw_data()
+    assert nhdr.ref_potential in raw.columns
+    # constant offset vs the cell potential (see _helpers.create_raw_data)
+    diff = (raw[nhdr.potential] - raw[nhdr.ref_potential]).unique().to_list()
+    assert diff == pytest.approx([0.2])
+
+
 def test_normalize_capacity_granularity_cycle_is_noop():
     """A CYCLE input is returned untouched (goldens stay byte-stable)."""
     nhdr = RawCols()
