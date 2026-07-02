@@ -9,6 +9,7 @@ Date: 2025-09-08
 
 | Column name | Data type | Unit | Sample data | Description |
 | --- | --- | --- | --- | --- |
+| test_id | int | - | 0 | Per-test key (leading component of the composite `(test_id, cycle_num, …)` group key); `0` for a single unmerged test |
 | cycle_num | int | - | 12 | Cycle number |
 | mask | boolean | - | True | Selection flag; default True (row is selected / used) |
 | datapoint_num_first | int | - | 123 | First datapoint number in cycle |

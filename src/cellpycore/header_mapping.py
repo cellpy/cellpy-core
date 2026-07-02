@@ -148,9 +148,13 @@ NATIVE_ONLY_RAW = frozenset({
 LEGACY_ONLY_STEP = frozenset({"test", "ustep", "info", "ir_pct_change"})
 
 # Native StepCols *signals* with no legacy counterpart (power / energy
-# statistics, and the boolean ``mask``). Compared at base-signal granularity,
-# i.e. after stripping the ``STAT_SUFFIXES`` from statistic columns.
-NATIVE_ONLY_STEP = frozenset({"power", "charge_energy", "discharge_energy", "mask"})
+# statistics, the boolean ``mask``, and the per-test ``test_id`` key). Compared at
+# base-signal granularity, i.e. after stripping the ``STAT_SUFFIXES`` from
+# statistic columns. ``test_id`` is intentionally not step-bridged (it is dropped
+# from the legacy step table), matching the raw-bridge treatment of ``test_id``.
+NATIVE_ONLY_STEP = frozenset(
+    {"power", "charge_energy", "discharge_energy", "mask", "test_id"}
+)
 
 # Legacy HeadersSummary column values with no native CycleCols counterpart
 # (legacy-only cruft: cumulated CE, shifted / RIC capacities, OCV mins/maxes,
@@ -166,7 +170,10 @@ LEGACY_ONLY_CYCLE = frozenset({
 })
 
 # Native CycleCols column values with no legacy HeadersSummary counterpart.
+# (``test_id`` is the per-test key; intentionally not summary-bridged, so it is
+# dropped from the legacy summary table like the raw/step ``test_id``.)
 NATIVE_ONLY_CYCLE = frozenset({
+    "test_id",
     "mask", "datapoint_num_first", "first_epoch_time_utc", "last_epoch_time_utc",
     "first_test_time", "cycle_duration", "charge_duration", "discharge_duration",
     "rest_duration", "test_net_capacity", "charge_energy", "discharge_energy",

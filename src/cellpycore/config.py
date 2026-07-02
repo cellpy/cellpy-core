@@ -284,6 +284,11 @@ class CycleCols(Cols):
     durations, per-direction current/potential/power statistics, etc.).
     """
 
+    # Compact per-test key (mirrors ``RawCols.test_id``); the leading component of
+    # the composite ``(test_id, cycle_num, …)`` group key so merged objects
+    # holding many tests never mix cycles across tests. Defaults to ``0`` for a
+    # single unmerged test.
+    test_id: str = "test_id"
     cycle_num: str = "cycle_num"
     mask: str = "mask"
     datapoint_num_first: str = "datapoint_num_first"
@@ -413,6 +418,11 @@ class StepCols(Cols):
     resistance, plus the per-step C-rate estimate).
     """
 
+    # Compact per-test key (mirrors ``RawCols.test_id``); the leading component of
+    # the composite ``(test_id, cycle_num, step_num, …)`` group key so merged
+    # objects holding many tests never mix cycles/steps across tests. Defaults to
+    # ``0`` for a single unmerged test.
+    test_id: str = "test_id"
     cycle_num: str = "cycle_num"
     step_num: str = "step_num"
     sub_step_num: str = "sub_step_num"

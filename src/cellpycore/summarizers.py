@@ -52,6 +52,31 @@ _SIGNAL_BASES = (
 )
 
 
+def _ensure_test_id(frame: "pl.DataFrame", test_id_col: str) -> "pl.DataFrame":
+    """Return ``frame`` with a ``test_id`` column, defaulting to ``0`` when absent.
+
+    A single unmerged test has no explicit ``test_id``; materializing a constant
+    ``0`` keeps the step/cycle tables carrying the key (and the composite group
+    keys well-defined) while being behaviour-preserving.
+    """
+    if test_id_col in frame.columns:
+        return frame
+    return frame.with_columns(pl.lit(0, dtype=pl.Int64).alias(test_id_col))
+
+
+def _group_keys(frame: "pl.DataFrame", base_keys: list, test_id_col: str) -> list:
+    """Prepend ``test_id`` to ``base_keys`` when ``frame`` carries that column.
+
+    Grouping / joining on the composite ``(test_id, …)`` key isolates cycles and
+    steps across merged tests. Frames without a ``test_id`` column (e.g. the
+    rebuilt native steps inside the legacy summary bridge) fall back to the base
+    keys, reproducing the pre-merge single-test behaviour exactly.
+    """
+    if test_id_col in frame.columns:
+        return [test_id_col, *base_keys]
+    return list(base_keys)
+
+
 def _delta_expr(base: str) -> pl.Expr:
     """Per-step delta in percent (mirrors legacy cellpy's ``delta``).
 
@@ -231,6 +256,10 @@ def make_step_table(
     if not isinstance(raw, pl.DataFrame):
         raw = pl.from_pandas(raw)
 
+    # Ensure a per-test key so the step table always carries ``test_id`` and the
+    # group key is composite (``0`` for a single unmerged test).
+    raw = _ensure_test_id(raw, nhdr.test_id)
+
     if from_data_point is not None:
         raw = raw.filter(pl.col(nhdr.datapoint_num) >= from_data_point)
 
@@ -264,7 +293,7 @@ def make_step_table(
         logging.debug(f"omitting steps {skip_steps}")
         raw = raw.filter(~pl.col(nhdr.step_num).is_in(skip_steps))
 
-    by = [nhdr.cycle_num, nhdr.step_num, sub_col]
+    by = [nhdr.test_id, nhdr.cycle_num, nhdr.step_num, sub_col]
     if usteps:
         raw = raw.with_columns(
             (pl.col(nhdr.step_num).diff().fill_null(1) != 0)
@@ -319,13 +348,14 @@ def make_step_table(
         )
 
     # Rename group-key columns to the (native) step schema names.
-    steps = steps.rename(
-        {
-            nhdr.cycle_num: shdr.cycle_num,
-            nhdr.step_num: shdr.step_num,
-            sub_col: shdr.sub_step_num,
-        }
-    )
+    rename_keys = {
+        nhdr.cycle_num: shdr.cycle_num,
+        nhdr.step_num: shdr.step_num,
+        sub_col: shdr.sub_step_num,
+    }
+    if nhdr.test_id != shdr.test_id:
+        rename_keys[nhdr.test_id] = shdr.test_id
+    steps = steps.rename(rename_keys)
 
     if sort_rows and "test_time_first" in steps.columns:
         logger.debug("sorting the step rows")
@@ -346,17 +376,26 @@ def _add_end_potentials(summary: "pl.DataFrame", steps: "pl.DataFrame", schema: 
     shdr, chdr = schema.step, schema.cycle
     steps_sorted = steps.sort(shdr.test_time_first)
 
+    group_keys = _group_keys(steps, [shdr.cycle_num], shdr.test_id)
+    # Join on the per-test key too, but only when the summary also carries it
+    # (aligned with the step frame; see ``use_tid`` in ``make_summary``).
+    join_on = (
+        [chdr.test_id, chdr.cycle_num]
+        if shdr.test_id in steps.columns and chdr.test_id in summary.columns
+        else [chdr.cycle_num]
+    )
+
     def _end(prefix: str, out_name: str) -> "pl.DataFrame":
         return (
             steps_sorted.filter(pl.col(shdr.step_type).str.starts_with(prefix))
-            .group_by(shdr.cycle_num, maintain_order=True)
+            .group_by(group_keys, maintain_order=True)
             .agg(pl.col(shdr.potential_last).last().alias(out_name))
         )
 
     discharge_end = _end("discharge", chdr.potential_end_discharge)
     charge_end = _end("charge", chdr.potential_end_charge)
-    summary = summary.join(discharge_end, on=chdr.cycle_num, how="left")
-    summary = summary.join(charge_end, on=chdr.cycle_num, how="left")
+    summary = summary.join(discharge_end, on=join_on, how="left")
+    summary = summary.join(charge_end, on=join_on, how="left")
     return summary
 
 
@@ -404,26 +443,46 @@ def make_summary(
     if not isinstance(steps, pl.DataFrame):
         steps = pl.from_pandas(steps)
 
+    raw = _ensure_test_id(raw, nhdr.test_id)
+
+    # Use the per-test key only when both the raw and the step frames carry it, so
+    # cumulations/joins stay isolated per test. When the step frame lacks it (e.g.
+    # the rebuilt native steps in the legacy summary bridge), fall back to
+    # cycle-only behaviour, byte-identical to the single-test path.
+    use_tid = nhdr.test_id in raw.columns and shdr.test_id in steps.columns
+
     # cycle-end datapoint per cycle = the last step's last datapoint
     if final_data_points is None:
         finals = (
             steps.sort(shdr.datapoint_num_last)
-            .group_by(shdr.cycle_num, maintain_order=True)
+            .group_by(
+                _group_keys(steps, [shdr.cycle_num], shdr.test_id),
+                maintain_order=True,
+            )
             .agg(pl.col(shdr.datapoint_num_last).last().alias("__fp"))
         )
         final_data_points = finals["__fp"].to_list()
 
+    sort_keys = [nhdr.test_id, nhdr.cycle_num] if use_tid else [nhdr.cycle_num]
     selected = raw.filter(
         pl.col(nhdr.datapoint_num).is_in(list(final_data_points))
-    ).sort(nhdr.cycle_num)
+    ).sort(sort_keys)
 
-    summary = selected.select(
+    select_exprs = [
         pl.col(nhdr.cycle_num).alias(chdr.cycle_num),
         pl.col(nhdr.datapoint_num).alias(chdr.datapoint_num_last),
         pl.col(nhdr.test_time).alias(chdr.last_test_time),
         pl.col(nhdr.cumulative_charge_capacity).alias(chdr.charge_capacity),
         pl.col(nhdr.cumulative_discharge_capacity).alias(chdr.discharge_capacity),
-    )
+    ]
+    if use_tid:
+        select_exprs.insert(0, pl.col(nhdr.test_id).alias(chdr.test_id))
+    summary = selected.select(select_exprs)
+
+    # Per-test cumulations / shifts: window over ``test_id`` so a merged object
+    # never carries capacity/CE from one test into the next.
+    def _per_test(expr: pl.Expr) -> pl.Expr:
+        return expr.over(chdr.test_id) if use_tid else expr
 
     cc = pl.col(chdr.charge_capacity)
     dc = pl.col(chdr.discharge_capacity)
@@ -439,21 +498,21 @@ def make_summary(
     summary = summary.with_columns(
         coulombic_efficiency,
         coulombic_difference,
-        (cc.shift(1) - cc).alias(chdr.charge_capacity_loss),
-        (dc.shift(1) - dc).alias(chdr.discharge_capacity_loss),
+        (_per_test(cc.shift(1)) - cc).alias(chdr.charge_capacity_loss),
+        (_per_test(dc.shift(1)) - dc).alias(chdr.discharge_capacity_loss),
     )
     summary = summary.with_columns(
-        cc.cum_sum().alias(chdr.test_cumulated_charge_capacity),
-        dc.cum_sum().alias(chdr.test_cumulated_discharge_capacity),
-        pl.col(chdr.coulombic_difference)
-        .cum_sum()
-        .alias(chdr.test_cumulated_coulombic_difference),
-        pl.col(chdr.charge_capacity_loss)
-        .cum_sum()
-        .alias(chdr.test_cumulated_charge_capacity_loss),
-        pl.col(chdr.discharge_capacity_loss)
-        .cum_sum()
-        .alias(chdr.test_cumulated_discharge_capacity_loss),
+        _per_test(cc.cum_sum()).alias(chdr.test_cumulated_charge_capacity),
+        _per_test(dc.cum_sum()).alias(chdr.test_cumulated_discharge_capacity),
+        _per_test(pl.col(chdr.coulombic_difference).cum_sum()).alias(
+            chdr.test_cumulated_coulombic_difference
+        ),
+        _per_test(pl.col(chdr.charge_capacity_loss).cum_sum()).alias(
+            chdr.test_cumulated_charge_capacity_loss
+        ),
+        _per_test(pl.col(chdr.discharge_capacity_loss).cum_sum()).alias(
+            chdr.test_cumulated_discharge_capacity_loss
+        ),
     )
 
     summary = _add_end_potentials(summary, steps, schema)
@@ -648,12 +707,28 @@ def c_rates_to_summary(
             summary, schema, normalization_cycles, step_txt
         )
 
+    group_keys = _group_keys(steps, [headers_steps.cycle_num], headers_steps.test_id)
+    use_tid = (
+        headers_steps.test_id in steps.columns
+        and headers_summary.test_id in summary.columns
+    )
+    left_on = (
+        [headers_summary.test_id, headers_summary.cycle_num]
+        if use_tid
+        else [headers_summary.cycle_num]
+    )
+    right_on = (
+        [headers_steps.test_id, headers_steps.cycle_num]
+        if use_tid
+        else [headers_steps.cycle_num]
+    )
+
     def _first_rate(step_type: str, out_name: str) -> "pl.DataFrame":
-        # First step of the given type per cycle (mirrors legacy drop_duplicates
-        # keep="first" on the step-table row order).
+        # First step of the given type per (test, cycle) (mirrors legacy
+        # drop_duplicates keep="first" on the step-table row order).
         return (
             steps.filter(pl.col(headers_steps.step_type) == step_type)
-            .group_by(headers_steps.cycle_num, maintain_order=True)
+            .group_by(group_keys, maintain_order=True)
             .agg(pl.col(headers_steps.c_rate).first().alias(out_name))
             .with_columns(
                 (pl.col(out_name) / nom_cap * current_conversion_factor).alias(out_name)
@@ -663,18 +738,8 @@ def c_rates_to_summary(
     charge = _first_rate("charge", headers_summary.charge_c_rate)
     discharge = _first_rate("discharge", headers_summary.discharge_c_rate)
 
-    summary = summary.join(
-        charge,
-        left_on=headers_summary.cycle_num,
-        right_on=headers_steps.cycle_num,
-        how="left",
-    )
-    summary = summary.join(
-        discharge,
-        left_on=headers_summary.cycle_num,
-        right_on=headers_steps.cycle_num,
-        how="left",
-    )
+    summary = summary.join(charge, left_on=left_on, right_on=right_on, how="left")
+    summary = summary.join(discharge, left_on=left_on, right_on=right_on, how="left")
     data.summary = summary
     return data
 
@@ -724,7 +789,13 @@ def ir_to_summary(
 
     per_cycle = ir_extractor(raw=raw, steps=steps, summary=summary, schema=schema)
 
-    summary = summary.join(per_cycle, on=headers_summary.cycle_num, how="left")
+    join_on = (
+        [headers_summary.test_id, headers_summary.cycle_num]
+        if headers_summary.test_id in per_cycle.columns
+        and headers_summary.test_id in summary.columns
+        else headers_summary.cycle_num
+    )
+    summary = summary.join(per_cycle, on=join_on, how="left")
     # Missing IR (e.g. a cycle without a charge/discharge step) stays NaN rather
     # than the legacy 0.0, so "no measurement" is distinguishable from a real 0.
     summary = summary.with_columns(
