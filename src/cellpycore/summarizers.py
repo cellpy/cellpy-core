@@ -1,11 +1,12 @@
 import logging
+import types
 from dataclasses import asdict
 from typing import Optional, Sequence, TypeVar, Union
 
 import polars as pl
 
-from cellpycore.config import ResetGranularity, Schema, TestMode, default_schema
 from cellpycore.cell_core import Data
+from cellpycore.config import ResetGranularity, Schema, TestMode, default_schema
 from cellpycore.extractors import LastIRExtractor, SummaryExtractor
 from cellpycore.legacy import CellpyLimits
 
@@ -25,8 +26,10 @@ Array = TypeVar("Array")
 # Standalone default step-detection limits, derived from the CellpyLimits
 # mirror so they match legacy cellpy. When cellpy drives the engine it passes
 # its own instrument ``raw_limits`` by value, so this default only applies to
-# standalone cellpy-core use.
-DEFAULT_RAW_LIMITS = asdict(CellpyLimits())
+# standalone cellpy-core use. Read-only view so no caller can mutate the
+# process-wide defaults (thread-safety); make_step_table builds a fresh dict
+# per call when no limits are passed.
+DEFAULT_RAW_LIMITS = types.MappingProxyType(asdict(CellpyLimits()))
 
 # Number of digits used when rounding the per-step C-rate (matches legacy cellpy).
 DIGITS_C_RATE = 5
@@ -218,16 +221,26 @@ def _classify_steps(
     if not required <= bases:
         return pl.lit("")
 
+    # Membership test (not ``or``) so an explicit override of 0 / 0.0 wins
+    # instead of silently falling back to the default limit.
     orl = override_raw_limits or {}
-    current_hard = orl.get("current_hard") or raw_limits["current_hard"]
+    current_hard = (
+        orl["current_hard"] if "current_hard" in orl else raw_limits["current_hard"]
+    )
     stable_current_soft = (
-        orl.get("stable_current_soft") or raw_limits["stable_current_soft"]
+        orl["stable_current_soft"]
+        if "stable_current_soft" in orl
+        else raw_limits["stable_current_soft"]
     )
     stable_voltage_hard = (
-        orl.get("stable_voltage_hard") or raw_limits["stable_voltage_hard"]
+        orl["stable_voltage_hard"]
+        if "stable_voltage_hard" in orl
+        else raw_limits["stable_voltage_hard"]
     )
     stable_charge_hard = (
-        orl.get("stable_charge_hard") or raw_limits["stable_charge_hard"]
+        orl["stable_charge_hard"]
+        if "stable_charge_hard" in orl
+        else raw_limits["stable_charge_hard"]
     )
 
     cur_mean = pl.col("current_mean")
@@ -247,9 +260,7 @@ def _classify_steps(
     m_cur_pos = cur_mean > current_hard
     m_ch_changed = ch_delta.abs() > stable_charge_hard
     m_dch_changed = dch_delta.abs() > stable_charge_hard
-    m_no_change = (
-        (v_delta == 0) & (cur_delta == 0) & (ch_delta == 0) & (dch_delta == 0)
-    )
+    m_no_change = (v_delta == 0) & (cur_delta == 0) & (ch_delta == 0) & (dch_delta == 0)
 
     # Order matters: later rules override earlier ones (matches legacy cellpy).
     rules = [
@@ -289,7 +300,7 @@ def make_step_table(
     skip_steps=None,
     sort_rows=True,
     from_data_point=None,
-    raw_limits: dict = DEFAULT_RAW_LIMITS,
+    raw_limits: Optional[dict] = None,
 ) -> Union[Data, DataFrame]:
     """Create a table (v.5) that contains summary information for each step.
 
@@ -328,6 +339,7 @@ def make_step_table(
         sort_rows (bool): sort the rows after processing.
         from_data_point (int): first data point to use.
         raw_limits (dict): the raw limits (resolution) for the instrument.
+            Defaults to a fresh copy of ``DEFAULT_RAW_LIMITS``.
 
     Returns:
         core.Data: The data object with the step table added if from_data_point is None,
@@ -336,6 +348,8 @@ def make_step_table(
     """
     if schema is None:
         schema = default_schema()
+    if raw_limits is None:
+        raw_limits = asdict(CellpyLimits())
     nhdr = schema.raw
     shdr = schema.step
 
@@ -379,7 +393,7 @@ def make_step_table(
     raw = raw.with_columns(pl.lit(1).alias(sub_col))
 
     if skip_steps is not None:
-        logging.debug(f"omitting steps {skip_steps}")
+        logger.debug(f"omitting steps {skip_steps}")
         raw = raw.filter(~pl.col(nhdr.step_num).is_in(skip_steps))
 
     by = [nhdr.test_id, nhdr.cycle_num, nhdr.step_num, sub_col]
@@ -521,9 +535,7 @@ def _subtract_excluded_step_deltas(
         steps.filter(mask)
         .group_by(group_keys, maintain_order=True)
         .agg(
-            (
-                pl.col(shdr.charge_capacity_last) - pl.col(shdr.charge_capacity_first)
-            )
+            (pl.col(shdr.charge_capacity_last) - pl.col(shdr.charge_capacity_first))
             .sum()
             .alias("__excl_charge"),
             (

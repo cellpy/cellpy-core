@@ -3,18 +3,14 @@ name = "cellpycore"
 version = "0.1.2"
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
-description = "Add your description here"
+description = "Core engine for cellpy: fast, thread-safe step and cycle summarization of battery-cycling raw data"
 readme = "README.md"
 requires-python = ">=3.13"
 
 dependencies = [
-    "duckdb>=1.2.2",
-    "duckdb-engine>=0.17.0",
-    "narwhals>=1.38.0",
     "pandas>=2.2.3",
     "polars>=1.29.0",
     "pyarrow>=20.0.0",
-    "sqlalchemy>=2.0.40",
 ]
 
 # pint is only needed for the optional unit-conversion helpers in
@@ -38,14 +34,14 @@ classifiers = [
   # Indicate who your project is intended for
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "Topic :: Software Development :: Build Tools",
+    "Topic :: Scientific/Engineering",
 
     # Specify the Python versions you support here.
     "Programming Language :: Python :: 3.13",
 ]
 
 [build-system]
-requires = ["hatchling >= 1.27", "uv-dynamic-versioning>=0.7.0"]
+requires = ["hatchling >= 1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.sdist]
@@ -76,4 +72,15 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short -m 'not benchmark'"
+markers = [
+    "benchmark: performance benchmarks (opt-in: pytest -m benchmark)",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

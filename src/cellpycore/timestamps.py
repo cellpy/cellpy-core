@@ -81,7 +81,9 @@ def datetime_to_epoch_ns(dt: datetime) -> int:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     delta = dt - _UNIX_EPOCH_UTC
-    microseconds = (delta.days * 86_400 + delta.seconds) * 1_000_000 + delta.microseconds
+    microseconds = (
+        delta.days * 86_400 + delta.seconds
+    ) * 1_000_000 + delta.microseconds
     return microseconds * 1_000
 
 

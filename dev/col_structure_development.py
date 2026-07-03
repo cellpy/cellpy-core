@@ -16,15 +16,16 @@ COMMENT: this file can most likely be deleted.
 
 """
 
-from dataclasses import dataclass, field
-from enum import StrEnum, Enum
+from dataclasses import dataclass
+from enum import Enum, StrEnum
+
 import polars as pl
 
 
 @dataclass
 class Cols:
     __version__: str = "1.0.0"
-    
+
 
 class CycleCols(Cols):
     cycle_num: str = "cycle_num"
@@ -33,7 +34,6 @@ class CycleCols(Cols):
     step_type: str = "step_type"
     step_mode: str = "step_mode"
     charge_capacity: str = "charge_capacity"
-
 
 
 class SimpleCols(StrEnum):

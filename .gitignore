@@ -180,3 +180,7 @@ __marimo__/
 
 # graphify
 graphify-out/cache/
+
+# scratch / throwaway artifacts
+scratch.db
+tmp/

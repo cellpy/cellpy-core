@@ -1,7 +1,9 @@
-import pytest
-from cellpycore.cell_core import Data
-from cellpycore._helpers import create_raw_data
 from typing import TypeVar
+
+import pytest
+
+from cellpycore._helpers import create_raw_data
+from cellpycore.cell_core import Data
 
 DataFrame = TypeVar("DataFrame")
 
@@ -17,4 +19,3 @@ def mock_data_with_raw() -> Data:
     data = Data()
     data.raw = create_raw_data()
     return data
-

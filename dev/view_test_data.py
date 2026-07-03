@@ -35,7 +35,9 @@ def _(mo, parquet_files):
 
 @app.cell
 def _(file_selector, mo, pl):
-    mo.stop(file_selector.value is None, mo.md("No parquet files found in `tests/data`."))
+    mo.stop(
+        file_selector.value is None, mo.md("No parquet files found in `tests/data`.")
+    )
 
     df = pl.read_parquet(file_selector.value)
     return (df,)

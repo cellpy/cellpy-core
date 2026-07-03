@@ -128,26 +128,58 @@ CYCLE_PAIRS = [
 # Legacy HeadersNormal column values with no native RawCols counterpart.
 # (``test_id`` exists on both sides with the same name but is intentionally not
 # translated by the raw bridge, so it is listed as an exception on both sides.)
-LEGACY_ONLY_RAW = frozenset({
-    "aci_phase_angle", "ref_aci_phase_angle", "ac_impedance", "ref_ac_impedance",
-    "charge_energy", "date_time", "discharge_energy", "power", "is_fc_data",
-    "sub_step_index", "sub_step_time", "test_id", "reference_voltage", "dv_dt",
-    "frequency", "amplitude", "channel_id", "data_flag", "test_name",
-})
+LEGACY_ONLY_RAW = frozenset(
+    {
+        "aci_phase_angle",
+        "ref_aci_phase_angle",
+        "ac_impedance",
+        "ref_ac_impedance",
+        "charge_energy",
+        "date_time",
+        "discharge_energy",
+        "power",
+        "is_fc_data",
+        "sub_step_index",
+        "sub_step_time",
+        "test_id",
+        "reference_voltage",
+        "dv_dt",
+        "frequency",
+        "amplitude",
+        "channel_id",
+        "data_flag",
+        "test_name",
+    }
+)
 
 # Native RawCols column values with no legacy HeadersNormal counterpart.
 # (``ref_potential`` is deliberately not bridged to legacy ``reference_voltage``:
 # legacy HeadersStepTable has no reference-voltage aggregates, so bridging the
 # raw column would grow the legacy step frame and break byte parity. The signal
 # is native-path only; see issue #43.)
-NATIVE_ONLY_RAW = frozenset({
-    "source_datapoint_num", "mask", "epoch_time_utc", "source_type",
-    "source_uuid", "test_id", "source_step_num", "step_type", "step_type_detail",
-    "step_mode", "cycle_type", "cumulative_charge_energy",
-    "cumulative_discharge_energy", "step_charge_power", "step_discharge_power",
-    "ref_potential",
-    "aux_temperature_cell", "aux_temperature_chamber", "aux_pressure_cell",
-})
+NATIVE_ONLY_RAW = frozenset(
+    {
+        "source_datapoint_num",
+        "mask",
+        "epoch_time_utc",
+        "source_type",
+        "source_uuid",
+        "test_id",
+        "source_step_num",
+        "step_type",
+        "step_type_detail",
+        "step_mode",
+        "cycle_type",
+        "cumulative_charge_energy",
+        "cumulative_discharge_energy",
+        "step_charge_power",
+        "step_discharge_power",
+        "ref_potential",
+        "aux_temperature_cell",
+        "aux_temperature_chamber",
+        "aux_pressure_cell",
+    }
+)
 
 # Legacy HeadersStepTable column values with no native StepCols counterpart.
 # (``ustep`` is emitted by the engine as a literal "ustep" column only when
@@ -160,52 +192,111 @@ LEGACY_ONLY_STEP = frozenset({"test", "ustep", "info", "ir_pct_change"})
 # statistic columns. ``test_id`` is intentionally not step-bridged (it is dropped
 # from the legacy step table), matching the raw-bridge treatment of ``test_id``.
 NATIVE_ONLY_STEP = frozenset(
-    {"power", "charge_energy", "discharge_energy", "mask", "test_id",
-     "ref_potential"}
+    {"power", "charge_energy", "discharge_energy", "mask", "test_id", "ref_potential"}
 )
 
 # Legacy HeadersSummary column values with no native CycleCols counterpart
 # (legacy-only cruft: cumulated CE, shifted / RIC capacities, OCV mins/maxes,
 # normalized capacities, temperatures, levels, passthrough identity columns).
-LEGACY_ONLY_CYCLE = frozenset({
-    "date_time", "test_name", "data_flag", "channel_id",
-    "cumulated_coulombic_efficiency", "normalized_charge_capacity",
-    "normalized_discharge_capacity", "shifted_charge_capacity",
-    "shifted_discharge_capacity", "ocv_first_min", "ocv_second_min",
-    "ocv_first_max", "ocv_second_max", "cumulated_ric_disconnect",
-    "cumulated_ric_sei", "cumulated_ric", "low_level", "high_level",
-    "aux_",
-})
+LEGACY_ONLY_CYCLE = frozenset(
+    {
+        "date_time",
+        "test_name",
+        "data_flag",
+        "channel_id",
+        "cumulated_coulombic_efficiency",
+        "normalized_charge_capacity",
+        "normalized_discharge_capacity",
+        "shifted_charge_capacity",
+        "shifted_discharge_capacity",
+        "ocv_first_min",
+        "ocv_second_min",
+        "ocv_first_max",
+        "ocv_second_max",
+        "cumulated_ric_disconnect",
+        "cumulated_ric_sei",
+        "cumulated_ric",
+        "low_level",
+        "high_level",
+        "aux_",
+    }
+)
 
 # Native CycleCols column values with no legacy HeadersSummary counterpart.
 # (``test_id`` is the per-test key; intentionally not summary-bridged, so it is
 # dropped from the legacy summary table like the raw/step ``test_id``.)
-NATIVE_ONLY_CYCLE = frozenset({
-    "test_id",
-    "mask", "datapoint_num_first", "first_epoch_time_utc", "last_epoch_time_utc",
-    "first_test_time", "cycle_duration", "charge_duration", "discharge_duration",
-    "rest_duration", "test_net_capacity", "charge_energy", "discharge_energy",
-    "cycle_net_energy", "energy_efficiency", "test_cumulated_charge_energy",
-    "test_cumulated_discharge_energy", "test_net_energy",
-    "current_charge_mean", "current_charge_mean_tw", "current_charge_mean_cw",
-    "current_charge_max", "current_charge_min", "current_discharge_mean",
-    "current_discharge_mean_tw", "current_discharge_mean_cw",
-    "current_discharge_max", "current_discharge_min",
-    "potential_charge_mean", "potential_charge_mean_tw", "potential_charge_mean_cw",
-    "potential_charge_max", "potential_charge_min", "potential_discharge_mean",
-    "potential_discharge_mean_tw", "potential_discharge_mean_cw",
-    "potential_discharge_max", "potential_discharge_min",
-    "potential_start_charge", "potential_start_discharge", "voltage_efficiency",
-    "power_charge_mean", "power_charge_mean_tw", "power_charge_mean_cw",
-    "power_charge_max", "power_charge_min", "power_discharge_mean",
-    "power_discharge_mean_tw", "power_discharge_mean_cw", "power_discharge_max",
-    "power_discharge_min", "ir_start_charge", "ir_end_charge", "ir_start_discharge",
-    "ir_end_discharge", "relaxation_potential_charge",
-    "relaxation_potential_discharge", "open_circuit_potential_charge",
-    "open_circuit_potential_discharge", "cv_share", "cv_charge_capacity",
-    "cv_charge_energy", "cv_charge_time", "cc_charge_capacity", "cc_charge_energy",
-    "cc_charge_time", "temperature_cell_max", "temperature_cell_min",
-})
+NATIVE_ONLY_CYCLE = frozenset(
+    {
+        "test_id",
+        "mask",
+        "datapoint_num_first",
+        "first_epoch_time_utc",
+        "last_epoch_time_utc",
+        "first_test_time",
+        "cycle_duration",
+        "charge_duration",
+        "discharge_duration",
+        "rest_duration",
+        "test_net_capacity",
+        "charge_energy",
+        "discharge_energy",
+        "cycle_net_energy",
+        "energy_efficiency",
+        "test_cumulated_charge_energy",
+        "test_cumulated_discharge_energy",
+        "test_net_energy",
+        "current_charge_mean",
+        "current_charge_mean_tw",
+        "current_charge_mean_cw",
+        "current_charge_max",
+        "current_charge_min",
+        "current_discharge_mean",
+        "current_discharge_mean_tw",
+        "current_discharge_mean_cw",
+        "current_discharge_max",
+        "current_discharge_min",
+        "potential_charge_mean",
+        "potential_charge_mean_tw",
+        "potential_charge_mean_cw",
+        "potential_charge_max",
+        "potential_charge_min",
+        "potential_discharge_mean",
+        "potential_discharge_mean_tw",
+        "potential_discharge_mean_cw",
+        "potential_discharge_max",
+        "potential_discharge_min",
+        "potential_start_charge",
+        "potential_start_discharge",
+        "voltage_efficiency",
+        "power_charge_mean",
+        "power_charge_mean_tw",
+        "power_charge_mean_cw",
+        "power_charge_max",
+        "power_charge_min",
+        "power_discharge_mean",
+        "power_discharge_mean_tw",
+        "power_discharge_mean_cw",
+        "power_discharge_max",
+        "power_discharge_min",
+        "ir_start_charge",
+        "ir_end_charge",
+        "ir_start_discharge",
+        "ir_end_discharge",
+        "relaxation_potential_charge",
+        "relaxation_potential_discharge",
+        "open_circuit_potential_charge",
+        "open_circuit_potential_discharge",
+        "cv_share",
+        "cv_charge_capacity",
+        "cv_charge_energy",
+        "cv_charge_time",
+        "cc_charge_capacity",
+        "cc_charge_energy",
+        "cc_charge_time",
+        "temperature_cell_max",
+        "temperature_cell_min",
+    }
+)
 
 
 # -----------------------------------------------------------------------------

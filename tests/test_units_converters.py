@@ -51,7 +51,9 @@ def _stub(raw_units=None, **attrs):
     ],
 )
 def test_get_converter_to_specific_modes(mode, expected):
-    assert units.get_converter_to_specific(_stub(), mode=mode) == pytest.approx(expected)
+    assert units.get_converter_to_specific(_stub(), mode=mode) == pytest.approx(
+        expected
+    )
 
 
 def test_get_converter_to_specific_unknown_mode_is_identity():

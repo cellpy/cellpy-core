@@ -22,13 +22,6 @@ Example:
     True
 """
 
-from cellpycore.metadata.models import (
-    CellMeta,
-    MetaLevel,
-    SourceKind,
-    TestMeta,
-    TestMetaCollection,
-)
 from cellpycore.metadata.io import (
     fetch_from_db,
     from_dict,
@@ -39,6 +32,13 @@ from cellpycore.metadata.io import (
     save_archive,
     to_dict,
     to_json,
+)
+from cellpycore.metadata.models import (
+    CellMeta,
+    MetaLevel,
+    SourceKind,
+    TestMeta,
+    TestMetaCollection,
 )
 
 __all__ = [
