@@ -69,7 +69,9 @@ def test_get_cycle_numbers_from_raw_when_steptable_none():
 def test_no_removed_create_selector_functions():
     """The pandas selector pair was removed once cellpy migrated off it (#45)."""
     for name in ("create_selector", "summary_selector_exluder"):
-        assert not hasattr(legacy_selectors, name), f"legacy_selectors.{name} should not exist"
+        assert not hasattr(legacy_selectors, name), (
+            f"legacy_selectors.{name} should not exist"
+        )
 
 
 @pytestmark_golden
