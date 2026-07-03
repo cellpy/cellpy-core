@@ -2,8 +2,8 @@ from typing import TypeVar
 
 import pytest
 
-from cellpycore._helpers import create_raw_data
 from cellpycore.cell_core import Data
+from cellpycore.testing.mock_data import create_raw_data
 
 DataFrame = TypeVar("DataFrame")
 

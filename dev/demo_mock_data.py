@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from cellpycore._helpers import create_raw_data
+from cellpycore.testing.mock_data import create_raw_data
 
 
 def main():

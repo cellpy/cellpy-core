@@ -6,8 +6,8 @@ from typing import Callable, Iterable, List, Optional, Sequence, TypeVar, Union
 # The CellpyCell (currently named CellpyCellCore) is the main class that the full cellpy package
 # should interact with.
 # The Data class can be accessed through the data property (setter and getter).
-from cellpycore import config, header_mapping
-from cellpycore.legacy import Meta, MockMetaTestDependent, NoDataFound
+from cellpycore import config
+from cellpycore.legacy import Meta, MockMetaTestDependent, NoDataFound, mapping
 from cellpycore.metadata.models import CellMeta
 
 DataFrame = TypeVar("DataFrame")
@@ -507,14 +507,14 @@ class OldCellpyCellCore(CellpyCellCore):
     # legacy ``HeadersStepTable`` layout byte-for-byte (the golden oracle).
     #
     # The native <-> legacy correspondence is declared once in
-    # ``cellpycore.header_mapping``; the methods below just adapt it to the
+    # ``cellpycore.legacy.mapping``; the methods below just adapt it to the
     # DataFrame renames this bridge needs (see tests/test_header_mapping.py).
 
     def _legacy_to_native_raw_rename(self, columns) -> dict:
-        return header_mapping.legacy_to_native_raw(columns)
+        return mapping.legacy_to_native_raw(columns)
 
     def _native_to_legacy_step_rename(self) -> dict:
-        return header_mapping.native_to_legacy_step()
+        return mapping.native_to_legacy_step()
 
     def _legacy_step_column_order(self) -> list:
         leg = self.step_cols
@@ -533,9 +533,7 @@ class OldCellpyCellCore(CellpyCellCore):
             leg.internal_resistance,
         ]
         for base in bases:
-            order += [
-                f"{base}_{stat}" for stat in header_mapping.STAT_SUFFIXES.values()
-            ]
+            order += [f"{base}_{stat}" for stat in mapping.STAT_SUFFIXES.values()]
         order += [leg.rate_avr, leg.type, leg.sub_type, leg.info]
         return order
 
@@ -651,13 +649,13 @@ class OldCellpyCellCore(CellpyCellCore):
     # pandas helpers, which is appropriate: they are legacy cruft.
 
     def _legacy_to_native_step_rename(self) -> dict:
-        return header_mapping.legacy_to_native_step()
+        return mapping.legacy_to_native_step()
 
     def _native_to_legacy_summary_rename(self) -> dict:
-        return header_mapping.native_to_legacy_summary()
+        return mapping.native_to_legacy_summary()
 
     def _legacy_to_native_summary_rename(self) -> dict:
-        return header_mapping.legacy_to_native_summary()
+        return mapping.legacy_to_native_summary()
 
     def _legacy_summary_column_order(self, find_end_voltage: bool) -> list:
         leg = self.cycle_cols

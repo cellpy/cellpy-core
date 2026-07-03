@@ -965,12 +965,12 @@ def test_step_table_skips_ref_potential_when_absent():
 
 def test_mock_raw_data_carries_ref_potential():
     """The synthetic mock raw fixture exercises the ref_potential column."""
-    from cellpycore._helpers import create_raw_data
+    from cellpycore.testing.mock_data import create_raw_data
 
     nhdr = RawCols()
     raw = create_raw_data()
     assert nhdr.ref_potential in raw.columns
-    # constant offset vs the cell potential (see _helpers.create_raw_data)
+    # constant offset vs the cell potential (see testing.mock_data.create_raw_data)
     diff = (raw[nhdr.potential] - raw[nhdr.ref_potential]).unique().to_list()
     assert diff == pytest.approx([0.2])
 
