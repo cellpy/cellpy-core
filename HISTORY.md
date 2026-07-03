@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Add pytest coverage reporting to CI: `pytest-cov` in the dev group,
+  `[tool.coverage.run]` config, and `--cov=cellpycore` in the test workflow. (#69)
 - Document the per-step `<signal>_<stat>` engine contract (B1) and default unset
   `cycle_mode` to NORMAL via `_cycle_mode_to_test_mode`, so initialized and
   uninitialized `CellpyCellCore` share the same polarity unless `"anode"` is set
