@@ -260,8 +260,6 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         self,
         data: Data,
         find_ir: bool = True,
-        find_end_voltage: bool = False,
-        select_columns: bool = True,
         final_data_points: Optional[Iterable[int]] = None,
         current_conversion_factor: float = 1.0,
         ir_extractor: Optional[Callable] = None,
@@ -269,11 +267,15 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
     ) -> Data:
         """Make the core summary.
 
+        Note:
+            The native engine always emits the clean ``CycleCols`` subset
+            including the end potentials; the legacy-only ``find_end_voltage``
+            / ``select_columns`` knobs live on the bridge
+            (``OldCellpyCellCore.make_core_summary``).
+
         Args:
             data: The data to make the summary from.
             find_ir: Whether to find the IR.
-            find_end_voltage: Whether to find the end voltage.
-            select_columns: Whether to select only the minimum columns that are needed.
             final_data_points: The final data point for each cycle to use for the selector.
             current_conversion_factor: Precomputed factor that converts the raw
                 current unit to the desired output current unit for the C-rate
