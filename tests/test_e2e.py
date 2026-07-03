@@ -28,12 +28,12 @@ from cellpycore import (
 )
 
 DATA_DIR = Path(__file__).parent / "data"
-HARMONIZED_RAW = DATA_DIR / "arbin_cc_harmonized_raw.parquet"
+HARMONIZED_RAW = DATA_DIR / "cycler_cc_harmonized_raw.parquet"
 
 # Golden numbers mirrored from cellpy's own suite (see test_golden.py).
-ARBIN_N_STEPS = 103
-ARBIN_N_CYCLES = 18
-ARBIN_CYC1_DATA_POINT = 1457
+CYCLER_CC_N_STEPS = 103
+CYCLER_CC_N_CYCLES = 18
+CYCLER_CC_CYC1_DATA_POINT = 1457
 
 pytestmark = pytest.mark.skipif(
     not HARMONIZED_RAW.is_file(),
@@ -58,11 +58,11 @@ def processed(harmonized_raw) -> Data:
 def test_native_pipeline_matches_golden_counts(processed):
     schema = default_schema()
     assert processed.has_steps and processed.has_summary
-    assert processed.steps.height == ARBIN_N_STEPS
-    assert processed.summary.height == ARBIN_N_CYCLES
+    assert processed.steps.height == CYCLER_CC_N_STEPS
+    assert processed.summary.height == CYCLER_CC_N_CYCLES
 
     cyc1 = processed.summary.filter(pl.col(schema.cycle.cycle_num) == 1)
-    assert cyc1[schema.cycle.datapoint_num_last].item() == ARBIN_CYC1_DATA_POINT
+    assert cyc1[schema.cycle.datapoint_num_last].item() == CYCLER_CC_CYC1_DATA_POINT
 
 
 def test_native_pipeline_step_types_and_capacities(processed):
@@ -72,7 +72,7 @@ def test_native_pipeline_step_types_and_capacities(processed):
 
     # Cycle-end capacities are positive and CE is finite for every *complete*
     # cycle (the final cycle of the fixture is truncated mid-cycle).
-    s = processed.summary.filter(pl.col(schema.cycle.cycle_num) < ARBIN_N_CYCLES)
+    s = processed.summary.filter(pl.col(schema.cycle.cycle_num) < CYCLER_CC_N_CYCLES)
     assert (s[schema.cycle.charge_capacity] > 0).all()
     assert (s[schema.cycle.discharge_capacity] > 0).all()
     assert s[schema.cycle.coulombic_efficiency].is_finite().all()
@@ -94,14 +94,14 @@ def test_exclude_step_types_variant(harmonized_raw):
         return data.summary
 
     plain = _summary(None)
-    assert plain.height == ARBIN_N_CYCLES
+    assert plain.height == CYCLER_CC_N_CYCLES
 
     non_cv = _summary(["cv_"])
     assert non_cv.equals(plain)
 
     dcap = schema.cycle.discharge_capacity
     no_discharge = _summary(["discharge"])
-    assert no_discharge.height == ARBIN_N_CYCLES
+    assert no_discharge.height == CYCLER_CC_N_CYCLES
     assert (no_discharge[dcap] <= plain[dcap]).all()
     assert no_discharge[dcap].sum() < plain[dcap].sum()
 
@@ -200,4 +200,4 @@ def test_parallel_step_tables_with_two_schemas(harmonized_raw):
 
     assert "CYCLE_A" in steps_a.columns and "CYCLE_A" not in steps_b.columns
     assert "CYCLE_B" in steps_b.columns and "CYCLE_B" not in steps_a.columns
-    assert steps_a.height == steps_b.height == ARBIN_N_STEPS
+    assert steps_a.height == steps_b.height == CYCLER_CC_N_STEPS

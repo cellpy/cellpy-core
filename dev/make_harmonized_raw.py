@@ -4,7 +4,7 @@
 cellpy-core consumes the *harmonized raw* format whose authoritative spec is
 ``docs/data_format_specifications/harmonized_raw.md`` and whose column names are
 defined by ``cellpycore.config.RawCols``. The vendored real-data fixture
-``tests/data/arbin_cc_raw.parquet`` is still in the legacy cellpy ``HeadersNormal``
+``tests/data/cycler_cc_raw.parquet`` is still in the legacy cellpy ``HeadersNormal``
 naming (``data_point``, ``voltage``, ``charge_capacity``, ...). This script
 renames it into the harmonized schema so we have a real-data fixture in the
 native naming.
@@ -19,9 +19,9 @@ The only maintenance point is ``LEGACY_TO_RAWCOLS`` below: the map from legacy
 source columns to ``RawCols`` *attribute names*. It is pure ``polars`` and never
 imports ``cellpy`` or any instrument loader (cellpy-core stays loader-free).
 
-Capacity convention: legacy Arbin ``charge_capacity`` / ``discharge_capacity``
+Capacity convention: legacy cycler ``charge_capacity`` / ``discharge_capacity``
 (and the energy columns) are already cumulative-per-cycle-per-direction (verified
-on real Arbin data in issue #13), which is exactly what the harmonized
+on the canonical cycler fixture in issue #13), which is exactly what the harmonized
 ``cumulative_*`` columns require, so these are straight renames with no
 recomputation. See the spec's *Capacity convention* section.
 
@@ -40,11 +40,11 @@ from cellpycore.timestamps import datetime_to_epoch_ns_expr
 
 CORE_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = CORE_ROOT / "tests" / "data"
-SOURCE = DATA_DIR / "arbin_cc_raw.parquet"
-OUTPUT = DATA_DIR / "arbin_cc_harmonized_raw.parquet"
+SOURCE = DATA_DIR / "cycler_cc_raw.parquet"
+OUTPUT = DATA_DIR / "cycler_cc_harmonized_raw.parquet"
 
-# Constant value written into ``source_type`` for this Arbin fixture.
-SOURCE_TYPE = "arbin"
+# Constant value written into ``source_type`` for this cycler fixture.
+SOURCE_TYPE = "cycler"
 
 # Map legacy ``HeadersNormal`` columns -> the ``RawCols`` *attribute name(s)* they
 # feed. A legacy column may feed more than one harmonized column (e.g. the data

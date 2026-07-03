@@ -36,11 +36,11 @@ cannot read those files directly in its test suite.
 - `dev/regenerate_test_data.py` — Stage A exports `data.raw` from cellpy files
   (run in cellpy's env); Stage B runs the cellpy-core engine on the exported raw
   and snapshots the step table (run in cellpy-core's env).
-- `tests/data/arbin_cc_raw.parquet` — canonical 18-cycle Arbin raw (legacy
+- `tests/data/cycler_cc_raw.parquet` — canonical 18-cycle cycler raw (legacy
   `HeadersNormal` naming).
-- `tests/data/arbin_cc_steps_expected.parquet` — frozen snapshot of the current
+- `tests/data/cycler_cc_steps_expected.parquet` — frozen snapshot of the current
   engine's step table = **the regression oracle** for the rewrite.
-- `tests/data/arbin_small_raw.parquet` — tiny 47-row/3-step Arbin-SQL-H5 raw.
+- `tests/data/cycler_small_raw.parquet` — tiny 47-row/3-step raw export.
 - `tests/test_golden.py` — asserts the engine reproduces cellpy's published
   goldens (103 steps / 18 cycles / cycle-1 `data_point` 1457) **and** stays
   byte-faithful to the snapshot.
@@ -70,9 +70,9 @@ This gives #13 a real-data, cross-library oracle: the polars rewrite must keep
 
 - Once the native schema/engine lands (#13), add **native-schema** parquet
   fixtures (RawCols naming) + expected **native** `StepCols`/cycle output.
-  - *Partly done (#29):* `tests/data/arbin_cc_harmonized_raw.parquet` is the raw
+  - *Partly done (#29):* `tests/data/cycler_cc_harmonized_raw.parquet` is the raw
     side in `RawCols` naming, produced by `dev/make_harmonized_raw.py` (a pure-
-    polars rename of `arbin_cc_raw.parquet`; headers read from `RawCols` so the
+    polars rename of `cycler_cc_raw.parquet`; headers read from `RawCols` so the
     fixture tracks the schema). Native expected `StepCols`/cycle output is still
     to come.
 - Add a real cycling non-Arbin fixture (Maccor/Neware/Biologics) for parser

@@ -110,8 +110,8 @@ tracked in **issue #13**.
   cellpy-core against a synced cellpy is circular; the meaningful references are cellpy's
   **pre-integration committed goldens**.
 - **Steps:** cellpy's `testdata/data/steps.csv` (cycle/step/type/info, 103 rows) is an
-  independent classifier oracle. Vendored as `tests/data/arbin_cc_steptypes_cellpy.csv`;
-  cellpy-core reproduces it byte-for-byte (`test_arbin_step_types_match_cellpy_reference`).
+  independent classifier oracle. Vendored as `tests/data/cycler_cc_steptypes_cellpy.csv`;
+  cellpy-core reproduces it byte-for-byte (`test_cycler_cc_step_types_match_cellpy_reference`).
 - **Summary (decision `steps_sufficient`):** the summary stays gated by the Phase 3a oracle +
   cellpy's cyc-1 `data_point` golden (1457). A full byte-parity against cellpy's independent
   `old=True` legacy summary needs cellpy run with the current core in its venv (stale install);
@@ -164,7 +164,7 @@ tracked in **issue #13**.
   legacy aliases). Once fixed, the legacy pandas summary runs and reproduces the cellpy golden
   cyc-1 `data_point` (1457).
 - **Oracle (decision: `freeze_now`).** Froze cellpy-core's *current* pandas summary output as
-  `arbin_cc_summary_expected.parquet` (18×27) via the legacy bridge. This locks the upcoming
+  `cycler_cc_summary_expected.parquet` (18×27) via the legacy bridge. This locks the upcoming
   3b refactor; **cross-library byte-parity with cellpy is deferred to Phase 4** (the snapshot
   is cellpy-core's own output, not a cellpy reference, though cyc-1 datapoint already matches).
 - `dev/regenerate_test_data.py` stage B was rewritten to drive the step table through the

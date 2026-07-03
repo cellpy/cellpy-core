@@ -19,7 +19,7 @@ import pytest
 from cellpycore import Data, make_step_table, make_summary
 
 DATA_DIR = Path(__file__).parent / "data"
-HARMONIZED_RAW = DATA_DIR / "arbin_cc_harmonized_raw.parquet"
+HARMONIZED_RAW = DATA_DIR / "cycler_cc_harmonized_raw.parquet"
 
 pytestmark = [
     pytest.mark.benchmark,
@@ -37,7 +37,7 @@ def harmonized_raw() -> pl.DataFrame:
 
 @pytest.fixture(scope="module")
 def large_raw(harmonized_raw) -> pl.DataFrame:
-    """~40x the Arbin fixture (~410k rows): shifts cycle numbers and datapoints
+    """~40x the cycler fixture (~410k rows): shifts cycle numbers and datapoints
     so the copies stack into one long continuous test."""
     n_copies = 40
     n_cycles = harmonized_raw["cycle_num"].max()

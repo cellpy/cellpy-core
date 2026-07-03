@@ -24,7 +24,7 @@ Original cycler files are converted to this format, in order to unify the format
   *naive*, timezone-less datetime, e.g. legacy Arbin `date_time`), it is converted to
   epoch nanoseconds by treating the naive timestamp as UTC. (Example:
   `dev/make_harmonized_raw.py` does this when building the
-  `arbin_cc_harmonized_raw.parquet` test fixture.) Conversion helpers to/from float
+  `cycler_cc_harmonized_raw.parquet` test fixture.) Conversion helpers to/from float
   seconds UTC and native datetime live in `cellpycore.timestamps`.
 - Capacity / energy columns are **cumulative per cycle, per direction** — see *Capacity
   convention* below. (Renamed from `step_cumulative_*` in issue #13; the old name was
