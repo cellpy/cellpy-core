@@ -107,6 +107,10 @@ properties over `steps` / `summary`.
 
 ### B1. Schema-agnosticism is only partial in the step engine
 
+> **Resolved (#70, 2026-07-03):** documented ``<signal>_<stat>`` as a fixed engine
+> contract in ``StepCols``, ``make_step_table``, and ``this-project.md``; no
+> schema-derived stat rename.
+
 The per-step statistic columns are hardcoded as `f"{base}_{stat}"` (and the
 classifier reads `pl.col("current_mean")` etc.). The injected `StepCols`
 values are applied only to the group keys, `step_type` and `c_rate`. A custom
@@ -115,6 +119,10 @@ names from the schema, or (cheaper, recommended) document that the
 `<signal>_<stat>` names are a fixed engine contract.
 
 ### B2. Default-polarity inconsistency in `cycle_mode`
+
+> **Resolved (#70, 2026-07-03):** ``MockMetaTestDependent.cycle_mode`` defaults to
+> ``None`` (``NORMAL``); ``CellpyCellCore`` maps via ``_cycle_mode_to_test_mode``.
+> Legacy cellpy ``"anode"`` remains the bridge's explicit job.
 
 `MockMetaTestDependent.cycle_mode = "anode"` means an **initialized** `Data`
 defaults to INVERTED mode, while an uninitialized cell

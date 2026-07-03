@@ -45,9 +45,10 @@ you commit often without running CI locally.
 - Issue work on `<N>-<short-slug>` branches; Conventional Commits; squash
   merges on GitHub. Issue tracking lives under `.issueflows/`.
 - Google-style docstrings everywhere.
-- Column names are never hardcoded in the engine: they come from an injected
-  `config.Schema` (native `RawCols`/`StepCols`/`CycleCols`, or the legacy
-  headers via the bridge).
+- Column names for raw / cycle / step **group keys** and summary aliases come
+  from an injected ``config.Schema``. Per-step stat column stems
+  (``<signal>_<stat>``) are a **fixed engine contract**, not schema-injected
+  (see issue #70 / ``StepCols`` docstring).
 - Parity with legacy cellpy is enforced by tests (golden parquet fixtures in
   `tests/data/`, see `tests/data/README.md`), not by vigilance.
 - Metadata boundary: core ships metadata *scaffolding* (`cellpycore.metadata`)

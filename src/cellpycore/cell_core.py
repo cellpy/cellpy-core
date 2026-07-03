@@ -15,6 +15,21 @@ DataFrame = TypeVar("DataFrame")
 logger = logging.getLogger(__name__)
 
 
+def _cycle_mode_to_test_mode(cycle_mode: Optional[str]) -> config.TestMode:
+    """Map legacy ``cycle_mode`` string to ``TestMode``.
+
+    Args:
+        cycle_mode: Legacy mode string (``"anode"`` selects inverted convention).
+            ``None`` and all other values map to ``TestMode.NORMAL``.
+
+    Returns:
+        The corresponding ``TestMode`` for summary sign conventions.
+    """
+    if cycle_mode == "anode":
+        return config.TestMode.INVERTED
+    return config.TestMode.NORMAL
+
+
 def validate_raw_frame(raw, raw_cols: Optional[config.Cols] = None) -> None:
     """Validate a native-schema raw frame against ``config.RawCols``.
 
@@ -212,7 +227,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         self._data = new_data
 
     @property
-    def cycle_mode(self) -> str:
+    def cycle_mode(self) -> Optional[str]:
         # TODO: v2.0 edit this from scalar to list
         try:
             data = self.data
@@ -300,11 +315,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         # added only on the legacy bridge (``OldCellpyCellCore.make_core_summary``).
         time_00 = time.time()
         logger.debug("start making summary (native polars engine)")
-        test_mode = (
-            config.TestMode.INVERTED
-            if self.cycle_mode == "anode"
-            else config.TestMode.NORMAL
-        )
+        test_mode = _cycle_mode_to_test_mode(self.cycle_mode)
         data = summarizers.make_summary(
             data,
             self.schema,
@@ -360,10 +371,11 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
             specifics = ["gravimetric", "areal", "absolute"]
 
         if step_txt is None:
-            if self.cycle_mode == "anode":
-                step_txt = schema.cycle.discharge_capacity
-            else:
-                step_txt = schema.cycle.charge_capacity
+            step_txt = (
+                schema.cycle.discharge_capacity
+                if _cycle_mode_to_test_mode(self.cycle_mode) == config.TestMode.INVERTED
+                else schema.cycle.charge_capacity
+            )
 
         data = summarizers.equivalent_cycles_to_summary(
             data, schema, nom_cap_abs, normalization_cycles, step_txt
@@ -815,7 +827,7 @@ class OldCellpyCellCore(CellpyCellCore):
         if step_txt is None:
             step_txt = (
                 native_schema.cycle.discharge_capacity
-                if self.cycle_mode == "anode"
+                if _cycle_mode_to_test_mode(self.cycle_mode) == config.TestMode.INVERTED
                 else native_schema.cycle.charge_capacity
             )
 

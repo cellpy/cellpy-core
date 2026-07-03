@@ -384,6 +384,94 @@ def test_make_summary_anode_flips_coulombic_columns():
         assert cd_anode[i] == pytest.approx(dc[i] - cc[i])
 
 
+# --- issue #70: stat-column contract + cycle_mode default --------------------
+_STAT_SUFFIXES = ("mean", "std", "min", "max", "first", "last", "delta")
+
+_STEP_TABLE_BASES = (
+    "datapoint_num",
+    "test_time",
+    "step_time",
+    "current",
+    "potential",
+    "charge_capacity",
+    "discharge_capacity",
+    "internal_resistance",
+)
+
+
+def test_step_table_stat_columns_match_stepcols_defaults():
+    """Per-step stat columns follow the fixed ``<base>_<stat>`` engine contract."""
+    schema = default_schema()
+    shdr = schema.step
+    data = Data()
+    data.raw = _build_raw(RawCols())
+
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    steps = data.steps
+
+    for base in _STEP_TABLE_BASES:
+        for stat in _STAT_SUFFIXES:
+            col = f"{base}_{stat}"
+            assert col in steps.columns
+            attr = f"{base}_{stat}"
+            if hasattr(shdr, attr):
+                assert getattr(shdr, attr) == col
+
+
+def test_default_cycle_mode_is_normal_convention():
+    """Fresh Data() with unset cycle_mode uses NORMAL CE via CellpyCellCore."""
+    nhdr = RawCols()
+    chdr = default_schema().cycle
+    data = Data()
+    data.raw = _build_cumulative_raw(nhdr)
+
+    core = CellpyCellCore()
+    core.data = data
+    assert core.cycle_mode is None
+
+    data = core.make_core_step_table(data, nom_cap=1.0)
+    data = core.make_core_summary(data)
+    s = data.summary
+
+    cc = s[chdr.charge_capacity].to_list()
+    dc = s[chdr.discharge_capacity].to_list()
+    ce = s[chdr.coulombic_efficiency].to_list()
+    cd = s[chdr.coulombic_difference].to_list()
+    for i in range(len(cc)):
+        assert ce[i] == pytest.approx(100.0 * dc[i] / cc[i])
+        assert cd[i] == pytest.approx(cc[i] - dc[i])
+
+
+def test_cycle_mode_anode_via_cellpy_cell_core():
+    """Explicit cycle_mode='anode' still selects INVERTED CE direction."""
+    nhdr = RawCols()
+    chdr = default_schema().cycle
+    data = Data()
+    data.raw = _build_cumulative_raw(nhdr)
+
+    core = CellpyCellCore()
+    core.data = data
+    core.cycle_mode = "anode"
+
+    data = core.make_core_step_table(data, nom_cap=1.0)
+    data = core.make_core_summary(data)
+    s = data.summary
+
+    cc = s[chdr.charge_capacity].to_list()
+    dc = s[chdr.discharge_capacity].to_list()
+    ce = s[chdr.coulombic_efficiency].to_list()
+    cd = s[chdr.coulombic_difference].to_list()
+    for i in range(len(cc)):
+        assert ce[i] == pytest.approx(100.0 * cc[i] / dc[i])
+        assert cd[i] == pytest.approx(dc[i] - cc[i])
+
+
+def test_initialized_and_uninitialized_core_share_cycle_mode_default():
+    """initialize=True vs False must not diverge on default polarity."""
+    assert CellpyCellCore(initialize=False).cycle_mode is None
+    assert CellpyCellCore(initialize=True).cycle_mode is None
+
+
 def test_c_rates_to_summary_native():
     """c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)."""
     nhdr = RawCols()

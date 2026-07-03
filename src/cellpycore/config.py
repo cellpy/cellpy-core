@@ -68,7 +68,9 @@ class TestMode(StrEnum):
         - Default-polarity trap: batbase defaults to ``NORMAL``, but cellpy
           historically defaulted ``cycle_mode="anode"`` (i.e. ``INVERTED``).
           When bridging metadata into the engine, map the mode explicitly and
-          do not rely on either side's implicit default.
+          do not rely on either side's implicit default. The core
+          ``legacy.MockMetaTestDependent`` placeholder defaults to ``None``
+          (``NORMAL``); only an explicit ``"anode"`` selects ``INVERTED``.
     """
 
     NORMAL = "normal"
@@ -452,6 +454,18 @@ class StepCols(Cols):
     per-step summary (per-step statistics such as mean/std/min/max/first/last/
     delta for time, current, potential, capacity, energy, power and internal
     resistance, plus the per-step C-rate estimate).
+
+    Note:
+        Attributes name the **native output columns** for the default contract.
+        The step engine builds aggregates as ``<base>_<stat>`` where ``<base>``
+        comes from the raw signal stems in ``summarizers._SIGNAL_BASES``
+        (``current``, ``potential``, ``charge_capacity``, …) and ``<stat>`` is
+        one of ``mean``, ``std``, ``min``, ``max``, ``first``, ``last``, or
+        ``delta``. Custom ``StepCols.current_mean`` (etc.) does **not** retarget
+        aggregation or step-type classification today; only group keys,
+        ``step_type``, and ``c_rate`` honour injected renames. The legacy bridge
+        renames via ``header_mapping.native_to_legacy_step()`` after the engine
+        runs.
     """
 
     # Compact per-test key (mirrors ``RawCols.test_id``); the leading component of
