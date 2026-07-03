@@ -18,9 +18,10 @@ Array = TypeVar("Array")
 
 
 # The summarizer bodies read their column names from an injected ``Schema`` (see
-# config.Schema) instead of module-level header globals. This keeps the engine
-# schema-agnostic and thread-safe; the legacy bridge (OldCellpyCellCore) injects
-# the legacy-named schema, a native CellpyCellCore injects the native one.
+# config.Schema) instead of module-level header globals. Raw / cycle / step group
+# keys and summary column aliases are schema-injected and thread-safe; per-step
+# stat column stems (``<base>_<stat>``) are a fixed engine contract — see
+# ``StepCols`` and ``make_step_table``.
 
 
 # Standalone default step-detection limits, derived from the CellpyLimits
@@ -367,6 +368,11 @@ def make_step_table(
         from_data_point (int): first data point to use.
         raw_limits (dict): the raw limits (resolution) for the instrument.
             Defaults to a fresh copy of ``DEFAULT_RAW_LIMITS``.
+
+    Note:
+        Per-step statistic columns are emitted as ``<base>_<stat>`` (fixed engine
+        contract). Only group keys, ``step_type``, and ``c_rate`` honour injected
+        ``StepCols`` renames. See ``config.StepCols`` for the full contract.
 
     Returns:
         core.Data: The data object with the step table added if from_data_point is None,

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Document the per-step `<signal>_<stat>` engine contract (B1) and default unset
+  `cycle_mode` to NORMAL via `_cycle_mode_to_test_mode`, so initialized and
+  uninitialized `CellpyCellCore` share the same polarity unless `"anode"` is set
+  explicitly. (#70)
 - Fix units fallback so `get_converter_to_specific` and
   `nominal_capacity_as_absolute` accept explicit values or `CellMeta` instead of
   crashing on bare `Data`; thread optional `cell_meta` through
