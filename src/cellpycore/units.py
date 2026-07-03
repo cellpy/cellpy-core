@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 DataFrame = TypeVar("DataFrame")
 
+logger = logging.getLogger(__name__)
+
 
 # -----------------------------------------------------------------------------
 #   cellpy unit-spec class (promoted from ``cellpycore.legacy``; re-exported
@@ -88,7 +90,7 @@ class CellpyUnits(BaseSettings):
     def update(self, new_units: dict):
         """Update the units."""
 
-        logging.debug(f"{new_units=}")
+        logger.debug(f"{new_units=}")
         for k in new_units:
             if k in self.keys():
                 self[k] = new_units[k]
@@ -184,7 +186,7 @@ def get_converter_to_specific(
         to_unit_specific = Q(1.0, None)
 
     else:
-        logging.debug(f"mode={mode} not supported!")
+        logger.debug(f"mode={mode} not supported!")
         return 1.0
 
     from_unit_cap = Q(1.0, old_units["charge"])
@@ -196,7 +198,7 @@ def get_converter_to_specific(
     to_unit = to_unit_cap / to_unit_specific
 
     conversion_factor = (from_unit / to_unit / value).to_reduced_units()
-    logging.debug(f"conversion factor: {conversion_factor}")
+    logger.debug(f"conversion factor: {conversion_factor}")
     return conversion_factor.m
 
 

@@ -1,5 +1,6 @@
-import polars as pl
 import datetime as dt
+
+import polars as pl
 
 
 def main():

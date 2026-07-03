@@ -10,15 +10,14 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from cellpycore import selectors, summarizers
-from cellpycore.cell_core import CellpyCellCore, OldCellpyCellCore, Data
-from cellpycore import config
+from cellpycore import config, selectors, summarizers
+from cellpycore.cell_core import CellpyCellCore, Data, OldCellpyCellCore
 from cellpycore.config import (
-    RawCols,
     CycleCols,
-    StepCols,
-    Schema,
+    RawCols,
     ResetGranularity,
+    Schema,
+    StepCols,
     default_schema,
 )
 from cellpycore.legacy import HeadersNormal
@@ -69,24 +68,36 @@ def _build_cumulative_raw(nhdr: RawCols) -> pd.DataFrame:
     dp = 0
     for cyc in (1, 2):
         for k in range(5):  # charge: cc 0.1..0.5, dc 0
-            records.append({
-                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
-                nhdr.step_time: float(k), nhdr.step_num: 1, nhdr.cycle_num: cyc,
-                nhdr.current: 1.0, nhdr.potential: 3.5 + 0.01 * k,
-                nhdr.cumulative_charge_capacity: 0.1 * (k + 1),
-                nhdr.cumulative_discharge_capacity: 0.0,
-                nhdr.internal_resistance: 0.0,
-            })
+            records.append(
+                {
+                    nhdr.datapoint_num: dp,
+                    nhdr.test_time: float(dp),
+                    nhdr.step_time: float(k),
+                    nhdr.step_num: 1,
+                    nhdr.cycle_num: cyc,
+                    nhdr.current: 1.0,
+                    nhdr.potential: 3.5 + 0.01 * k,
+                    nhdr.cumulative_charge_capacity: 0.1 * (k + 1),
+                    nhdr.cumulative_discharge_capacity: 0.0,
+                    nhdr.internal_resistance: 0.0,
+                }
+            )
             dp += 1
         for k in range(5):  # discharge: cc held 0.5, dc 0.08..0.4
-            records.append({
-                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
-                nhdr.step_time: float(k), nhdr.step_num: 2, nhdr.cycle_num: cyc,
-                nhdr.current: -1.0, nhdr.potential: 3.9 - 0.01 * k,
-                nhdr.cumulative_charge_capacity: 0.5,
-                nhdr.cumulative_discharge_capacity: 0.08 * (k + 1),
-                nhdr.internal_resistance: 0.0,
-            })
+            records.append(
+                {
+                    nhdr.datapoint_num: dp,
+                    nhdr.test_time: float(dp),
+                    nhdr.step_time: float(k),
+                    nhdr.step_num: 2,
+                    nhdr.cycle_num: cyc,
+                    nhdr.current: -1.0,
+                    nhdr.potential: 3.9 - 0.01 * k,
+                    nhdr.cumulative_charge_capacity: 0.5,
+                    nhdr.cumulative_discharge_capacity: 0.08 * (k + 1),
+                    nhdr.internal_resistance: 0.0,
+                }
+            )
             dp += 1
     return pd.DataFrame(records)
 
@@ -108,8 +119,14 @@ def _types(steps) -> set:
 
 def test_no_module_header_globals():
     """The globals bridge is gone: no module-level header/unit globals remain."""
-    for name in ("headers_steps", "headers_summary", "headers_raw",
-                 "cellpy_units", "output_units", "units"):
+    for name in (
+        "headers_steps",
+        "headers_summary",
+        "headers_raw",
+        "cellpy_units",
+        "output_units",
+        "units",
+    ):
         assert not hasattr(summarizers, name), f"summarizers.{name} should not exist"
     for name in ("headers_step_table", "headers_summary", "headers_normal"):
         assert not hasattr(selectors, name), f"selectors.{name} should not exist"
@@ -188,10 +205,9 @@ def test_nom_cap_scales_c_rate_by_value():
     res2 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema, nom_cap=2.0)
 
     def _charge_rate(steps):
-        return (
-            steps.filter(pl.col(StepCols.step_type) == "charge")[StepCols.c_rate]
-            .to_list()[0]
-        )
+        return steps.filter(pl.col(StepCols.step_type) == "charge")[
+            StepCols.c_rate
+        ].to_list()[0]
 
     assert _charge_rate(res1.steps) == pytest.approx(2 * _charge_rate(res2.steps))
 
@@ -215,6 +231,87 @@ def test_raw_limits_affect_classification():
     assert "charge" not in _types(res_huge.steps)
 
 
+def test_make_step_table_missing_raw_raises_no_data_found():
+    from cellpycore.legacy import NoDataFound
+
+    with pytest.raises(NoDataFound, match="raw"):
+        summarizers.make_step_table(Data(), schema=_native_schema())
+
+
+def test_make_step_table_missing_columns_are_all_named():
+    nhdr = RawCols()
+    data = Data()
+    data.raw = _build_raw(nhdr).drop(columns=[nhdr.cycle_num, nhdr.step_num])
+    with pytest.raises(ValueError) as excinfo:
+        summarizers.make_step_table(data, schema=_native_schema())
+    assert nhdr.cycle_num in str(excinfo.value)
+    assert nhdr.step_num in str(excinfo.value)
+
+
+def test_make_summary_missing_steps_raises_no_data_found():
+    from cellpycore.legacy import NoDataFound
+
+    data = _data_with_raw(RawCols())
+    with pytest.raises(NoDataFound, match="steps"):
+        summarizers.make_summary(data, schema=_native_schema())
+
+
+def test_make_summary_missing_raw_columns_are_named():
+    nhdr = RawCols()
+    schema = _native_schema()
+    data = _data_with_raw(nhdr)
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    data.raw = data.raw.drop(columns=[nhdr.cumulative_charge_capacity])
+    with pytest.raises(ValueError, match=nhdr.cumulative_charge_capacity):
+        summarizers.make_summary(data, schema=schema)
+
+
+def test_override_raw_limits_zero_is_honoured():
+    """Regression for the falsy-override bug: an explicit 0.0 override must win.
+
+    With ``current_hard=0.0`` the no-current mask ``(|max| + |min|) < 0`` is
+    always false, so a zero-current step with slight potential drift can no
+    longer be classified as ``rest`` (and the drift keeps the ``ir`` no-change
+    rule out of play), leaving it uncategorized.
+    """
+    nhdr = RawCols()
+    schema = _native_schema()
+
+    # One zero-current step with a slight potential drift: "rest" under the
+    # default current_hard, but neither "rest" nor "ir" when current_hard=0.0.
+    records = [
+        {
+            nhdr.datapoint_num: k,
+            nhdr.test_time: float(k),
+            nhdr.step_time: float(k),
+            nhdr.step_num: 1,
+            nhdr.cycle_num: 1,
+            nhdr.current: 0.0,
+            nhdr.potential: 3.7 + 0.001 * k,
+            nhdr.cumulative_charge_capacity: 0.0,
+            nhdr.cumulative_discharge_capacity: 0.0,
+            nhdr.internal_resistance: 0.0,
+        }
+        for k in range(5)
+    ]
+
+    def _fresh_data() -> Data:
+        data = Data()
+        data.raw = pd.DataFrame(records)
+        return data
+
+    res_default = summarizers.make_step_table(_fresh_data(), schema=schema, nom_cap=1.0)
+    assert _types(res_default.steps) == {"rest"}
+
+    res_zero = summarizers.make_step_table(
+        _fresh_data(),
+        schema=schema,
+        nom_cap=1.0,
+        override_raw_limits={"current_hard": 0.0},
+    )
+    assert "rest" not in _types(res_zero.steps)
+
+
 def test_make_summary_native_schema():
     """The native polars summary engine emits the clean CycleCols subset only."""
     nhdr = RawCols()
@@ -228,16 +325,24 @@ def test_make_summary_native_schema():
 
     assert s.height == 2  # one row per cycle
     for col in (
-        chdr.cycle_num, chdr.charge_capacity, chdr.discharge_capacity,
-        chdr.coulombic_efficiency, chdr.coulombic_difference,
-        chdr.test_cumulated_charge_capacity, chdr.potential_end_charge,
+        chdr.cycle_num,
+        chdr.charge_capacity,
+        chdr.discharge_capacity,
+        chdr.coulombic_efficiency,
+        chdr.coulombic_difference,
+        chdr.test_cumulated_charge_capacity,
+        chdr.potential_end_charge,
     ):
         assert col in s.columns
 
     # legacy-only cruft must NOT leak into the native summary (it lives in the bridge)
     for col in (
-        "cumulated_ric", "shifted_charge_capacity", "charge_c_rate",
-        "normalized_cycle_index", "cumulated_coulombic_efficiency", "ir_charge",
+        "cumulated_ric",
+        "shifted_charge_capacity",
+        "charge_c_rate",
+        "normalized_cycle_index",
+        "cumulated_coulombic_efficiency",
+        "ir_charge",
     ):
         assert col not in s.columns
 
@@ -247,7 +352,9 @@ def test_generate_specific_columns_takes_factor_by_value():
     data = Data()
     data.summary = pl.DataFrame({"charge_capacity": [1.0, 2.0, 4.0]})
     data = summarizers.generate_specific_summary_columns(
-        data, mode="gravimetric", specific_columns=["charge_capacity"],
+        data,
+        mode="gravimetric",
+        specific_columns=["charge_capacity"],
         specific_converter=10.0,
     )
     assert data.summary["charge_capacity_gravimetric"].to_list() == [10.0, 20.0, 40.0]
@@ -450,26 +557,38 @@ def _build_merged_raw(nhdr: RawCols) -> pd.DataFrame:
         scale = 1.0 if test_id == 0 else 2.0
         for cyc in (1, 2):
             for k in range(5):  # charge
-                records.append({
-                    nhdr.test_id: test_id, nhdr.datapoint_num: dp,
-                    nhdr.test_time: float(dp), nhdr.step_time: float(k),
-                    nhdr.step_num: 1, nhdr.cycle_num: cyc,
-                    nhdr.current: 1.0, nhdr.potential: 3.5 + 0.01 * k,
-                    nhdr.cumulative_charge_capacity: scale * 0.1 * (k + 1),
-                    nhdr.cumulative_discharge_capacity: 0.0,
-                    nhdr.internal_resistance: 0.0,
-                })
+                records.append(
+                    {
+                        nhdr.test_id: test_id,
+                        nhdr.datapoint_num: dp,
+                        nhdr.test_time: float(dp),
+                        nhdr.step_time: float(k),
+                        nhdr.step_num: 1,
+                        nhdr.cycle_num: cyc,
+                        nhdr.current: 1.0,
+                        nhdr.potential: 3.5 + 0.01 * k,
+                        nhdr.cumulative_charge_capacity: scale * 0.1 * (k + 1),
+                        nhdr.cumulative_discharge_capacity: 0.0,
+                        nhdr.internal_resistance: 0.0,
+                    }
+                )
                 dp += 1
             for k in range(5):  # discharge
-                records.append({
-                    nhdr.test_id: test_id, nhdr.datapoint_num: dp,
-                    nhdr.test_time: float(dp), nhdr.step_time: float(k),
-                    nhdr.step_num: 2, nhdr.cycle_num: cyc,
-                    nhdr.current: -1.0, nhdr.potential: 3.9 - 0.01 * k,
-                    nhdr.cumulative_charge_capacity: scale * 0.5,
-                    nhdr.cumulative_discharge_capacity: scale * 0.08 * (k + 1),
-                    nhdr.internal_resistance: 0.0,
-                })
+                records.append(
+                    {
+                        nhdr.test_id: test_id,
+                        nhdr.datapoint_num: dp,
+                        nhdr.test_time: float(dp),
+                        nhdr.step_time: float(k),
+                        nhdr.step_num: 2,
+                        nhdr.cycle_num: cyc,
+                        nhdr.current: -1.0,
+                        nhdr.potential: 3.9 - 0.01 * k,
+                        nhdr.cumulative_charge_capacity: scale * 0.5,
+                        nhdr.cumulative_discharge_capacity: scale * 0.08 * (k + 1),
+                        nhdr.internal_resistance: 0.0,
+                    }
+                )
                 dp += 1
     return pd.DataFrame(records)
 
@@ -520,12 +639,13 @@ def test_merged_object_summary_cumulation_resets_per_test():
     # test 0: cc = [0.5, 0.5]; test 1: cc = [1.0, 1.0] (scale 2x)
     assert cc == pytest.approx([0.5, 0.5, 1.0, 1.0])
     # cumulation restarts per test: first cycle of each test == its own cc
-    assert cum[0] == pytest.approx(cc[0])           # test 0, cycle 1
-    assert cum[1] == pytest.approx(cc[0] + cc[1])   # test 0, cycle 2
-    assert cum[2] == pytest.approx(cc[2])           # test 1, cycle 1 -> RESET
-    assert cum[3] == pytest.approx(cc[2] + cc[3])   # test 1, cycle 2
+    assert cum[0] == pytest.approx(cc[0])  # test 0, cycle 1
+    assert cum[1] == pytest.approx(cc[0] + cc[1])  # test 0, cycle 2
+    assert cum[2] == pytest.approx(cc[2])  # test 1, cycle 1 -> RESET
+    assert cum[3] == pytest.approx(cc[2] + cc[3])  # test 1, cycle 2
     # first-cycle capacity loss is null within each test (shift is per-test)
     import math
+
     assert loss[0] is None or math.isnan(loss[0])
     assert loss[2] is None or math.isnan(loss[2])
 
@@ -559,24 +679,36 @@ def _build_step_cumulative_raw(nhdr: RawCols) -> pd.DataFrame:
     dp = 0
     for cyc in (1, 2):
         for k in range(5):  # charge step: cc restarts at 0 -> 0.1..0.5, dc 0
-            records.append({
-                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
-                nhdr.step_time: float(k), nhdr.step_num: 1, nhdr.cycle_num: cyc,
-                nhdr.current: 1.0, nhdr.potential: 3.5 + 0.01 * k,
-                nhdr.cumulative_charge_capacity: 0.1 * (k + 1),
-                nhdr.cumulative_discharge_capacity: 0.0,
-                nhdr.internal_resistance: 0.0,
-            })
+            records.append(
+                {
+                    nhdr.datapoint_num: dp,
+                    nhdr.test_time: float(dp),
+                    nhdr.step_time: float(k),
+                    nhdr.step_num: 1,
+                    nhdr.cycle_num: cyc,
+                    nhdr.current: 1.0,
+                    nhdr.potential: 3.5 + 0.01 * k,
+                    nhdr.cumulative_charge_capacity: 0.1 * (k + 1),
+                    nhdr.cumulative_discharge_capacity: 0.0,
+                    nhdr.internal_resistance: 0.0,
+                }
+            )
             dp += 1
         for k in range(5):  # discharge step: cc restarts at 0, dc 0.08..0.4
-            records.append({
-                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
-                nhdr.step_time: float(k), nhdr.step_num: 2, nhdr.cycle_num: cyc,
-                nhdr.current: -1.0, nhdr.potential: 3.9 - 0.01 * k,
-                nhdr.cumulative_charge_capacity: 0.0,
-                nhdr.cumulative_discharge_capacity: 0.08 * (k + 1),
-                nhdr.internal_resistance: 0.0,
-            })
+            records.append(
+                {
+                    nhdr.datapoint_num: dp,
+                    nhdr.test_time: float(dp),
+                    nhdr.step_time: float(k),
+                    nhdr.step_num: 2,
+                    nhdr.cycle_num: cyc,
+                    nhdr.current: -1.0,
+                    nhdr.potential: 3.9 - 0.01 * k,
+                    nhdr.cumulative_charge_capacity: 0.0,
+                    nhdr.cumulative_discharge_capacity: 0.08 * (k + 1),
+                    nhdr.internal_resistance: 0.0,
+                }
+            )
             dp += 1
     return pd.DataFrame(records)
 
@@ -595,25 +727,37 @@ def _build_test_cumulative_raw(nhdr: RawCols) -> pd.DataFrame:
     for cyc in (1, 2):
         for k in range(5):  # charge: cc grows by 0.1/row, dc held
             cc += 0.1
-            records.append({
-                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
-                nhdr.step_time: float(k), nhdr.step_num: 1, nhdr.cycle_num: cyc,
-                nhdr.current: 1.0, nhdr.potential: 3.5 + 0.01 * k,
-                nhdr.cumulative_charge_capacity: cc,
-                nhdr.cumulative_discharge_capacity: dc,
-                nhdr.internal_resistance: 0.0,
-            })
+            records.append(
+                {
+                    nhdr.datapoint_num: dp,
+                    nhdr.test_time: float(dp),
+                    nhdr.step_time: float(k),
+                    nhdr.step_num: 1,
+                    nhdr.cycle_num: cyc,
+                    nhdr.current: 1.0,
+                    nhdr.potential: 3.5 + 0.01 * k,
+                    nhdr.cumulative_charge_capacity: cc,
+                    nhdr.cumulative_discharge_capacity: dc,
+                    nhdr.internal_resistance: 0.0,
+                }
+            )
             dp += 1
         for k in range(5):  # discharge: dc grows by 0.08/row, cc held
             dc += 0.08
-            records.append({
-                nhdr.datapoint_num: dp, nhdr.test_time: float(dp),
-                nhdr.step_time: float(k), nhdr.step_num: 2, nhdr.cycle_num: cyc,
-                nhdr.current: -1.0, nhdr.potential: 3.9 - 0.01 * k,
-                nhdr.cumulative_charge_capacity: cc,
-                nhdr.cumulative_discharge_capacity: dc,
-                nhdr.internal_resistance: 0.0,
-            })
+            records.append(
+                {
+                    nhdr.datapoint_num: dp,
+                    nhdr.test_time: float(dp),
+                    nhdr.step_time: float(k),
+                    nhdr.step_num: 2,
+                    nhdr.cycle_num: cyc,
+                    nhdr.current: -1.0,
+                    nhdr.potential: 3.9 - 0.01 * k,
+                    nhdr.cumulative_charge_capacity: cc,
+                    nhdr.cumulative_discharge_capacity: dc,
+                    nhdr.internal_resistance: 0.0,
+                }
+            )
             dp += 1
     return pd.DataFrame(records)
 
@@ -655,8 +799,12 @@ def test_normalize_capacity_granularity_matches_cycle_oracle(builder, granularit
 # --- issue #43: ref_potential (reference electrode) --------------------------
 def _ref_stat_columns(shdr: StepCols) -> list:
     return [
-        shdr.ref_potential_mean, shdr.ref_potential_std, shdr.ref_potential_min,
-        shdr.ref_potential_max, shdr.ref_potential_first, shdr.ref_potential_last,
+        shdr.ref_potential_mean,
+        shdr.ref_potential_std,
+        shdr.ref_potential_min,
+        shdr.ref_potential_max,
+        shdr.ref_potential_first,
+        shdr.ref_potential_last,
         shdr.ref_potential_delta,
     ]
 

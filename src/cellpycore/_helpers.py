@@ -14,6 +14,7 @@ def create_raw_data() -> DataFrame:
     If the test-suite is getting slow, consider caching the result of this function or using a different approach.
     """
     import polars as pl
+
     from cellpycore.config import RawCols
     from cellpycore.timestamps import NS_PER_SECOND
 
@@ -184,6 +185,7 @@ def create_raw_data() -> DataFrame:
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+
     df = create_raw_data()
     df_pandas = df.to_pandas()
 

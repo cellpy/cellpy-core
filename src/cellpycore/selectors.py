@@ -1,9 +1,9 @@
 import collections
-from typing import Any, Optional, Union, TypeVar
 import logging
+from typing import Any, Optional, TypeVar, Union
 
-from cellpycore.config import Schema, default_schema, STEP_TYPES
 from cellpycore.cell_core import Data
+from cellpycore.config import STEP_TYPES, Schema, default_schema
 
 DataFrame = TypeVar("DataFrame")
 
@@ -220,7 +220,9 @@ def get_cycle_numbers(
 
     if rate_on is None:
         rate_on = ["charge", "discharge"]
-    rates = get_rates(data, schema, steptable=steptable, agg=rate_agg, direction=rate_on)
+    rates = get_rates(
+        data, schema, steptable=steptable, agg=rate_agg, direction=rate_on
+    )
     rate_column = schema.step.rate_avr
     cycles_mask = (rates[rate_column] < (rate + rate_std)) & (
         rates[rate_column] > (rate - rate_std)
@@ -271,9 +273,7 @@ def get_rates(
 
     if agg:
         rates = (
-            rates.groupby([schema.step.cycle, schema.step.type])
-            .agg(agg)
-            .reset_index()
+            rates.groupby([schema.step.cycle, schema.step.type]).agg(agg).reset_index()
         )
 
     if direction is not None:

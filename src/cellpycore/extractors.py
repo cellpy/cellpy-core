@@ -151,6 +151,4 @@ class LastIRExtractor(SummaryExtractor):
             if use_tid
             else headers_cycle.cycle_num
         )
-        return ir_charge.join(
-            ir_discharge, on=join_on, how="full", coalesce=True
-        )
+        return ir_charge.join(ir_discharge, on=join_on, how="full", coalesce=True)

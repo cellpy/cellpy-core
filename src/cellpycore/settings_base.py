@@ -7,8 +7,10 @@ an import cycle. ``cellpycore.legacy`` re-exports both names for backwards
 compatibility.
 """
 
-from dataclasses import asdict, dataclass, fields
 import logging
+from dataclasses import asdict, dataclass, fields
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -25,7 +27,7 @@ class DictLikeClass:
 
     def __getitem__(self, key):
         if key not in self._field_names:
-            logging.debug(f"{key} not in fields")
+            logger.debug(f"{key} not in fields")
         try:
             return getattr(self, key)
         except AttributeError:
@@ -77,7 +79,7 @@ class BaseSettings(DictLikeClass):
     def get(self, key):
         """Get the value (postfixes not supported)."""
         if key not in self.keys():
-            logging.critical(f"the column header '{key}' not found")
+            logger.critical(f"the column header '{key}' not found")
             return
         else:
             return self[key]

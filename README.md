@@ -1,5 +1,22 @@
 # cellpy-core
 
+The core engine of [cellpy](https://github.com/jepegit/cellpy): fast,
+thread-safe processing of battery-cycling raw data. Given a raw data frame
+(polars, native schema — or pandas via the legacy bridge), it finds all steps
+and cycles and builds per-step and per-cycle summary tables. It is designed to
+be small, schema-injected, and easy for cellpy developers to build on and
+extend; instrument loaders, file IO, and unit handling stay out of the core.
+
+```python
+import polars as pl
+from cellpycore import Data, make_step_table, make_summary
+
+data = Data.from_raw_frame(pl.read_parquet("my_native_raw.parquet"))
+make_step_table(data, nom_cap=1.0)
+make_summary(data)
+print(data.steps, data.summary)
+```
+
 ## Installing
 
 Available on PyPI as [`cellpycore`](https://pypi.org/project/cellpycore/):

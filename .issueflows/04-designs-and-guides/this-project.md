@@ -2,31 +2,62 @@
 
 ## What this project is
 
-TODO: Summarize the project in one short paragraph. Mention what it does, who it is for, and the main outcome it produces.
+`cellpy-core` is the core processing engine of
+[cellpy](https://github.com/jepegit/cellpy): it takes battery-cycling raw data
+(one row per logged datapoint) and finds all steps and cycles, classifies step
+types (charge / discharge / rest / cv / ir), and builds per-step and per-cycle
+summary tables. It is consumed by cellpy through the legacy bridge
+(`OldCellpyCellCore`) and by slim standalone consumers through the native API
+(`Data.from_raw_frame` + `make_step_table` / `make_summary`). Goals: fast,
+thread-safe, schema-injected, easy to extend.
 
 ## Stack / runtime
 
-- TODO: Primary language(s), runtime versions, package manager(s), and major frameworks.
-- TODO: External services, CLIs, or local tools that agents should know about.
+- Python >= 3.13, managed with `uv` (`.venv` in the repo root).
+- Engine is polars-native; pandas + pyarrow only for the legacy bridge and
+  parquet fixtures. `pint` is an optional extra (`units`) for the unit helpers.
+- Lint/format: `ruff` (checked in CI). Tests: `pytest`.
 
 ## How to run / test
 
 ```bash
-TODO: command to install or sync dependencies
-TODO: command to run the main test suite
-TODO: command to run lint/format checks
+uv sync                      # install / sync dependencies
+uv run pytest                # full test suite (benchmarks excluded by default)
+uv run pytest -m benchmark   # opt-in performance benchmarks
+uv run ruff check && uv run ruff format --check   # lint / format checks
 ```
 
 ## Conventions
 
-- TODO: Branch, commit, formatting, typing, testing, or review conventions that are specific to this project.
-- TODO: Any project-specific workflow details that are easy for agents to miss.
+- Issue work on `<N>-<short-slug>` branches; Conventional Commits; squash
+  merges on GitHub. Issue tracking lives under `.issueflows/`.
+- Google-style docstrings everywhere.
+- Column names are never hardcoded in the engine: they come from an injected
+  `config.Schema` (native `RawCols`/`StepCols`/`CycleCols`, or the legacy
+  headers via the bridge).
+- Parity with legacy cellpy is enforced by tests (golden parquet fixtures in
+  `tests/data/`, see `tests/data/README.md`), not by vigilance.
+- Metadata boundary: core ships metadata *scaffolding* (`cellpycore.metadata`)
+  but never requires populated metadata on `Data` (see
+  `cellpy-core-migration.md`).
 
 ## Entry points
 
-- TODO: Main application/package/module entry point.
-- TODO: Important directories or files to read first.
+- Public API: `cellpycore/__init__.py` (curated exports + `__version__`).
+- Engine: `src/cellpycore/summarizers.py` (`make_step_table`, `make_summary`),
+  helpers in `extractors.py`.
+- Cell classes / data container: `src/cellpycore/cell_core.py`
+  (`CellpyCellCore`, `OldCellpyCellCore`, `Data`).
+- Schemas: `src/cellpycore/config.py`; legacy headers: `legacy.py`;
+  legacy<->native mapping: `header_mapping.py`.
+- Read first: `.issueflows/04-designs-and-guides/code-review-2026-07.md` and
+  `cellpy-core-migration.md`.
 
 ## Non-goals / known limitations
 
-- TODO: Scope boundaries, known caveats, or things this project intentionally does not do.
+- No instrument loaders, no file IO beyond test fixtures, no unit conversion
+  on the hot path (conversion factors are passed by value).
+- `selectors.py` is legacy-bridge-only and broken with the native schema
+  (issue #67); `units.py` fallback needs a richer data object (issue #68).
+- Per-step stat column names (`<signal>_<stat>`) are a fixed engine contract,
+  not schema-injected (issue #70).

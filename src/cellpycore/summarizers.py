@@ -1,13 +1,14 @@
 import logging
+import types
 from dataclasses import asdict
 from typing import Optional, Sequence, TypeVar, Union
 
 import polars as pl
 
-from cellpycore.config import ResetGranularity, Schema, TestMode, default_schema
 from cellpycore.cell_core import Data
+from cellpycore.config import ResetGranularity, Schema, TestMode, default_schema
 from cellpycore.extractors import LastIRExtractor, SummaryExtractor
-from cellpycore.legacy import CellpyLimits
+from cellpycore.legacy import CellpyLimits, NoDataFound
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,10 @@ Array = TypeVar("Array")
 # Standalone default step-detection limits, derived from the CellpyLimits
 # mirror so they match legacy cellpy. When cellpy drives the engine it passes
 # its own instrument ``raw_limits`` by value, so this default only applies to
-# standalone cellpy-core use.
-DEFAULT_RAW_LIMITS = asdict(CellpyLimits())
+# standalone cellpy-core use. Read-only view so no caller can mutate the
+# process-wide defaults (thread-safety); make_step_table builds a fresh dict
+# per call when no limits are passed.
+DEFAULT_RAW_LIMITS = types.MappingProxyType(asdict(CellpyLimits()))
 
 # Number of digits used when rounding the per-step C-rate (matches legacy cellpy).
 DIGITS_C_RATE = 5
@@ -51,6 +54,33 @@ _SIGNAL_BASES = (
     ("internal_resistance", "internal_resistance"),
     ("ref_potential", "ref_potential"),
 )
+
+
+def _require_frame(frame, name: str) -> None:
+    """Raise ``NoDataFound`` when a required input frame is missing."""
+    if frame is None:
+        raise NoDataFound(
+            f"data.{name} is missing; the engine needs a populated ``{name}`` frame"
+        )
+
+
+def _require_columns(frame: "pl.DataFrame", required: dict, frame_name: str) -> None:
+    """Raise ``ValueError`` naming every required column missing from ``frame``.
+
+    Args:
+        frame: The (polars) frame to check.
+        required: Mapping of schema attribute name -> resolved column name.
+        frame_name: Label used in the error message (e.g. ``"raw"``).
+    """
+    missing = [
+        f"'{col}' (schema attribute ``{attr}``)"
+        for attr, col in required.items()
+        if col not in frame.columns
+    ]
+    if missing:
+        raise ValueError(
+            f"data.{frame_name} is missing required column(s): " + ", ".join(missing)
+        )
 
 
 def _ensure_test_id(frame: "pl.DataFrame", test_id_col: str) -> "pl.DataFrame":
@@ -218,16 +248,26 @@ def _classify_steps(
     if not required <= bases:
         return pl.lit("")
 
+    # Membership test (not ``or``) so an explicit override of 0 / 0.0 wins
+    # instead of silently falling back to the default limit.
     orl = override_raw_limits or {}
-    current_hard = orl.get("current_hard") or raw_limits["current_hard"]
+    current_hard = (
+        orl["current_hard"] if "current_hard" in orl else raw_limits["current_hard"]
+    )
     stable_current_soft = (
-        orl.get("stable_current_soft") or raw_limits["stable_current_soft"]
+        orl["stable_current_soft"]
+        if "stable_current_soft" in orl
+        else raw_limits["stable_current_soft"]
     )
     stable_voltage_hard = (
-        orl.get("stable_voltage_hard") or raw_limits["stable_voltage_hard"]
+        orl["stable_voltage_hard"]
+        if "stable_voltage_hard" in orl
+        else raw_limits["stable_voltage_hard"]
     )
     stable_charge_hard = (
-        orl.get("stable_charge_hard") or raw_limits["stable_charge_hard"]
+        orl["stable_charge_hard"]
+        if "stable_charge_hard" in orl
+        else raw_limits["stable_charge_hard"]
     )
 
     cur_mean = pl.col("current_mean")
@@ -247,9 +287,7 @@ def _classify_steps(
     m_cur_pos = cur_mean > current_hard
     m_ch_changed = ch_delta.abs() > stable_charge_hard
     m_dch_changed = dch_delta.abs() > stable_charge_hard
-    m_no_change = (
-        (v_delta == 0) & (cur_delta == 0) & (ch_delta == 0) & (dch_delta == 0)
-    )
+    m_no_change = (v_delta == 0) & (cur_delta == 0) & (ch_delta == 0) & (dch_delta == 0)
 
     # Order matters: later rules override earlier ones (matches legacy cellpy).
     rules = [
@@ -289,7 +327,7 @@ def make_step_table(
     skip_steps=None,
     sort_rows=True,
     from_data_point=None,
-    raw_limits: dict = DEFAULT_RAW_LIMITS,
+    raw_limits: Optional[dict] = None,
 ) -> Union[Data, DataFrame]:
     """Create a table (v.5) that contains summary information for each step.
 
@@ -328,21 +366,38 @@ def make_step_table(
         sort_rows (bool): sort the rows after processing.
         from_data_point (int): first data point to use.
         raw_limits (dict): the raw limits (resolution) for the instrument.
+            Defaults to a fresh copy of ``DEFAULT_RAW_LIMITS``.
 
     Returns:
         core.Data: The data object with the step table added if from_data_point is None,
           otherwise the step table is returned as a DataFrame.
 
+    Raises:
+        NoDataFound: If ``data.raw`` is missing.
+        ValueError: If the raw frame lacks required columns (datapoint,
+            cycle or step numbers).
     """
     if schema is None:
         schema = default_schema()
+    if raw_limits is None:
+        raw_limits = asdict(CellpyLimits())
     nhdr = schema.raw
     shdr = schema.step
 
+    _require_frame(data.raw, "raw")
     raw = data.raw
     # The engine is polars-native; accept a pandas frame for convenience.
     if not isinstance(raw, pl.DataFrame):
         raw = pl.from_pandas(raw)
+    _require_columns(
+        raw,
+        {
+            "datapoint_num": nhdr.datapoint_num,
+            "cycle_num": nhdr.cycle_num,
+            "step_num": nhdr.step_num,
+        },
+        "raw",
+    )
 
     # Ensure a per-test key so the step table always carries ``test_id`` and the
     # group key is composite (``0`` for a single unmerged test).
@@ -368,10 +423,14 @@ def make_step_table(
         "internal_resistance": nhdr.internal_resistance,
         "ref_potential": nhdr.ref_potential,
     }
+    # Skip Null-dtype columns (all-null placeholders, e.g. an unpopulated
+    # ref_potential in a harmonized frame): aggregating them crashes polars
+    # and their statistics would be meaningless anyway.
     signals = [
         (raw_for_base[raw_attr], base)
         for raw_attr, base in _SIGNAL_BASES
         if raw_for_base[raw_attr] in raw.columns
+        and raw.schema[raw_for_base[raw_attr]] != pl.Null
     ]
 
     # sub-step is a constant 1 for now (real sub-step support comes later).
@@ -379,7 +438,7 @@ def make_step_table(
     raw = raw.with_columns(pl.lit(1).alias(sub_col))
 
     if skip_steps is not None:
-        logging.debug(f"omitting steps {skip_steps}")
+        logger.debug(f"omitting steps {skip_steps}")
         raw = raw.filter(~pl.col(nhdr.step_num).is_in(skip_steps))
 
     by = [nhdr.test_id, nhdr.cycle_num, nhdr.step_num, sub_col]
@@ -521,9 +580,7 @@ def _subtract_excluded_step_deltas(
         steps.filter(mask)
         .group_by(group_keys, maintain_order=True)
         .agg(
-            (
-                pl.col(shdr.charge_capacity_last) - pl.col(shdr.charge_capacity_first)
-            )
+            (pl.col(shdr.charge_capacity_last) - pl.col(shdr.charge_capacity_first))
             .sum()
             .alias("__excl_charge"),
             (
@@ -584,6 +641,10 @@ def make_summary(
     Returns:
         Data: The data object with the per-cycle ``summary`` added.
 
+    Raises:
+        NoDataFound: If ``data.raw`` or ``data.steps`` is missing.
+        ValueError: If the raw or step frame lacks required columns.
+
     Note:
         The legacy-only summary columns (cumulated CE, shifted capacities, RIC)
         are deliberately **not** produced here; the legacy bridge
@@ -593,12 +654,33 @@ def make_summary(
         schema = default_schema()
     nhdr, shdr, chdr = schema.raw, schema.step, schema.cycle
 
+    _require_frame(data.raw, "raw")
+    _require_frame(data.steps, "steps")
     raw = data.raw
     if not isinstance(raw, pl.DataFrame):
         raw = pl.from_pandas(raw)
     steps = data.steps
     if not isinstance(steps, pl.DataFrame):
         steps = pl.from_pandas(steps)
+    _require_columns(
+        raw,
+        {
+            "datapoint_num": nhdr.datapoint_num,
+            "cycle_num": nhdr.cycle_num,
+            "test_time": nhdr.test_time,
+            "cumulative_charge_capacity": nhdr.cumulative_charge_capacity,
+            "cumulative_discharge_capacity": nhdr.cumulative_discharge_capacity,
+        },
+        "raw",
+    )
+    _require_columns(
+        steps,
+        {
+            "cycle_num": shdr.cycle_num,
+            "datapoint_num_last": shdr.datapoint_num_last,
+        },
+        "steps",
+    )
 
     raw = _ensure_test_id(raw, nhdr.test_id)
 

@@ -1,8 +1,8 @@
 # contains mocks and legacy code to help with the migration to cellpy core
 
-from dataclasses import dataclass
 import logging
 import numbers
+from dataclasses import dataclass
 from typing import List
 
 from cellpycore.config import STEP_TYPES  # noqa: F401  (re-exported; see note below)
@@ -13,7 +13,6 @@ from cellpycore.config import STEP_TYPES  # noqa: F401  (re-exported; see note b
 # settings-parity contract test) keep resolving them from this module.
 from cellpycore.settings_base import BaseSettings, DictLikeClass  # noqa: F401
 from cellpycore.units import CellpyUnits  # noqa: F401
-
 
 logger = logging.getLogger(__name__)
 

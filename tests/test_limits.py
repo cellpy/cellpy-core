@@ -7,9 +7,8 @@ step-detection limits used by ``make_step_table`` are derived from it.
 
 from dataclasses import asdict
 
-from cellpycore.legacy import CellpyLimits, STEP_TYPES, CAPACITY_MODIFIERS
+from cellpycore.legacy import CAPACITY_MODIFIERS, STEP_TYPES, CellpyLimits
 from cellpycore.summarizers import DEFAULT_RAW_LIMITS
-
 
 EXPECTED_LIMITS = {
     "current_hard": 1e-13,
@@ -30,6 +29,14 @@ def test_cellpy_limits_values_match_legacy():
 
 def test_default_raw_limits_derived_from_cellpy_limits():
     assert DEFAULT_RAW_LIMITS == asdict(CellpyLimits())
+
+
+def test_default_raw_limits_is_read_only():
+    """The module-level default is frozen so no caller can mutate it process-wide."""
+    import pytest
+
+    with pytest.raises(TypeError):
+        DEFAULT_RAW_LIMITS["current_hard"] = 1.0
 
 
 def test_cellpy_limits_is_dict_like():

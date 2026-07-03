@@ -338,7 +338,9 @@ class CycleCols(Cols):
     test_cumulated_discharge_capacity: str = "test_cumulated_discharge_capacity"
     test_cumulated_coulombic_difference: str = "test_cumulated_coulombic_difference"
     test_cumulated_charge_capacity_loss: str = "test_cumulated_charge_capacity_loss"
-    test_cumulated_discharge_capacity_loss: str = "test_cumulated_discharge_capacity_loss"
+    test_cumulated_discharge_capacity_loss: str = (
+        "test_cumulated_discharge_capacity_loss"
+    )
     test_net_capacity: str = "test_net_capacity"
     charge_energy: str = "charge_energy"
     discharge_energy: str = "discharge_energy"

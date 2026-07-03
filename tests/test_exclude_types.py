@@ -51,7 +51,9 @@ def _build_cv_raw(nhdr: RawCols, cv_cycles=(1, 2)) -> pd.DataFrame:
             dp += 1
         if with_cv:
             for k in range(5):  # cv_charge: cc 0.52..0.60, current tapers
-                records.append(_row(2, k, 0.5 - 0.1 * k, 4.0, 0.5 + 0.02 * (k + 1), 0.0))
+                records.append(
+                    _row(2, k, 0.5 - 0.1 * k, 4.0, 0.5 + 0.02 * (k + 1), 0.0)
+                )
                 dp += 1
         for k in range(5):  # discharge: dc 0.08..0.4
             records.append(_row(3, k, -1.0, 3.9 - 0.01 * k, cc_top, 0.08 * (k + 1)))
@@ -68,9 +70,7 @@ def _build_cv_raw(nhdr: RawCols, cv_cycles=(1, 2)) -> pd.DataFrame:
 def _data_with_steps(raw: pd.DataFrame, schema: Schema) -> Data:
     data = Data()
     data.raw = raw
-    summarizers.make_step_table(
-        data, schema, override_step_types=_OVERRIDE_STEP_TYPES
-    )
+    summarizers.make_step_table(data, schema, override_step_types=_OVERRIDE_STEP_TYPES)
     return data
 
 
@@ -212,9 +212,7 @@ def test_only_cv_prefix_semantics():
     schema = default_schema()
     chdr = schema.cycle
     data = _data_with_steps(_build_cv_raw(schema.raw), schema)
-    summarizers.make_summary(
-        data, schema, exclude_step_types=["charge", "discharge"]
-    )
+    summarizers.make_summary(data, schema, exclude_step_types=["charge", "discharge"])
     s = data.summary.sort(chdr.cycle_num)
 
     # plain charge contributes 0.4 (first row 0.1 -> last 0.5), plain

@@ -1,20 +1,13 @@
 import datetime
 import logging
 import time
-
-from typing import Callable, Iterable, Union, Sequence, Optional, List, TypeVar
-
+from typing import Callable, Iterable, List, Optional, Sequence, TypeVar, Union
 
 # The CellpyCell (currently named CellpyCellCore) is the main class that the full cellpy package
 # should interact with.
 # The Data class can be accessed through the data property (setter and getter).
-
-
-from cellpycore import config
-from cellpycore import header_mapping
-
-from cellpycore.legacy import NoDataFound
-from cellpycore.legacy import Meta, MockMetaTestDependent
+from cellpycore import config, header_mapping
+from cellpycore.legacy import Meta, MockMetaTestDependent, NoDataFound
 
 DataFrame = TypeVar("DataFrame")
 
@@ -102,12 +95,8 @@ class Data:
         self.meta_test_dependent: Meta = MockMetaTestDependent()
         self.raw: Optional[DataFrame] = None
         # The step table and the per-cycle summary produced by the engine.
-        # (``cycle``/``step`` are kept as legacy aliases for backwards
-        # compatibility; the engine reads/writes ``steps``/``summary``.)
         self.steps: Optional[DataFrame] = None
         self.summary: Optional[DataFrame] = None
-        self.cycle: Optional[DataFrame] = None
-        self.step: Optional[DataFrame] = None
 
     @classmethod
     def from_raw_frame(
@@ -271,8 +260,6 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         self,
         data: Data,
         find_ir: bool = True,
-        find_end_voltage: bool = False,
-        select_columns: bool = True,
         final_data_points: Optional[Iterable[int]] = None,
         current_conversion_factor: float = 1.0,
         ir_extractor: Optional[Callable] = None,
@@ -280,11 +267,15 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
     ) -> Data:
         """Make the core summary.
 
+        Note:
+            The native engine always emits the clean ``CycleCols`` subset
+            including the end potentials; the legacy-only ``find_end_voltage``
+            / ``select_columns`` knobs live on the bridge
+            (``OldCellpyCellCore.make_core_summary``).
+
         Args:
             data: The data to make the summary from.
             find_ir: Whether to find the IR.
-            find_end_voltage: Whether to find the end voltage.
-            select_columns: Whether to select only the minimum columns that are needed.
             final_data_points: The final data point for each cycle to use for the selector.
             current_conversion_factor: Precomputed factor that converts the raw
                 current unit to the desired output current unit for the C-rate
@@ -472,8 +463,8 @@ class OldCellpyCellCore(CellpyCellCore):
     """Legacy CellpyCellCore class to make it easier to migrate to cellpy core."""
 
     def __init__(self, *args, **kwargs):
+        from cellpycore.legacy import HeadersNormal, HeadersStepTable, HeadersSummary
         from cellpycore.units import get_cellpy_units, get_default_output_units
-        from cellpycore.legacy import HeadersNormal, HeadersSummary, HeadersStepTable
 
         super().__init__(*args, **kwargs)
         self.cellpy_units = get_cellpy_units()
@@ -506,11 +497,19 @@ class OldCellpyCellCore(CellpyCellCore):
         # out below when absent, so this is a no-op for the default step table.
         order = [leg.cycle, leg.step, leg.sub_step, leg.ustep]
         bases = [
-            leg.point, leg.test_time, leg.step_time, leg.current, leg.voltage,
-            leg.charge, leg.discharge, leg.internal_resistance,
+            leg.point,
+            leg.test_time,
+            leg.step_time,
+            leg.current,
+            leg.voltage,
+            leg.charge,
+            leg.discharge,
+            leg.internal_resistance,
         ]
         for base in bases:
-            order += [f"{base}_{stat}" for stat in header_mapping.STAT_SUFFIXES.values()]
+            order += [
+                f"{base}_{stat}" for stat in header_mapping.STAT_SUFFIXES.values()
+            ]
         order += [leg.rate_avr, leg.type, leg.sub_type, leg.info]
         return order
 
@@ -609,8 +608,7 @@ class OldCellpyCellCore(CellpyCellCore):
             legacy_steps[leg.info] = legacy_steps[leg.step].map(info_by_key)
         else:
             info_by_key = {
-                (c, s): i
-                for c, s, i in zip(spec["cycle"], spec["step"], spec["info"])
+                (c, s): i for c, s, i in zip(spec["cycle"], spec["step"], spec["info"])
             }
             legacy_steps[leg.info] = [
                 info_by_key.get((c, s))
@@ -638,15 +636,28 @@ class OldCellpyCellCore(CellpyCellCore):
     def _legacy_summary_column_order(self, find_end_voltage: bool) -> list:
         leg = self.cycle_cols
         order = [
-            leg.ir_charge, leg.ir_discharge, leg.data_point, leg.test_time,
-            leg.datetime, leg.cycle_index, leg.charge_capacity,
-            leg.discharge_capacity, leg.coulombic_efficiency,
-            leg.cumulated_coulombic_efficiency, leg.cumulated_charge_capacity,
-            leg.cumulated_discharge_capacity, leg.discharge_capacity_loss,
-            leg.charge_capacity_loss, leg.coulombic_difference,
-            leg.cumulated_coulombic_difference, leg.cumulated_discharge_capacity_loss,
-            leg.cumulated_charge_capacity_loss, leg.shifted_charge_capacity,
-            leg.shifted_discharge_capacity, leg.cumulated_ric, leg.cumulated_ric_sei,
+            leg.ir_charge,
+            leg.ir_discharge,
+            leg.data_point,
+            leg.test_time,
+            leg.datetime,
+            leg.cycle_index,
+            leg.charge_capacity,
+            leg.discharge_capacity,
+            leg.coulombic_efficiency,
+            leg.cumulated_coulombic_efficiency,
+            leg.cumulated_charge_capacity,
+            leg.cumulated_discharge_capacity,
+            leg.discharge_capacity_loss,
+            leg.charge_capacity_loss,
+            leg.coulombic_difference,
+            leg.cumulated_coulombic_difference,
+            leg.cumulated_discharge_capacity_loss,
+            leg.cumulated_charge_capacity_loss,
+            leg.shifted_charge_capacity,
+            leg.shifted_discharge_capacity,
+            leg.cumulated_ric,
+            leg.cumulated_ric_sei,
             leg.cumulated_ric_disconnect,
         ]
         if find_end_voltage:
@@ -798,7 +809,9 @@ class OldCellpyCellCore(CellpyCellCore):
         )
         specific_columns = native_schema.cycle.specific_columns
         for mode in specifics:
-            converter = self._resolve_specific_converter(data, mode, specific_converters)
+            converter = self._resolve_specific_converter(
+                data, mode, specific_converters
+            )
             summarizers.generate_specific_summary_columns(
                 nd, mode, specific_columns, converter
             )

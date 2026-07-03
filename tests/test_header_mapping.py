@@ -164,12 +164,10 @@ def test_bridge_uses_header_mapping():
         legacy_raw_cols
     ) == header_mapping.legacy_to_native_raw(legacy_raw_cols)
     assert (
-        core._native_to_legacy_step_rename()
-        == header_mapping.native_to_legacy_step()
+        core._native_to_legacy_step_rename() == header_mapping.native_to_legacy_step()
     )
     assert (
-        core._legacy_to_native_step_rename()
-        == header_mapping.legacy_to_native_step()
+        core._legacy_to_native_step_rename() == header_mapping.legacy_to_native_step()
     )
     assert (
         core._native_to_legacy_summary_rename()

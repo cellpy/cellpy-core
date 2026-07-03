@@ -7,17 +7,19 @@ from cellpycore.cell_core import CellpyCellCore, Data
 from cellpycore.config import RawCols
 from cellpycore.legacy import MockMetaTestDependent
 
+
 def test_data_creation(mock_data_empty: Data):
     assert mock_data_empty is not None
     assert mock_data_empty.raw is None
-    assert mock_data_empty.cycle is None
-    assert mock_data_empty.step is None
+    assert mock_data_empty.steps is None
+    assert mock_data_empty.summary is None
+
 
 def test_data_creation_with_raw(mock_data_with_raw: Data):
     assert mock_data_with_raw is not None
     assert mock_data_with_raw.raw is not None
-    assert mock_data_with_raw.cycle is None
-    assert mock_data_with_raw.step is None
+    assert mock_data_with_raw.steps is None
+    assert mock_data_with_raw.summary is None
 
 
 def _run_engine(data: Data) -> Data:
@@ -67,4 +69,3 @@ def test_from_raw_frame_rejects_non_polars_input():
     df = create_raw_data().to_pandas()
     with pytest.raises(TypeError, match="polars.DataFrame"):
         Data.from_raw_frame(df)
-

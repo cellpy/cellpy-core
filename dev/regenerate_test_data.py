@@ -107,6 +107,7 @@ def stage_b_engine_snapshot() -> bool:
     frames are in legacy ``HeadersStepTable`` / ``HeadersSummary`` naming)."""
     try:
         import pandas as pd
+
         from cellpycore.cell_core import Data, OldCellpyCellCore
     except Exception as exc:  # noqa: BLE001 - diagnostic only
         print(f"[stage B] cellpycore not importable ({exc}); skipping snapshot.")
@@ -149,7 +150,9 @@ def stage_b_engine_snapshot() -> bool:
     n_cycles = len(summary)
     cyc1_dp = int(summary["data_point"].iloc[0])
     print(f"[stage B] wrote {steps_out.name}  ({n_steps} steps)")
-    print(f"[stage B] wrote {summary_out.name}  ({n_cycles} cycles, {summary.shape[1]} cols)")
+    print(
+        f"[stage B] wrote {summary_out.name}  ({n_cycles} cycles, {summary.shape[1]} cols)"
+    )
     print(
         f"[stage B] golden check: n_steps={n_steps} (expect {ARBIN_GOLDEN['n_steps']}), "
         f"max_cycle={max_cycle} (expect {ARBIN_GOLDEN['n_cycles']}), "
