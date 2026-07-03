@@ -3,13 +3,10 @@ from __future__ import annotations
 import functools
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional, TypeVar
+from typing import Any, Optional, TypeVar
 
 from cellpycore.metadata.models import CellMeta
 from cellpycore.settings_base import BaseSettings
-
-if TYPE_CHECKING:
-    from cellpycore.cell_core import Data
 
 DataFrame = TypeVar("DataFrame")
 
@@ -226,36 +223,48 @@ def get_converter_to_specific(
     old_units = _resolve_raw_units(from_units, data)
 
     if mode == "gravimetric":
-        scale = value if value is not None else _resolve_optional_attr(
-            explicit=mass,
-            cell_meta=cell_meta,
-            meta_attr="mass",
-            data=data,
-            data_attr="mass",
+        scale = (
+            value
+            if value is not None
+            else _resolve_optional_attr(
+                explicit=mass,
+                cell_meta=cell_meta,
+                meta_attr="mass",
+                data=data,
+                data_attr="mass",
+            )
         )
         scale = _require_attr(scale, "mass", context="gravimetric mode")
         value = Q(scale, new_units["mass"])
         to_unit_specific = Q(1.0, new_units["specific_gravimetric"])
 
     elif mode == "areal":
-        scale = value if value is not None else _resolve_optional_attr(
-            explicit=active_electrode_area,
-            cell_meta=cell_meta,
-            meta_attr="active_electrode_area",
-            data=data,
-            data_attr="active_electrode_area",
+        scale = (
+            value
+            if value is not None
+            else _resolve_optional_attr(
+                explicit=active_electrode_area,
+                cell_meta=cell_meta,
+                meta_attr="active_electrode_area",
+                data=data,
+                data_attr="active_electrode_area",
+            )
         )
         scale = _require_attr(scale, "active_electrode_area", context="areal mode")
         value = Q(scale, new_units["area"])
         to_unit_specific = Q(1.0, new_units["specific_areal"])
 
     elif mode == "volumetric":
-        scale = value if value is not None else _resolve_optional_attr(
-            explicit=volume,
-            cell_meta=None,
-            meta_attr="volume",
-            data=data,
-            data_attr="volume",
+        scale = (
+            value
+            if value is not None
+            else _resolve_optional_attr(
+                explicit=volume,
+                cell_meta=None,
+                meta_attr="volume",
+                data=data,
+                data_attr="volume",
+            )
         )
         scale = _require_attr(scale, "volume", context="volumetric mode")
         value = Q(scale, new_units["volume"])
