@@ -1,6 +1,6 @@
 # Issue #66 status: code cleaning and test completion
 
-- [ ] Done
+- [x] Done
 
 Plan: [issue66_plan.md](issue66_plan.md) (confirmed 2026-07-03, deferred items filed as #67–#70)
 
@@ -38,4 +38,5 @@ All four plan phases implemented on branch `66-code-cleaning-and-test-completion
 
 ## Remaining work
 
-- `/iflow-close`: version bump decision, changelog, push, PR.
+- None. Closed via `/iflow-close` 2026-07-03 (HISTORY.md bullet added, no
+  version bump requested). Deferred follow-ups live in issues #67–#70.

@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Code-review cleanup and test completion (#66): drop unused dependencies
+  (duckdb, duckdb-engine, sqlalchemy, narwhals) and the unconfigured
+  uv-dynamic-versioning; fix the falsy-override bug so an explicit `0.0` in
+  `override_raw_limits` wins; freeze `DEFAULT_RAW_LIMITS` and build fresh
+  limits per call (thread safety); remove the dead `Data.cycle`/`Data.step`
+  fields and the dead `find_end_voltage`/`select_columns` params on the native
+  `make_core_summary`; declare the public API in `cellpycore/__init__.py`
+  (curated exports + `__version__`) with a `py.typed` marker; validate engine
+  inputs (`NoDataFound` / missing-column `ValueError`) at `make_step_table` /
+  `make_summary`; add ruff lint to CI, native-path e2e tests via the public
+  API, and an opt-in pytest-benchmark suite (`uv run pytest -m benchmark`).
 - Update the README developer section to uv's project workflow: `uv sync` after
   cloning, `uv add` for new dependencies, `uv run pytest` for tests (#64).
 
