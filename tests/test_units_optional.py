@@ -30,12 +30,12 @@ class _BlockPint:
 
 @pytest.fixture
 def pint_absent(monkeypatch):
-    from cellpycore import units
+    from cellpycore.units import converters
 
     for mod in list(sys.modules):
         if mod == "pint" or mod.startswith("pint."):
             monkeypatch.delitem(sys.modules, mod, raising=False)
-    units._get_unit_registry.cache_clear()
+    converters._get_unit_registry.cache_clear()
 
     finder = _BlockPint()
     sys.meta_path.insert(0, finder)
@@ -43,7 +43,7 @@ def pint_absent(monkeypatch):
         yield
     finally:
         sys.meta_path.remove(finder)
-        units._get_unit_registry.cache_clear()
+        converters._get_unit_registry.cache_clear()
 
 
 def test_cellpycore_imports_without_pint(pint_absent):

@@ -464,7 +464,7 @@ class StepCols(Cols):
         ``delta``. Custom ``StepCols.current_mean`` (etc.) does **not** retarget
         aggregation or step-type classification today; only group keys,
         ``step_type``, and ``c_rate`` honour injected renames. The legacy bridge
-        renames via ``header_mapping.native_to_legacy_step()`` after the engine
+        renames via ``legacy.mapping.native_to_legacy_step()`` after the engine
         runs.
     """
 
@@ -623,7 +623,7 @@ def default_schema() -> Schema:
 def legacy_schema() -> Schema:
     """Return a Schema using legacy cellpy column definitions.
 
-    For bridge-only helpers (e.g. ``legacy_selectors``) that operate on pandas
+    For bridge-only helpers (e.g. ``legacy.selectors``) that operate on pandas
     frames in legacy naming. The polars engine uses :func:`default_schema`
     instead.
     """

@@ -4,8 +4,8 @@ The public, stable surface is the curated set of names re-exported here:
 the cell classes (``CellpyCellCore``, its legacy bridge ``OldCellpyCellCore``),
 the ``Data`` container, the engine entry points (``make_step_table``,
 ``make_summary``), the column-header schema types, and the package
-exceptions. Everything else (``units``, ``timestamps``, ``header_mapping``,
-``metadata`` ...) remains importable as submodules but is not part of the
+exceptions. Everything else (``units``, ``timestamps``, ``legacy``, ``metadata``,
+``testing`` ...) remains importable as submodules but is not part of the
 guaranteed top-level API.
 """
 

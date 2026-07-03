@@ -2,10 +2,10 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from cellpycore._helpers import create_raw_data
 from cellpycore.cell_core import CellpyCellCore, Data
 from cellpycore.config import RawCols
 from cellpycore.legacy import MockMetaTestDependent
+from cellpycore.testing.mock_data import create_raw_data
 
 
 def test_data_creation(mock_data_empty: Data):

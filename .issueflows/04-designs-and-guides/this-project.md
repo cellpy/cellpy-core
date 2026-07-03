@@ -62,8 +62,9 @@ you commit often without running CI locally.
   helpers in `extractors.py`.
 - Cell classes / data container: `src/cellpycore/cell_core.py`
   (`CellpyCellCore`, `OldCellpyCellCore`, `Data`).
-- Schemas: `src/cellpycore/config.py`; legacy headers: `legacy.py`;
-  legacy<->native mapping: `header_mapping.py`.
+- Schemas: `src/cellpycore/config.py`; legacy bridge: `src/cellpycore/legacy/`
+  (headers, `mapping.py`, bridge-only `selectors.py`).
+- Mock/test data: `src/cellpycore/testing/mock_data.py`.
 - Read first: `.issueflows/04-designs-and-guides/code-review-2026-07.md` and
   `cellpy-core-migration.md`.
 
@@ -71,7 +72,7 @@ you commit often without running CI locally.
 
 - No instrument loaders, no file IO beyond test fixtures, no unit conversion
   on the hot path (conversion factors are passed by value).
-- `legacy_selectors.py` is bridge-only (pandas + `legacy_schema()`); not part of
+- `legacy/selectors.py` is bridge-only (pandas + `legacy_schema()`); not part of
   the public API.
 - Per-step stat column names (`<signal>_<stat>`) are a fixed engine contract,
   not schema-injected (issue #70).
