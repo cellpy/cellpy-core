@@ -1,9 +1,18 @@
+"""Bridge-only pandas selectors for legacy-named step/raw tables.
+
+These helpers mirror cellpy's ``CellpyCell.get_step_numbers`` /
+``get_cycle_numbers`` / ``get_rates`` and require legacy column names
+(``HeadersNormal`` / ``HeadersStepTable``). They are **not** for native
+``CellpyCellCore`` consumers — use :func:`cellpycore.config.legacy_schema`
+(or inject an equivalent ``Schema``) and pandas ``Data.steps`` / ``Data.raw``.
+"""
+
 import collections
 import logging
 from typing import Any, Optional, TypeVar, Union
 
 from cellpycore.cell_core import Data
-from cellpycore.config import STEP_TYPES, Schema, default_schema
+from cellpycore.config import STEP_TYPES, Schema, legacy_schema
 
 DataFrame = TypeVar("DataFrame")
 
@@ -56,7 +65,7 @@ def get_step_numbers(
 
     """
     if schema is None:
-        schema = default_schema()
+        schema = legacy_schema()
 
     if trim_taper_steps is not None and usteps:
         logger.warning(
@@ -197,7 +206,7 @@ def get_cycle_numbers(
     logger.debug("getting cycle numbers")
 
     if schema is None:
-        schema = default_schema()
+        schema = legacy_schema()
 
     if steptable is None:
         d = data.raw
@@ -244,8 +253,7 @@ def get_rates(
     agg: str = "first",
     direction: Optional[str] = None,
 ) -> DataFrame:
-    """
-    Get the rates in the test (only valid for constant current).
+    """Get the rates in the test (only valid for constant current).
 
     Args:
         steptable: provide custom steptable (if None, the steptable from the cellpydata object will be used).
@@ -259,7 +267,7 @@ def get_rates(
     """
 
     if schema is None:
-        schema = default_schema()
+        schema = legacy_schema()
 
     if steptable is None:
         steptable = data.steps
@@ -282,11 +290,3 @@ def get_rates(
         rates = rates.loc[rates[schema.step.type].isin(direction), :]
 
     return rates
-
-
-def _main():
-    print("selectors.py - no main function yet")
-
-
-if __name__ == "__main__":
-    _main()
