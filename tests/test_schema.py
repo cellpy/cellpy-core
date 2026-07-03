@@ -231,6 +231,41 @@ def test_raw_limits_affect_classification():
     assert "charge" not in _types(res_huge.steps)
 
 
+def test_make_step_table_missing_raw_raises_no_data_found():
+    from cellpycore.legacy import NoDataFound
+
+    with pytest.raises(NoDataFound, match="raw"):
+        summarizers.make_step_table(Data(), schema=_native_schema())
+
+
+def test_make_step_table_missing_columns_are_all_named():
+    nhdr = RawCols()
+    data = Data()
+    data.raw = _build_raw(nhdr).drop(columns=[nhdr.cycle_num, nhdr.step_num])
+    with pytest.raises(ValueError) as excinfo:
+        summarizers.make_step_table(data, schema=_native_schema())
+    assert nhdr.cycle_num in str(excinfo.value)
+    assert nhdr.step_num in str(excinfo.value)
+
+
+def test_make_summary_missing_steps_raises_no_data_found():
+    from cellpycore.legacy import NoDataFound
+
+    data = _data_with_raw(RawCols())
+    with pytest.raises(NoDataFound, match="steps"):
+        summarizers.make_summary(data, schema=_native_schema())
+
+
+def test_make_summary_missing_raw_columns_are_named():
+    nhdr = RawCols()
+    schema = _native_schema()
+    data = _data_with_raw(nhdr)
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    data.raw = data.raw.drop(columns=[nhdr.cumulative_charge_capacity])
+    with pytest.raises(ValueError, match=nhdr.cumulative_charge_capacity):
+        summarizers.make_summary(data, schema=schema)
+
+
 def test_override_raw_limits_zero_is_honoured():
     """Regression for the falsy-override bug: an explicit 0.0 override must win.
 

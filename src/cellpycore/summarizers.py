@@ -8,7 +8,7 @@ import polars as pl
 from cellpycore.cell_core import Data
 from cellpycore.config import ResetGranularity, Schema, TestMode, default_schema
 from cellpycore.extractors import LastIRExtractor, SummaryExtractor
-from cellpycore.legacy import CellpyLimits
+from cellpycore.legacy import CellpyLimits, NoDataFound
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,33 @@ _SIGNAL_BASES = (
     ("internal_resistance", "internal_resistance"),
     ("ref_potential", "ref_potential"),
 )
+
+
+def _require_frame(frame, name: str) -> None:
+    """Raise ``NoDataFound`` when a required input frame is missing."""
+    if frame is None:
+        raise NoDataFound(
+            f"data.{name} is missing; the engine needs a populated ``{name}`` frame"
+        )
+
+
+def _require_columns(frame: "pl.DataFrame", required: dict, frame_name: str) -> None:
+    """Raise ``ValueError`` naming every required column missing from ``frame``.
+
+    Args:
+        frame: The (polars) frame to check.
+        required: Mapping of schema attribute name -> resolved column name.
+        frame_name: Label used in the error message (e.g. ``"raw"``).
+    """
+    missing = [
+        f"'{col}' (schema attribute ``{attr}``)"
+        for attr, col in required.items()
+        if col not in frame.columns
+    ]
+    if missing:
+        raise ValueError(
+            f"data.{frame_name} is missing required column(s): " + ", ".join(missing)
+        )
 
 
 def _ensure_test_id(frame: "pl.DataFrame", test_id_col: str) -> "pl.DataFrame":
@@ -345,6 +372,10 @@ def make_step_table(
         core.Data: The data object with the step table added if from_data_point is None,
           otherwise the step table is returned as a DataFrame.
 
+    Raises:
+        NoDataFound: If ``data.raw`` is missing.
+        ValueError: If the raw frame lacks required columns (datapoint,
+            cycle or step numbers).
     """
     if schema is None:
         schema = default_schema()
@@ -353,10 +384,20 @@ def make_step_table(
     nhdr = schema.raw
     shdr = schema.step
 
+    _require_frame(data.raw, "raw")
     raw = data.raw
     # The engine is polars-native; accept a pandas frame for convenience.
     if not isinstance(raw, pl.DataFrame):
         raw = pl.from_pandas(raw)
+    _require_columns(
+        raw,
+        {
+            "datapoint_num": nhdr.datapoint_num,
+            "cycle_num": nhdr.cycle_num,
+            "step_num": nhdr.step_num,
+        },
+        "raw",
+    )
 
     # Ensure a per-test key so the step table always carries ``test_id`` and the
     # group key is composite (``0`` for a single unmerged test).
@@ -596,6 +637,10 @@ def make_summary(
     Returns:
         Data: The data object with the per-cycle ``summary`` added.
 
+    Raises:
+        NoDataFound: If ``data.raw`` or ``data.steps`` is missing.
+        ValueError: If the raw or step frame lacks required columns.
+
     Note:
         The legacy-only summary columns (cumulated CE, shifted capacities, RIC)
         are deliberately **not** produced here; the legacy bridge
@@ -605,12 +650,33 @@ def make_summary(
         schema = default_schema()
     nhdr, shdr, chdr = schema.raw, schema.step, schema.cycle
 
+    _require_frame(data.raw, "raw")
+    _require_frame(data.steps, "steps")
     raw = data.raw
     if not isinstance(raw, pl.DataFrame):
         raw = pl.from_pandas(raw)
     steps = data.steps
     if not isinstance(steps, pl.DataFrame):
         steps = pl.from_pandas(steps)
+    _require_columns(
+        raw,
+        {
+            "datapoint_num": nhdr.datapoint_num,
+            "cycle_num": nhdr.cycle_num,
+            "test_time": nhdr.test_time,
+            "cumulative_charge_capacity": nhdr.cumulative_charge_capacity,
+            "cumulative_discharge_capacity": nhdr.cumulative_discharge_capacity,
+        },
+        "raw",
+    )
+    _require_columns(
+        steps,
+        {
+            "cycle_num": shdr.cycle_num,
+            "datapoint_num_last": shdr.datapoint_num_last,
+        },
+        "steps",
+    )
 
     raw = _ensure_test_id(raw, nhdr.test_id)
 
