@@ -10,5 +10,7 @@
 			"path": "../batbase"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"djlint.showInstallError": false
+	}
 }
