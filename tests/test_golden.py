@@ -17,8 +17,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from cellpycore.cell_core import Data, OldCellpyCellCore
-from cellpycore.config import Schema
-from cellpycore.legacy import HeadersNormal, HeadersStepTable, HeadersSummary
+from cellpycore.config import legacy_schema
 
 DATA_DIR = Path(__file__).parent / "data"
 CYCLER_CC_RAW = DATA_DIR / "cycler_cc_raw.parquet"
@@ -36,10 +35,6 @@ CYCLER_CC_STEPTYPES_CELLPY = DATA_DIR / "cycler_cc_steptypes_cellpy.csv"
 CYCLER_CC_N_STEPS = 103
 CYCLER_CC_N_CYCLES = 18
 CYCLER_CC_CYC1_DATA_POINT = 1457
-
-
-def _legacy_schema() -> Schema:
-    return Schema(raw=HeadersNormal(), cycle=HeadersSummary(), step=HeadersStepTable())
 
 
 def _step_table(raw_path: Path) -> pd.DataFrame:
@@ -70,7 +65,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_cycler_cc_step_table_matches_cellpy_goldens():
     """cellpy-core reproduces cellpy's published step/cycle goldens on real data."""
-    schema = _legacy_schema()
+    schema = legacy_schema()
     steps = _step_table(CYCLER_CC_RAW)
 
     assert len(steps) == CYCLER_CC_N_STEPS
@@ -98,7 +93,7 @@ def test_cycler_cc_step_table_matches_snapshot():
 
 def test_cycler_cc_summary_matches_cellpy_goldens():
     """The per-cycle summary has one row per cycle and the expected cyc-1 datapoint."""
-    schema = _legacy_schema()
+    schema = legacy_schema()
     summary = _summary(CYCLER_CC_RAW)
 
     assert len(summary) == CYCLER_CC_N_CYCLES
@@ -135,7 +130,7 @@ def test_cycler_cc_step_types_match_cellpy_reference():
     cellpy->cellpy-core engine integration), so a byte-match validates the
     classifier across repositories rather than against a self-snapshot.
     """
-    schema = _legacy_schema()
+    schema = legacy_schema()
     steps = _step_table(CYCLER_CC_RAW)
 
     reference = pd.read_csv(CYCLER_CC_STEPTYPES_CELLPY, sep=";")
@@ -170,7 +165,7 @@ def test_cycler_small_step_table_runs_on_real_data():
     so 7 step rows in total. (Before the composite key this incorrectly returned
     3 rows.)
     """
-    schema = _legacy_schema()
+    schema = legacy_schema()
     steps = _step_table(CYCLER_SMALL_RAW)
     assert len(steps) == 7
     assert schema.step.type in steps.columns

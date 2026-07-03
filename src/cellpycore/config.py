@@ -606,6 +606,22 @@ def default_schema() -> Schema:
     return Schema(raw=RawCols(), cycle=CycleCols(), step=StepCols())
 
 
+def legacy_schema() -> Schema:
+    """Return a Schema using legacy cellpy column definitions.
+
+    For bridge-only helpers (e.g. ``legacy_selectors``) that operate on pandas
+    frames in legacy naming. The polars engine uses :func:`default_schema`
+    instead.
+    """
+    from cellpycore.legacy import HeadersNormal, HeadersStepTable, HeadersSummary
+
+    return Schema(
+        raw=HeadersNormal(),
+        cycle=HeadersSummary(),
+        step=HeadersStepTable(),
+    )
+
+
 def cols_check():
     import pandas as pd
     import polars as pl

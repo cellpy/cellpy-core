@@ -26,6 +26,9 @@ surface.
 
 ### A1. `selectors.py` is broken with its own default schema
 
+> **Resolved (#67, 2026-07-03):** functions moved to `legacy_selectors.py` with
+> `legacy_schema()` default; `selectors.py` removed.
+
 All four public functions (`summary_selector_exluder`, `get_step_numbers`,
 `get_cycle_numbers`, `get_rates`) default to `default_schema()` but then
 dereference **legacy-only** attribute names:

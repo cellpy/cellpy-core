@@ -10,7 +10,7 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from cellpycore import config, selectors, summarizers
+from cellpycore import config, summarizers
 from cellpycore.cell_core import CellpyCellCore, Data, OldCellpyCellCore
 from cellpycore.config import (
     CycleCols,
@@ -128,14 +128,6 @@ def test_no_module_header_globals():
         "units",
     ):
         assert not hasattr(summarizers, name), f"summarizers.{name} should not exist"
-    for name in ("headers_step_table", "headers_summary", "headers_normal"):
-        assert not hasattr(selectors, name), f"selectors.{name} should not exist"
-
-
-def test_no_legacy_selector_functions():
-    """The pandas selector pair was removed once cellpy migrated off it (#45)."""
-    for name in ("create_selector", "summary_selector_exluder"):
-        assert not hasattr(selectors, name), f"selectors.{name} should not exist"
 
 
 def test_schema_property_reflects_headers():

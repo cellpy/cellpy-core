@@ -57,7 +57,7 @@ uv run ruff check && uv run ruff format --check   # lint / format checks
 
 - No instrument loaders, no file IO beyond test fixtures, no unit conversion
   on the hot path (conversion factors are passed by value).
-- `selectors.py` is legacy-bridge-only and broken with the native schema
-  (issue #67); `units.py` fallback needs a richer data object (issue #68).
+- `legacy_selectors.py` is bridge-only (pandas + `legacy_schema()`); not part of
+  the public API. `units.py` fallback needs a richer data object (issue #68).
 - Per-step stat column names (`<signal>_<stat>`) are a fixed engine contract,
   not schema-injected (issue #70).

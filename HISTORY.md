@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Move broken `selectors.py` helpers to bridge-only `legacy_selectors.py` with
+  `legacy_schema()` default and unit + golden tests. (#67)
 - Rename test-data fixture prefix from vendor-specific `arbin` to generic `cycler`
   (files, tests, regen scripts, harmonized `source_type`, and docs). (#72)
 - Code-review cleanup and test completion (#66): drop unused dependencies
