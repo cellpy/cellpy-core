@@ -8,6 +8,7 @@ from typing import Callable, Iterable, List, Optional, Sequence, TypeVar, Union
 # The Data class can be accessed through the data property (setter and getter).
 from cellpycore import config, header_mapping
 from cellpycore.legacy import Meta, MockMetaTestDependent, NoDataFound
+from cellpycore.metadata.models import CellMeta
 
 DataFrame = TypeVar("DataFrame")
 
@@ -329,6 +330,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         step_txt: Optional[str] = None,
         specifics: Optional[List[str]] = None,
         specific_converters: Optional[dict] = None,
+        cell_meta: Optional[CellMeta] = None,
     ) -> Data:
         """Add specific summary columns to the summary.
 
@@ -342,6 +344,10 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
                 by value by the caller (so this method needs no unit handling). If
                 not provided, the factors are computed lazily via the units helper
                 using ``self.cellpy_units`` as a fallback (legacy / standalone).
+            cell_meta: Optional ``CellMeta`` supplying geometry for the units
+                fallback when ``specific_converters`` is omitted. Bare ``Data``
+                without ``specific_converters`` or ``cell_meta`` raises
+                ``ValueError`` (not ``AttributeError``).
 
         Returns:
             The data with the specific summary columns added.
@@ -371,7 +377,7 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         specific_columns = schema.cycle.specific_columns
         for mode in specifics:
             converter = self._resolve_specific_converter(
-                data, mode, specific_converters
+                data, mode, specific_converters, cell_meta=cell_meta
             )
             data = summarizers.generate_specific_summary_columns(
                 data, mode, specific_columns, converter
@@ -380,7 +386,12 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         return data
 
     def _resolve_specific_converter(
-        self, data: Data, mode: str, specific_converters: Optional[dict]
+        self,
+        data: Data,
+        mode: str,
+        specific_converters: Optional[dict],
+        *,
+        cell_meta: Optional[CellMeta] = None,
     ) -> float:
         """Resolve the specific-capacity conversion factor for a mode.
 
@@ -395,7 +406,10 @@ class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
         from cellpycore import units
 
         return units.get_converter_to_specific(
-            data=data, mode=mode, to_units=getattr(self, "cellpy_units", None)
+            data=data,
+            mode=mode,
+            to_units=getattr(self, "cellpy_units", None),
+            cell_meta=cell_meta,
         )
 
     def make_core_step_table(
@@ -775,6 +789,7 @@ class OldCellpyCellCore(CellpyCellCore):
         step_txt: Optional[str] = None,
         specifics: Optional[List[str]] = None,
         specific_converters: Optional[dict] = None,
+        cell_meta: Optional[CellMeta] = None,
     ) -> Data:
         """Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam).
 
@@ -810,7 +825,7 @@ class OldCellpyCellCore(CellpyCellCore):
         specific_columns = native_schema.cycle.specific_columns
         for mode in specifics:
             converter = self._resolve_specific_converter(
-                data, mode, specific_converters
+                data, mode, specific_converters, cell_meta=cell_meta
             )
             summarizers.generate_specific_summary_columns(
                 nd, mode, specific_columns, converter

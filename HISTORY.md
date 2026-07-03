@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Fix units fallback so `get_converter_to_specific` and
+  `nominal_capacity_as_absolute` accept explicit values or `CellMeta` instead of
+  crashing on bare `Data`; thread optional `cell_meta` through
+  `add_scaled_summary_columns`. (#68)
 - Move broken `selectors.py` helpers to bridge-only `legacy_selectors.py` with
   `legacy_schema()` default and unit + golden tests. (#67)
 - Rename test-data fixture prefix from vendor-specific `arbin` to generic `cycler`
