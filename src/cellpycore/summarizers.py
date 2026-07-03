@@ -423,10 +423,14 @@ def make_step_table(
         "internal_resistance": nhdr.internal_resistance,
         "ref_potential": nhdr.ref_potential,
     }
+    # Skip Null-dtype columns (all-null placeholders, e.g. an unpopulated
+    # ref_potential in a harmonized frame): aggregating them crashes polars
+    # and their statistics would be meaningless anyway.
     signals = [
         (raw_for_base[raw_attr], base)
         for raw_attr, base in _SIGNAL_BASES
         if raw_for_base[raw_attr] in raw.columns
+        and raw.schema[raw_for_base[raw_attr]] != pl.Null
     ]
 
     # sub-step is a constant 1 for now (real sub-step support comes later).
