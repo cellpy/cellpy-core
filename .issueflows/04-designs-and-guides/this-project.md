@@ -16,7 +16,7 @@ thread-safe, schema-injected, easy to extend.
 - Python >= 3.13, managed with `uv` (`.venv` in the repo root).
 - Engine is polars-native; pandas + pyarrow only for the legacy bridge and
   parquet fixtures. `pint` is an optional extra (`units`) for the unit helpers.
-- Lint/format: `ruff` (checked in CI). Tests: `pytest`.
+- Lint/format: `ruff` (checked in CI — same commands as the workflow). Tests: `pytest`.
 
 ## How to run / test
 
@@ -24,8 +24,21 @@ thread-safe, schema-injected, easy to extend.
 uv sync                      # install / sync dependencies
 uv run pytest                # full test suite (benchmarks excluded by default)
 uv run pytest -m benchmark   # opt-in performance benchmarks
-uv run ruff check && uv run ruff format --check   # lint / format checks
+
+# Lint / format — run before push (matches CI)
+uv run ruff check && uv run ruff format --check
+
+# Auto-fix what ruff can (unused imports, format, etc.)
+uv run ruff check --fix && uv run ruff format
 ```
+
+Run **both** check and format before opening a PR. CI runs `ruff check` and
+`ruff format --check` with no `--fix`; autofix locally, then re-run the check
+commands to confirm green.
+
+Optional: install [pre-commit](https://pre-commit.com/) and add a local hook that
+runs the same ruff commands — not configured in-repo yet, but a good guard if
+you commit often without running CI locally.
 
 ## Conventions
 
@@ -58,6 +71,6 @@ uv run ruff check && uv run ruff format --check   # lint / format checks
 - No instrument loaders, no file IO beyond test fixtures, no unit conversion
   on the hot path (conversion factors are passed by value).
 - `legacy_selectors.py` is bridge-only (pandas + `legacy_schema()`); not part of
-  the public API. `units.py` fallback needs a richer data object (issue #68).
+  the public API.
 - Per-step stat column names (`<signal>_<stat>`) are a fixed engine contract,
   not schema-injected (issue #70).

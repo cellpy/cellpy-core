@@ -533,6 +533,33 @@ def test_native_add_scaled_summary_columns_end_to_end():
         assert g == pytest.approx(10.0 * b)
 
 
+def test_native_add_scaled_summary_columns_with_cell_meta():
+    """Units fallback via ``cell_meta`` works without ``specific_converters``."""
+    pytest.importorskip("pint")
+
+    from cellpycore.metadata.models import CellMeta
+
+    cell = CellpyCellCore(initialize=False)
+    nhdr = cell.schema.raw
+    chdr = cell.schema.cycle
+
+    data = _data_with_raw(nhdr)
+    cell.make_core_step_table(data, nom_cap=1.0)
+    cell.make_core_summary(data)
+    cell.add_scaled_summary_columns(
+        data,
+        nom_cap_abs=1.0,
+        normalization_cycles=None,
+        specifics=["gravimetric"],
+        cell_meta=CellMeta(mass=2.0),
+    )
+
+    base = data.summary[chdr.charge_capacity].to_list()
+    grav = data.summary[f"{chdr.charge_capacity}_gravimetric"].to_list()
+    for b, g in zip(base, grav):
+        assert g == pytest.approx(500.0 * b)
+
+
 # --- issue #41: per-test key + composite group keys -------------------------
 def _build_merged_raw(nhdr: RawCols) -> pd.DataFrame:
     """Two tests (test_id 0 and 1) with **overlapping** cycle_num/step_num.

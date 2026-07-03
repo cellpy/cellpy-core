@@ -17,6 +17,8 @@ import pytest
 pytest.importorskip("pint")
 
 from cellpycore import units
+from cellpycore.cell_core import Data
+from cellpycore.metadata.models import CellMeta
 from cellpycore.units import CellpyUnits
 
 
@@ -69,12 +71,38 @@ def test_get_converter_to_specific_charge_unit_mismatch():
     ) == pytest.approx(500_000.0)
 
 
+def test_get_converter_to_specific_via_cell_meta():
+    meta = CellMeta(mass=2.0, active_electrode_area=2.0)
+    assert units.get_converter_to_specific(
+        data=None, cell_meta=meta, mode="gravimetric"
+    ) == pytest.approx(500.0)
+    assert units.get_converter_to_specific(
+        data=None, cell_meta=meta, mode="areal"
+    ) == pytest.approx(0.5)
+
+
+def test_get_converter_to_specific_bare_data_raises_value_error():
+    with pytest.raises(ValueError, match="mass"):
+        units.get_converter_to_specific(Data(), mode="gravimetric")
+
+
 # --- nominal_capacity_as_absolute ---------------------------------------------
 # Gravimetric, default units: (nom_cap mAh/g * mass mg).to("Ah")
 #   = nom_cap * mass * 1e-6 Ah. With nom_cap=3000, mass=2.0 -> 0.006 Ah.
 def test_nominal_capacity_as_absolute_gravimetric():
     assert units.nominal_capacity_as_absolute(
         _stub(), nom_cap_specifics="gravimetric"
+    ) == pytest.approx(0.006)
+
+
+def test_nominal_capacity_as_absolute_via_cell_meta():
+    meta = CellMeta(
+        mass=2.0,
+        nom_cap=3000.0,
+        nom_cap_specifics="gravimetric",
+    )
+    assert units.nominal_capacity_as_absolute(
+        data=None, cell_meta=meta, nom_cap_specifics="gravimetric"
     ) == pytest.approx(0.006)
 
 
