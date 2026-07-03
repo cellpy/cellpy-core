@@ -1,16 +1,16 @@
 # Graph Report - cellpy-core  (2026-07-03)
 
 ## Corpus Check
-- 52 files · ~53,480 words
+- 52 files · ~54,611 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1162 nodes · 1596 edges · 109 communities (80 shown, 29 thin omitted)
-- Extraction: 82% EXTRACTED · 18% INFERRED · 0% AMBIGUOUS · INFERRED: 284 edges (avg confidence: 0.7)
+- 1268 nodes · 1733 edges · 135 communities (99 shown, 36 thin omitted)
+- Extraction: 82% EXTRACTED · 18% INFERRED · 0% AMBIGUOUS · INFERRED: 305 edges (avg confidence: 0.7)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f1116b43`
+- Built from commit: `402414b5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -122,32 +122,58 @@
 - [[_COMMUNITY_Community 106|Community 106]]
 - [[_COMMUNITY_Community 107|Community 107]]
 - [[_COMMUNITY_Community 108|Community 108]]
+- [[_COMMUNITY_Community 109|Community 109]]
+- [[_COMMUNITY_Community 110|Community 110]]
+- [[_COMMUNITY_Community 111|Community 111]]
+- [[_COMMUNITY_Community 112|Community 112]]
+- [[_COMMUNITY_Community 113|Community 113]]
+- [[_COMMUNITY_Community 114|Community 114]]
+- [[_COMMUNITY_Community 115|Community 115]]
+- [[_COMMUNITY_Community 116|Community 116]]
+- [[_COMMUNITY_Community 117|Community 117]]
+- [[_COMMUNITY_Community 118|Community 118]]
+- [[_COMMUNITY_Community 119|Community 119]]
+- [[_COMMUNITY_Community 120|Community 120]]
+- [[_COMMUNITY_Community 121|Community 121]]
+- [[_COMMUNITY_Community 122|Community 122]]
+- [[_COMMUNITY_Community 123|Community 123]]
+- [[_COMMUNITY_Community 124|Community 124]]
+- [[_COMMUNITY_Community 125|Community 125]]
+- [[_COMMUNITY_Community 126|Community 126]]
+- [[_COMMUNITY_Community 127|Community 127]]
+- [[_COMMUNITY_Community 128|Community 128]]
+- [[_COMMUNITY_Community 129|Community 129]]
+- [[_COMMUNITY_Community 130|Community 130]]
+- [[_COMMUNITY_Community 131|Community 131]]
+- [[_COMMUNITY_Community 132|Community 132]]
+- [[_COMMUNITY_Community 133|Community 133]]
+- [[_COMMUNITY_Community 134|Community 134]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `RawCols` - 43 edges
-2. `Data` - 38 edges
-3. `OldCellpyCellCore` - 36 edges
-4. `default_schema()` - 35 edges
-5. `HeadersNormal` - 28 edges
-6. `HeadersStepTable` - 27 edges
-7. `HeadersSummary` - 26 edges
-8. `CellpyUnits` - 26 edges
-9. `DictLikeClass` - 22 edges
-10. `_native_schema()` - 21 edges
+1. `RawCols` - 47 edges
+2. `Data` - 43 edges
+3. `default_schema()` - 39 edges
+4. `OldCellpyCellCore` - 38 edges
+5. `HeadersNormal` - 29 edges
+6. `HeadersStepTable` - 28 edges
+7. `CellpyUnits` - 28 edges
+8. `HeadersSummary` - 27 edges
+9. `CellpyCellCore` - 23 edges
+10. `DictLikeClass` - 22 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `mock_data_empty()` --calls--> `Data`  [INFERRED]
+  tests/conftest.py → src/cellpycore/cell_core.py
+- `test_get_converter_to_specific_bare_data_raises_value_error()` --calls--> `Data`  [INFERRED]
+  tests/test_units_converters.py → src/cellpycore/cell_core.py
 - `test_native_pipeline_matches_golden_counts()` --calls--> `default_schema()`  [INFERRED]
   tests/test_e2e.py → src/cellpycore/config.py
 - `test_native_pipeline_step_types_and_capacities()` --calls--> `default_schema()`  [INFERRED]
   tests/test_e2e.py → src/cellpycore/config.py
-- `test_default_schema_is_native()` --calls--> `default_schema()`  [INFERRED]
-  tests/test_schema.py → src/cellpycore/config.py
 - `main()` --calls--> `create_raw_data()`  [INFERRED]
   dev/demo_mock_data.py → src/cellpycore/_helpers.py
-- `main()` --calls--> `RawCols`  [INFERRED]
-  dev/make_harmonized_raw.py → src/cellpycore/config.py
 
-## Communities (109 total, 29 thin omitted)
+## Communities (135 total, 36 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.16
@@ -155,15 +181,15 @@ Nodes (21): _build_cv_raw(), _data_with_steps(), _pandas_oracle(), Tests for nat
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (42): fetch_from_db(), from_dict(), from_json(), load_archive(), merge_test_meta(), push_to_db(), (De)serialization, merging, and persistence scaffolding for metadata.  This is, Load metadata from a cellpy archive file (HDF5). **Stub.**      Intended to re (+34 more)
+Nodes (44): fetch_from_db(), from_dict(), from_json(), load_archive(), merge_test_meta(), push_to_db(), (De)serialization, merging, and persistence scaffolding for metadata.  This is, Load metadata from a cellpy archive file (HDF5). **Stub.**      Intended to re (+36 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.25
-Nodes (8): The pandas selector pair was removed once cellpy migrated off it (#45)., The pandas selector pair was removed once cellpy migrated off it (#45)., The output column names follow the injected (native) schema, not any global., The output column names follow the injected (native) schema, not any global., The output column names follow the injected (native) schema, not any global., The output column names follow the injected (native) schema, not any global., test_make_step_table_uses_injected_schema(), test_no_legacy_selector_functions()
+Cohesion: 0.15
+Nodes (13): CellpyCellCore.schema bundles the (possibly overridden) header instances., The pandas selector pair was removed once cellpy migrated off it (#45)., CellpyCellCore.schema bundles the (possibly overridden) header instances., CellpyCellCore.schema bundles the (possibly overridden) header instances., The pandas selector pair was removed once cellpy migrated off it (#45)., CellpyCellCore.schema bundles the (possibly overridden) header instances., The output column names follow the injected (native) schema, not any global., The output column names follow the injected (native) schema, not any global. (+5 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.06
-Nodes (34): 1. Context and guiding principle, 1. Introduction: The Industrial Data Scalability Paradigm, 2. Core Challenges in High-Volume Data Management, 3.1 The M4 Algorithm, 3.2 LTTB and MinMaxLTTB, 3.3 Hierarchical Aggregation and the Visual Entity Budget, 3. Algorithmic Solutions for Scalable Visualization, 3. Implementation details (+26 more)
+Cohesion: 0.29
+Nodes (7): 3. Implementation details, BatBase – The relational database layer, Cellpy – The data processing layer, Odin – Linux servers, Ohma – BESS layer, Phase 0 tasks, Phase 0 tasks
 
 ### Community 4 - "Community 4"
 Cohesion: 0.22
@@ -178,32 +204,32 @@ Cohesion: 0.07
 Nodes (27): Auto-Clarity, Be token greedy - as a caveman, Boundaries, Branch hygiene, code:bash (# Either activate the environment first…), code:bash (# ❌ BAD: bare interpreter), code:bash (# Add or upgrade dependencies), code:bash (cellpycore/) (+19 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.06
-Nodes (56): BaseCols, Cols, cols_check(), CycleCols, CycleType, FlexibleCols, Canonical step-type labels for the ``step_type`` column of the step table., Control mode of a step for the ``step_mode`` column of the raw table.      Des (+48 more)
+Cohesion: 0.22
+Nodes (9): Cols, cols_check(), CycleCols, Standard base for the concrete column-header classes.      ``CycleCols``, ``St, Standard base for the concrete column-header classes.      ``CycleCols``, ``St, Standard base for the concrete column-header classes.      ``CycleCols``, ``St, Column-header definitions for the per-cycle summary table.      Each attribute, Column-header definitions for the per-cycle summary table.      Each attribute (+1 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.22
 Nodes (9): `cell_core.py`, Code Structure and Principles, code:block6 (src/cellpycore/), `config.py`, Module Responsibilities, Project Architecture, `selectors.py`, `summarizers.py` (+1 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.08
-Nodes (24): 2. Stages, Before Stage 0 closes, Before Stage 2 starts, Before Stage 3 starts, Deliverables, Deliverables, Deliverables, Deliverables (+16 more)
+Cohesion: 0.18
+Nodes (11): 2. Stages, Deliverables, Deliverables, How the listed strengths map onto the stages, Immediate next steps, Sequencing risks to watch, Stage 2 — Pack/system layer MVP (~3 months), Stage 3 — Model layer (parallel with Stage 2) (+3 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.14
 Nodes (16): _assert_pairs_bijective(), _legacy_values(), _native_values(), Round-trip / totality tests for the authoritative header mapping.  These lock, Distinct column-name strings declared on a native ``config.Cols`` class., Distinct column-name strings declared on a legacy ``Headers*`` dataclass., Reduce a step column ``<signal>_<stat>`` to its base ``<signal>``., _step_signal() (+8 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.06
-Nodes (51): legacy_schema(), Return a Schema using legacy cellpy column definitions.      For bridge-only h, get_cycle_numbers(), get_rates(), get_step_numbers(), Bridge-only pandas selectors for legacy-named step/raw tables.  These helpers, Get a array containing the cycle numbers in the test.      Parameters:, # TODO: add support for selecting cycles based on other criteria (for example, b (+43 more)
+Cohesion: 0.05
+Nodes (53): legacy_schema(), Return a Schema using legacy cellpy column definitions.      For bridge-only h, Return a Schema using legacy cellpy column definitions.      For bridge-only h, get_cycle_numbers(), get_rates(), get_step_numbers(), Bridge-only pandas selectors for legacy-named step/raw tables.  These helpers, Get a array containing the cycle numbers in the test.      Parameters: (+45 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.17
-Nodes (7): CellpyUnits, MockCore, These are the units used inside Cellpy.      At least two sets of units needs, Set selected columns first in a pandas.DataFrame.      This function sets cols, Set selected columns first in a pandas.DataFrame.      This function sets cols, Set selected columns first in a pandas.DataFrame.      This function sets cols, set_col_first()
+Cohesion: 0.22
+Nodes (3): CellpyUnits, MockCore, These are the units used inside Cellpy.      At least two sets of units needs
 
 ### Community 13 - "Community 13"
-Cohesion: 0.06
-Nodes (31): create_raw_data(), Helper functions only intended for development purposes  (e.g. for creating mock, Create mock raw battery testing data with realistic values.      TODO: This fu, Cols, CycleCols, # TODO: dtype should be a python native "dtype object" if it exists, or a pl.Dat, simple_cols_check(), SimpleCols (+23 more)
+Cohesion: 0.05
+Nodes (34): create_raw_data(), Helper functions only intended for development purposes  (e.g. for creating mock, Create mock raw battery testing data with realistic values.      TODO: This fu, Cols, CycleCols, # TODO: dtype should be a python native "dtype object" if it exists, or a pl.Dat, simple_cols_check(), SimpleCols (+26 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.11
@@ -214,28 +240,28 @@ Cohesion: 0.12
 Nodes (16): Add on's, Cellpy Core Functionality, Cellpy Core Input (Harmonized_Raw), Cellpy Core Output, Core CycleTable, Current code structure:, Definition of Cellpy Core Functionality, Headers (+8 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.28
-Nodes (6): OldCellpyCellCore, Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core.
+Cohesion: 0.24
+Nodes (7): OldCellpyCellCore, Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core., Legacy CellpyCellCore class to make it easier to migrate to cellpy core.
 
 ### Community 17 - "Community 17"
-Cohesion: 0.2
-Nodes (8): BaseSettings, BaseHeaders, BaseSettings, Converts to pandas dataframe, Subclass of BaseSetting including option to add postfixes.      Example:, Subclass of BaseSetting including option to add postfixes.      Example:, Subclass of BaseSetting including option to add postfixes.      Example:, Base class for internal cellpy settings.      Usage::           @dataclass
+Cohesion: 0.17
+Nodes (9): BaseHeaders, BaseSettings, Get the value (postfixes not supported)., Converts to pandas dataframe, Subclass of BaseSetting including option to add postfixes.      Example:, Subclass of BaseSetting including option to add postfixes.      Example:, Subclass of BaseSetting including option to add postfixes.      Example:, Base class for internal cellpy settings.      Usage::           @dataclass (+1 more)
 
 ### Community 18 - "Community 18"
 Cohesion: 0.18
 Nodes (13): cellpy-core, code:python (import polars as pl), code:bash (pip install cellpycore), code:bash (pip install uv), code:bash (uv sync), code:bash (# Add a new package), code:bash (uv run pytest), Common Commands (+5 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.08
-Nodes (27): _check_value_unit(), Parse for unit, update cellpy_units class, and return magnitude., Parse for unit, update cellpy_units class, and return magnitude., Parse for unit, update cellpy_units class, and return magnitude., get_cellpy_units(), get_converter_to_specific(), _get_unit_registry(), nominal_capacity_as_absolute() (+19 more)
+Cohesion: 0.06
+Nodes (38): _check_value_unit(), Parse for unit, update cellpy_units class, and return magnitude., Parse for unit, update cellpy_units class, and return magnitude., Parse for unit, update cellpy_units class, and return magnitude., Parse for unit, update cellpy_units class, and return magnitude., get_cellpy_units(), get_converter_to_specific(), _get_unit_registry() (+30 more)
 
 ### Community 20 - "Community 20"
 Cohesion: 0.12
-Nodes (17): CellpyCellCore, Data, Args:             initialize (bool): set to True if you want to initialize the, Args:             initialize (bool): set to True if you want to initialize the, Initialize the CellpyCell object with empty Data instance., Initialize the CellpyCell object with empty Data instance., Make the core step table.          Delegates to ``summarizers.make_step_table`, Make the core step table.          Delegates to ``summarizers.make_step_table` (+9 more)
+Nodes (19): CellpyCellCore, Data, Args:             initialize (bool): set to True if you want to initialize the, Args:             initialize (bool): set to True if you want to initialize the, Args:             initialize (bool): set to True if you want to initialize the, Initialize the CellpyCell object with empty Data instance., Initialize the CellpyCell object with empty Data instance., Initialize the CellpyCell object with empty Data instance. (+11 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.12
-Nodes (17): _build_raw(), _build_step_cumulative_raw(), Tests for the injected Schema bundle and the step-table port.  These prove the, The globals bridge is gone: no module-level header/unit globals remain., The globals bridge is gone: no module-level header/unit globals remain., The globals bridge is gone: no module-level header/unit globals remain., Build a minimal native-named raw DataFrame (2 cycles x charge/discharge/rest)., Build a minimal native-named raw DataFrame (2 cycles x charge/discharge/rest). (+9 more)
+Cohesion: 0.5
+Nodes (4): The globals bridge is gone: no module-level header/unit globals remain., The globals bridge is gone: no module-level header/unit globals remain., The globals bridge is gone: no module-level header/unit globals remain., test_no_module_header_globals()
 
 ### Community 22 - "Community 22"
 Cohesion: 0.09
@@ -246,8 +272,8 @@ Cohesion: 0.18
 Nodes (11): _declared_columns(), Conformance tests: config.py column classes match docs/data_format_specification, The renamed/removed legacy names are gone from RawCols., The renamed/removed legacy names are gone from RawCols., The renamed/removed legacy names are gone from RawCols., Map declared column attribute -> its string value for a Cols subclass., The renamed/removed legacy names are gone from RawCols., test_cycle_cols_match_spec() (+3 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.16
-Nodes (14): CellpyLimits, Thresholds used when classifying step types in ``make_step_table``.      Since, Thresholds used when classifying step types in ``make_step_table``.      Since, Thresholds used when classifying step types in ``make_step_table``.      Since, Tests for the CellpyLimits port (issue #12, Phase 1).  CellpyLimits holds the, The module-level default is frozen so no caller can mutate it process-wide., CellpyLimits behaves like a dict (BaseSettings), as the engine indexes it., CellpyLimits behaves like a dict (BaseSettings), as the engine indexes it. (+6 more)
+Cohesion: 0.15
+Nodes (15): BaseSettings, CellpyLimits, Thresholds used when classifying step types in ``make_step_table``.      Since, Thresholds used when classifying step types in ``make_step_table``.      Since, Thresholds used when classifying step types in ``make_step_table``.      Since, Tests for the CellpyLimits port (issue #12, Phase 1).  CellpyLimits holds the, The module-level default is frozen so no caller can mutate it process-wide., CellpyLimits behaves like a dict (BaseSettings), as the engine indexes it. (+7 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.2
@@ -258,20 +284,20 @@ Cohesion: 0.14
 Nodes (13): Test that cellpycore can be imported successfully., Test that cellpycore can be imported., Test that cellpycore has the expected package structure., Test that cellpycore has the expected package structure., Test that cellpycore has a version attribute (if defined)., Test that cellpycore has a version attribute (if defined)., Test that cellpycore is properly registered in sys.modules., Test that cellpycore is properly registered in sys.modules. (+5 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.25
-Nodes (3): DictLikeClass, Add some dunder-methods so that it does not break old code that used     dictio, Add some dunder-methods so that it does not break old code that used     dictio
+Cohesion: 0.19
+Nodes (4): DictLikeClass, Generic dict-like settings base classes shared across cellpy-core.  These were, Add some dunder-methods so that it does not break old code that used     dictio, Add some dunder-methods so that it does not break old code that used     dictio
 
 ### Community 28 - "Community 28"
-Cohesion: 0.18
-Nodes (11): Raw with ref_potential yields all seven ref_potential_* step aggregates., Raw with ref_potential yields all seven ref_potential_* step aggregates., Raw without ref_potential yields no ref_potential_* columns, engine unaffected., Raw without ref_potential yields no ref_potential_* columns, engine unaffected., Raw with ref_potential yields all seven ref_potential_* step aggregates., Raw with ref_potential yields all seven ref_potential_* step aggregates., Raw without ref_potential yields no ref_potential_* columns, engine unaffected., Raw without ref_potential yields no ref_potential_* columns, engine unaffected. (+3 more)
+Cohesion: 0.11
+Nodes (20): Column-header definitions for the harmonized raw data table.      Each attribu, Column-header definitions for the harmonized raw data table.      Each attribu, Column-header definitions for the harmonized raw data table.      Each attribu, Column-header definitions for the harmonized raw data table.      Each attribu, Column-header definitions for the harmonized raw data table.      Each attribu, RawCols, _build_raw(), Build a minimal native-named raw DataFrame (2 cycles x charge/discharge/rest). (+12 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.25
 Nodes (7): code:bash, code:bash, Files, Golden numbers, Provenance & license, Regenerating, Test data fixtures
 
 ### Community 30 - "Community 30"
-Cohesion: 0.13
-Nodes (15): _build_merged_raw(), Hand-built native raw + steps exercising the IR-extraction rules.      cycle 1, Two tests (test_id 0 and 1) with **overlapping** cycle_num/step_num.      Each, A merged object (2 tests, overlapping cycle/step) keeps every step row.      W, A merged object (2 tests, overlapping cycle/step) keeps every step row.      W, Per-cycle cumulations restart at each test; no capacity leaks across tests., Per-cycle cumulations restart at each test; no capacity leaks across tests., Two tests (test_id 0 and 1) with **overlapping** cycle_num/step_num.      Each (+7 more)
+Cohesion: 0.33
+Nodes (6): Per-cycle cumulations restart at each test; no capacity leaks across tests., Per-cycle cumulations restart at each test; no capacity leaks across tests., Per-cycle cumulations restart at each test; no capacity leaks across tests., Per-cycle cumulations restart at each test; no capacity leaks across tests., Per-cycle cumulations restart at each test; no capacity leaks across tests., test_merged_object_summary_cumulation_resets_per_test()
 
 ### Community 31 - "Community 31"
 Cohesion: 0.5
@@ -282,8 +308,8 @@ Cohesion: 0.5
 Nodes (3): Cellpy Core StepTable (DRAFT), Column Headers, Purpose
 
 ### Community 34 - "Community 34"
-Cohesion: 0.25
-Nodes (5): Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam).
+Cohesion: 0.22
+Nodes (6): Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam)., Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam).
 
 ### Community 48 - "Community 48"
 Cohesion: 0.5
@@ -294,12 +320,12 @@ Cohesion: 0.14
 Nodes (13): create_selector(), # TODO: implement also for energy and power (and probably others as well) - this, # TODO: @jepe - this method might be a bit slow for large datasets - consider us, # TODO: add support for selecting cycles based on other criteria (for example, b, # TODO: @jepe - include sub_steps here, # TODO: @jepe - include option for not selecting taper steps here, # TODO: @jepe - refactor this method!, # TODO: @jepe - include sub_steps here (+5 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.2
-Nodes (10): _calculate_nominal_capacity_from_cycles(), equivalent_cycles_to_summary(), Calculate nominal capacity from specified normalization cycles.      Polars-na, Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary., Calculate nominal capacity from specified normalization cycles.      Polars-na, Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary., Calculate nominal capacity from specified normalization cycles.      Polars-na, Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary. (+2 more)
+Cohesion: 0.17
+Nodes (12): _calculate_nominal_capacity_from_cycles(), equivalent_cycles_to_summary(), Calculate nominal capacity from specified normalization cycles.      Polars-na, Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary., Calculate nominal capacity from specified normalization cycles.      Polars-na, Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary., Calculate nominal capacity from specified normalization cycles.      Polars-na, Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary. (+4 more)
 
 ### Community 51 - "Community 51"
-Cohesion: 0.15
-Nodes (11): LastIRExtractor, Pluggable per-cycle summary extractors.  A *summary extractor* is a callable o, Base class for callable per-cycle summary extractors.      Subclasses implemen, Return a per-cycle frame keyed by ``schema.cycle.cycle_num``.          Args:, Default internal-resistance extractor (issue #23).      For each cycle it read, SummaryExtractor, ir_to_summary(), Add per-cycle internal-resistance columns (``ir_charge`` / ``ir_discharge``). (+3 more)
+Cohesion: 0.14
+Nodes (12): LastIRExtractor, Pluggable per-cycle summary extractors.  A *summary extractor* is a callable o, Base class for callable per-cycle summary extractors.      Subclasses implemen, Return a per-cycle frame keyed by ``schema.cycle.cycle_num``.          Args:, Default internal-resistance extractor (issue #23).      For each cycle it read, SummaryExtractor, ir_to_summary(), Add per-cycle internal-resistance columns (``ir_charge`` / ``ir_discharge``). (+4 more)
 
 ### Community 52 - "Community 52"
 Cohesion: 0.15
@@ -311,23 +337,23 @@ Nodes (12): End-to-end tests for the native pipeline through the public API (iss
 
 ### Community 54 - "Community 54"
 Cohesion: 0.14
-Nodes (20): Column-header definitions for the harmonized raw data table.      Each attribu, Column-header definitions for the harmonized raw data table.      Each attribu, Column-header definitions for the harmonized raw data table.      Each attribu, Column-header definitions for the harmonized raw data table.      Each attribu, RawCols, _data_with_raw(), _native_schema(), The native polars summary engine emits the clean CycleCols subset only. (+12 more)
+Nodes (20): _data_with_raw(), _native_schema(), Tests for the injected Schema bundle and the step-table port.  These prove the, The native polars summary engine emits the clean CycleCols subset only., The native polars summary engine emits the clean CycleCols subset only., The native polars summary engine emits the clean CycleCols subset only., The native polars summary engine emits the clean CycleCols subset only., The native polars summary engine emits the clean CycleCols subset only. (+12 more)
 
 ### Community 55 - "Community 55"
-Cohesion: 0.18
-Nodes (10): code:bash (pip install cellpycore            # or: uv add cellpycore), code:python (from cellpycore.cell_core import CellpyCellCore, Data), code:python (from cellpycore.cell_core import Data), Reference, The class-free alternative, The contract the caller must honor, The cycle-mode trap, The recommended entry point (+2 more)
+Cohesion: 0.17
+Nodes (11): code:bash (pip install cellpycore            # or: uv add cellpycore), code:python (from cellpycore.cell_core import CellpyCellCore, Data), code:python (from cellpycore.cell_core import Data), Reference, The class-free alternative, The contract the caller must honor, The cycle-mode default, The cycle-mode trap (+3 more)
 
 ### Community 56 - "Community 56"
-Cohesion: 0.11
-Nodes (19): _build_cumulative_raw(), _cap_lists(), 2 cycles, each charge then discharge, with cycle-cumulative capacities held., 2 cycles, each charge then discharge, with cycle-cumulative capacities held., Return the (charge, discharge) cumulative capacity lists, datapoint-ordered., 2 cycles, each charge then discharge, with cycle-cumulative capacities held., Return the (charge, discharge) cumulative capacity lists, datapoint-ordered., STEP / TEST cumulative raw normalizes to the cycle-cumulative oracle. (+11 more)
+Cohesion: 0.1
+Nodes (22): _build_cumulative_raw(), _cap_lists(), 2 cycles, each charge then discharge, with cycle-cumulative capacities held., 2 cycles, each charge then discharge, with cycle-cumulative capacities held., Return the (charge, discharge) cumulative capacity lists, datapoint-ordered., 2 cycles, each charge then discharge, with cycle-cumulative capacities held., Return the (charge, discharge) cumulative capacity lists, datapoint-ordered., STEP / TEST cumulative raw normalizes to the cycle-cumulative oracle. (+14 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.22
-Nodes (9): default_schema(), Return a Schema using the native cellpy-core column definitions.      Used as, Return a Schema using the native cellpy-core column definitions.      Used as, Return a Schema using the native cellpy-core column definitions.      Used as, Return a Schema using the native cellpy-core column definitions.      Used as, add_scaled_summary_columns with explicit by-value converters (no pint)., Exclusion keeps one row per cycle and subtracts the excluded deltas.      The, test_exclude_step_types_variant() (+1 more)
+Cohesion: 0.18
+Nodes (11): default_schema(), Return a Schema using the native cellpy-core column definitions.      Used as, Return a Schema using the native cellpy-core column definitions.      Used as, Return a Schema using the native cellpy-core column definitions.      Used as, Return a Schema using the native cellpy-core column definitions.      Used as, Return a Schema using the native cellpy-core column definitions.      Used as, add_scaled_summary_columns with explicit by-value converters (no pint)., Exclusion keeps one row per cycle and subtracts the excluded deltas.      The (+3 more)
 
 ### Community 61 - "Community 61"
-Cohesion: 0.23
-Nodes (12): CellpyUnits, These are the units used inside Cellpy.      At least two sets of units needs, These are the units used inside Cellpy.      At least two sets of units needs, Converter-parity tests for ``cellpycore.units`` (STEP-12, issue #40).  ``cellp, Minimal stand-in for ``Data`` exposing only what the converters read., _stub(), test_get_converter_to_specific_charge_unit_mismatch(), test_get_converter_to_specific_modes() (+4 more)
+Cohesion: 0.19
+Nodes (14): CellpyUnits, These are the units used inside Cellpy.      At least two sets of units needs, These are the units used inside Cellpy.      At least two sets of units needs, Converter-parity tests for ``cellpycore.units`` (STEP-12, issue #40).  ``cellp, Minimal stand-in for ``Data`` exposing only what the converters read., Minimal stand-in for ``Data`` exposing only what the converters read., _stub(), test_get_converter_to_specific_bare_data_raises_value_error() (+6 more)
 
 ### Community 62 - "Community 62"
 Cohesion: 0.2
@@ -337,37 +363,33 @@ Nodes (10): get_cycle_numbers(), get_rates(), get_step_numbers(), Get a array co
 Cohesion: 0.33
 Nodes (6): TestMode.INVERTED (anode) flips CE and coulombic_difference references., TestMode.INVERTED (anode) flips CE and coulombic_difference references., TestMode.INVERTED (anode) flips CE and coulombic_difference references., TestMode.INVERTED (anode) flips CE and coulombic_difference references., TestMode.INVERTED (anode) flips CE and coulombic_difference references., test_make_summary_anode_flips_coulombic_columns()
 
-### Community 64 - "Community 64"
-Cohesion: 0.21
-Nodes (3): DictLikeClass, Get the value (postfixes not supported)., Add some dunder-methods so that it does not break old code that used     dictio
-
 ### Community 65 - "Community 65"
-Cohesion: 0.12
-Nodes (17): _ir_raw_steps(), Hand-built native raw + steps exercising the IR-extraction rules.      cycle 1, Hand-built native raw + steps exercising the IR-extraction rules.      cycle 1, Hand-built native raw + steps exercising the IR-extraction rules.      cycle 1, Default extractor picks the last datapoint of the last charge/discharge     ste, Default extractor picks the last datapoint of the last charge/discharge     ste, Default extractor picks the last datapoint of the last charge/discharge     ste, A custom SummaryExtractor passed via ir_extractor overrides the default. (+9 more)
+Cohesion: 0.06
+Nodes (31): _build_merged_raw(), _build_step_cumulative_raw(), _ir_raw_steps(), Hand-built native raw + steps exercising the IR-extraction rules.      cycle 1, Hand-built native raw + steps exercising the IR-extraction rules.      cycle 1, Hand-built native raw + steps exercising the IR-extraction rules.      cycle 1, Default extractor picks the last datapoint of the last charge/discharge     ste, Default extractor picks the last datapoint of the last charge/discharge     ste (+23 more)
 
 ### Community 66 - "Community 66"
-Cohesion: 0.2
-Nodes (10): _add_end_potentials(), _group_keys(), Join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``., Join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``., Subtract excluded steps' per-cycle capacity deltas from the summary.      Port, Join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``., Subtract excluded steps' per-cycle capacity deltas from the summary.      Port, Prepend ``test_id`` to ``base_keys`` when ``frame`` carries that column. (+2 more)
+Cohesion: 0.4
+Nodes (5): _add_end_potentials(), Join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``., Join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``., Join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``., Join per-cycle end-of-charge / end-of-discharge potentials onto ``summary``.
 
 ### Community 67 - "Community 67"
-Cohesion: 0.29
-Nodes (7): Distinct step-type labels from a (polars) native step table., Distinct step-type labels from a (polars) native step table., Regression for the falsy-override bug: an explicit 0.0 override must win., Regression for the falsy-override bug: an explicit 0.0 override must win., Distinct step-type labels from a (polars) native step table., test_override_raw_limits_zero_is_honoured(), _types()
+Cohesion: 0.15
+Nodes (13): Distinct step-type labels from a (polars) native step table., Distinct step-type labels from a (polars) native step table., Regression for the falsy-override bug: an explicit 0.0 override must win., Regression for the falsy-override bug: an explicit 0.0 override must win., Raw without ref_potential yields no ref_potential_* columns, engine unaffected., Raw without ref_potential yields no ref_potential_* columns, engine unaffected., Raw without ref_potential yields no ref_potential_* columns, engine unaffected., Raw without ref_potential yields no ref_potential_* columns, engine unaffected. (+5 more)
 
 ### Community 68 - "Community 68"
-Cohesion: 0.06
-Nodes (29): from_raw_frame(), # TODO: v2.0 edit this from scalar to list, # TODO: v2.0 edit this from scalar to list, # TODO: move the data object to slim, # TODO: copy div settings to slim, # TODO: move the data object to slim, # TODO: copy div settings to slim, Make the core summary.          Args:             data: The data to make the (+21 more)
+Cohesion: 0.05
+Nodes (39): _cycle_mode_to_test_mode(), from_raw_frame(), # TODO: v2.0 edit this from scalar to list, # TODO: v2.0 edit this from scalar to list, # TODO: move the data object to slim, # TODO: copy div settings to slim, True if a summary has been computed., # TODO: copy div settings to slim (+31 more)
 
 ### Community 69 - "Community 69"
-Cohesion: 0.17
-Nodes (8): BaseSettings, Generic dict-like settings base classes shared across cellpy-core.  These were, Base class for internal cellpy settings.      Usage::           @dataclass, Base class for internal cellpy settings.      Usage::           @dataclass, Get the value (postfixes not supported)., Get the value (postfixes not supported)., Converts to pandas dataframe, Converts to pandas dataframe
+Cohesion: 0.13
+Nodes (15): CellpyError, NoDataFound, Base class for other exceptions, Base class for other exceptions, Base class for other exceptions, Exception raised when no data is found, Exception raised when no data is found, BaseSettings (+7 more)
 
 ### Community 71 - "Community 71"
-Cohesion: 0.2
-Nodes (10): _delta_expr(), make_step_table(), Per-step delta in percent (mirrors legacy cellpy's ``delta``).      ``100 * la, Create a table (v.5) that contains summary information for each step.      Thi, Per-step delta in percent (mirrors legacy cellpy's ``delta``).      ``100 * la, Create a table (v.5) that contains summary information for each step.      Thi, Create a table (v.5) that contains summary information for each step.      Thi, Per-step delta in percent (mirrors legacy cellpy's ``delta``).      ``100 * la (+2 more)
+Cohesion: 0.17
+Nodes (12): _delta_expr(), make_step_table(), Per-step delta in percent (mirrors legacy cellpy's ``delta``).      ``100 * la, Create a table (v.5) that contains summary information for each step.      Thi, Per-step delta in percent (mirrors legacy cellpy's ``delta``).      ``100 * la, Per-step delta in percent (mirrors legacy cellpy's ``delta``).      ``100 * la, Create a table (v.5) that contains summary information for each step.      Thi, Create a table (v.5) that contains summary information for each step.      Thi (+4 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.22
-Nodes (9): make_summary(), Polars-native per-cycle summary (the clean native ``CycleCols`` subset)., Polars-native per-cycle summary (the clean native ``CycleCols`` subset)., Polars-native per-cycle summary (the clean native ``CycleCols`` subset)., Raise ``NoDataFound`` when a required input frame is missing., Polars-native per-cycle summary (the clean native ``CycleCols`` subset)., Raise ``ValueError`` naming every required column missing from ``frame``., _require_columns() (+1 more)
+Cohesion: 0.14
+Nodes (16): _group_keys(), make_summary(), Prepend ``test_id`` to ``base_keys`` when ``frame`` carries that column., Polars-native per-cycle summary (the clean native ``CycleCols`` subset)., Polars-native per-cycle summary (the clean native ``CycleCols`` subset)., Subtract excluded steps' per-cycle capacity deltas from the summary.      Port, Subtract excluded steps' per-cycle capacity deltas from the summary.      Port, Polars-native per-cycle summary (the clean native ``CycleCols`` subset). (+8 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.33
@@ -382,40 +404,40 @@ Cohesion: 0.18
 Nodes (11): c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate., c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate., c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate., Step-type classification uses the supplied raw_limits, not a fixed default., c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate., Step-type classification uses the supplied raw_limits, not a fixed default., c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate., Step-type classification uses the supplied raw_limits, not a fixed default. (+3 more)
 
 ### Community 81 - "Community 81"
-Cohesion: 0.29
-Nodes (8): CellpyError, NoDataFound, Base class for other exceptions, Base class for other exceptions, Base class for other exceptions, Exception raised when no data is found, Exception raised when no data is found, Exception
+Cohesion: 0.2
+Nodes (11): Canonical step-type labels for the ``step_type`` column of the step table., Canonical step-type labels for the ``step_type`` column of the step table., Reset granularity of a cumulative raw capacity / energy column.      Describes, Reset granularity of a cumulative raw capacity / energy column.      Describes, ResetGranularity, StepType, HeadersSummary, Headers used for the summary data (used as column headers for the main data pand (+3 more)
 
 ### Community 82 - "Community 82"
-Cohesion: 0.4
-Nodes (5): CellpyCellCore.schema bundles the (possibly overridden) header instances., CellpyCellCore.schema bundles the (possibly overridden) header instances., CellpyCellCore.schema bundles the (possibly overridden) header instances., CellpyCellCore.schema bundles the (possibly overridden) header instances., test_schema_property_reflects_headers()
+Cohesion: 0.2
+Nodes (9): HeadersNormal, Headers used for the normal (raw) data (used as column headers for the main data, Headers used for the normal (raw) data (used as column headers for the main data, Headers used for the normal (raw) data (used as column headers for the main data, Headers used for the normal (raw) data (used as column headers for the main data, get_default_output_units(), Returns an augmented dictionary with units to use as default., Returns an augmented dictionary with units to use as default. (+1 more)
 
 ### Community 83 - "Community 83"
-Cohesion: 0.25
-Nodes (8): _classify_from_specifications(), _classify_steps(), Build a step-type expression from explicit step specifications., Return a polars expression classifying each step into a step type.      Mirror, Build a step-type expression from explicit step specifications., Return a polars expression classifying each step into a step type.      Mirror, Build a step-type expression from explicit step specifications., Return a polars expression classifying each step into a step type.      Mirror
+Cohesion: 0.2
+Nodes (10): _classify_from_specifications(), _classify_steps(), Build a step-type expression from explicit step specifications., Return a polars expression classifying each step into a step type.      Mirror, Build a step-type expression from explicit step specifications., Build a step-type expression from explicit step specifications., Return a polars expression classifying each step into a step type.      Mirror, Return a polars expression classifying each step into a step type.      Mirror (+2 more)
 
 ### Community 84 - "Community 84"
-Cohesion: 0.29
-Nodes (6): _ensure_test_id(), normalize_capacity_granularity(), Normalize cumulative raw capacity / energy columns to cycle-cumulative.      T, Return ``frame`` with a ``test_id`` column, defaulting to ``0`` when absent., Return ``frame`` with a ``test_id`` column, defaulting to ``0`` when absent., Normalize cumulative raw capacity / energy columns to cycle-cumulative.      T
+Cohesion: 0.25
+Nodes (8): _ensure_test_id(), normalize_capacity_granularity(), Normalize cumulative raw capacity / energy columns to cycle-cumulative.      T, Normalize cumulative raw capacity / energy columns to cycle-cumulative.      T, Return ``frame`` with a ``test_id`` column, defaulting to ``0`` when absent., Return ``frame`` with a ``test_id`` column, defaulting to ``0`` when absent., Return ``frame`` with a ``test_id`` column, defaulting to ``0`` when absent., Normalize cumulative raw capacity / energy columns to cycle-cumulative.      T
 
 ### Community 85 - "Community 85"
-Cohesion: 0.4
-Nodes (5): c_rates_to_summary(), Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t, Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t, Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t, Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t
+Cohesion: 0.33
+Nodes (6): c_rates_to_summary(), Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t, Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t, Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t, Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t, Add per-cycle charge / discharge C-rates to the summary.      Polars-native: t
 
 ### Community 86 - "Community 86"
-Cohesion: 0.4
-Nodes (5): generate_specific_summary_columns(), Generate specific (per mass / area / volume) summary columns.      Polars-nati, Generate specific (per mass / area / volume) summary columns.      Polars-nati, Generate specific (per mass / area / volume) summary columns.      Polars-nati, Generate specific (per mass / area / volume) summary columns.      Polars-nati
+Cohesion: 0.33
+Nodes (6): generate_specific_summary_columns(), Generate specific (per mass / area / volume) summary columns.      Polars-nati, Generate specific (per mass / area / volume) summary columns.      Polars-nati, Generate specific (per mass / area / volume) summary columns.      Polars-nati, Generate specific (per mass / area / volume) summary columns.      Polars-nati, Generate specific (per mass / area / volume) summary columns.      Polars-nati
 
 ### Community 87 - "Community 87"
 Cohesion: 0.33
 Nodes (6): Two cells with different schemas each emit their own column names., Two cells with different schemas each emit their own column names., Two cells with different schemas each emit their own column names., Two cells with different schemas each emit their own column names., Two cells with different schemas each emit their own column names., test_two_schemas_do_not_share_state()
 
 ### Community 88 - "Community 88"
-Cohesion: 0.18
-Nodes (11): ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., The native CellpyCellCore add_scaled path runs on the polars summary., ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., The native CellpyCellCore add_scaled path runs on the polars summary., ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., The native CellpyCellCore add_scaled path runs on the polars summary. (+3 more)
+Cohesion: 0.15
+Nodes (13): ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., The native CellpyCellCore add_scaled path runs on the polars summary., ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., The native CellpyCellCore add_scaled path runs on the polars summary., ir_to_summary adds ir_charge/ir_discharge (native, default extractor)., ir_to_summary adds ir_charge/ir_discharge (native, default extractor). (+5 more)
 
 ### Community 89 - "Community 89"
-Cohesion: 0.25
-Nodes (5): Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form.
+Cohesion: 0.22
+Nodes (6): Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form., Build the per-cycle summary via the polars engine, in/out in legacy form.
 
 ### Community 98 - "Community 98"
 Cohesion: 0.25
@@ -434,20 +456,20 @@ Cohesion: 0.29
 Nodes (6): Code Review Process, Development Guide, Development Process, Development Workflow, Setting Up Development Environment, Table of Contents
 
 ### Community 102 - "Community 102"
-Cohesion: 0.33
-Nodes (5): Build the step table via the polars engine, in/out in legacy form.          Se, Add the pandas-only legacy summary columns the native schema omits.          `, Add the pandas-only legacy summary columns the native schema omits.          `, Add the pandas-only legacy summary columns the native schema omits.          `, Add the pandas-only legacy summary columns the native schema omits.          `
+Cohesion: 0.29
+Nodes (6): Build the step table via the polars engine, in/out in legacy form.          Se, Add the pandas-only legacy summary columns the native schema omits.          `, Add the pandas-only legacy summary columns the native schema omits.          `, Add the pandas-only legacy summary columns the native schema omits.          `, Add the pandas-only legacy summary columns the native schema omits.          `, Add the pandas-only legacy summary columns the native schema omits.          `
 
 ### Community 103 - "Community 103"
-Cohesion: 0.33
-Nodes (5): Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table.
+Cohesion: 0.29
+Nodes (6): Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table., Map the ``info`` column from step specifications onto the step table.
 
 ### Community 104 - "Community 104"
-Cohesion: 0.33
-Nodes (4): Build the step table via the polars engine, in/out in legacy form.          Se, Build the step table via the polars engine, in/out in legacy form.          Se, Build the step table via the polars engine, in/out in legacy form.          Se, Build the step table via the polars engine, in/out in legacy form.          Se
+Cohesion: 0.29
+Nodes (5): Build the step table via the polars engine, in/out in legacy form.          Se, Build the step table via the polars engine, in/out in legacy form.          Se, Build the step table via the polars engine, in/out in legacy form.          Se, Build the step table via the polars engine, in/out in legacy form.          Se, Build the step table via the polars engine, in/out in legacy form.          Se
 
 ### Community 105 - "Community 105"
-Cohesion: 0.33
-Nodes (6): c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., test_c_rates_to_summary_native()
+Cohesion: 0.29
+Nodes (7): c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)., test_c_rates_to_summary_native()
 
 ### Community 106 - "Community 106"
 Cohesion: 0.4
@@ -458,28 +480,108 @@ Cohesion: 0.4
 Nodes (5): code:python (def test_function_name_with_valid_input_returns_expected_res), Test Coverage, Test Naming, Test Structure, Testing Guidelines
 
 ### Community 108 - "Community 108"
+Cohesion: 0.33
+Nodes (6): _build_test_cumulative_raw(), Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca, Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca, Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca, Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca, Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca
+
+### Community 109 - "Community 109"
+Cohesion: 0.22
+Nodes (9): CycleType, Cycle classification for the ``cycle_type`` column of the raw table.      A *r, Test mode of an electrochemical experiment (cycling configuration).      Descr, Cycle classification for the ``cycle_type`` column of the raw table.      A *r, Cycle classification for the ``cycle_type`` column of the raw table.      A *r, TestMode, MetaLevel, The level a piece of metadata applies to.      Attributes:         CELL: Cell (+1 more)
+
+### Community 110 - "Community 110"
+Cohesion: 0.22
+Nodes (9): Bundle of the column-header objects for one cell.      Holds the raw, cycle (s, Bundle of the column-header objects for one cell.      Holds the raw, cycle (s, Bundle of the column-header objects for one cell.      Holds the raw, cycle (s, Schema, HeadersStepTable, Headers used for the steps table (used as column headers for the steps pandas Da, Headers used for the steps table (used as column headers for the steps pandas Da, Headers used for the steps table (used as column headers for the steps pandas Da (+1 more)
+
+### Community 111 - "Community 111"
+Cohesion: 0.25
+Nodes (7): BaseCols, Shared base for all column-header objects.      Provides the ``__version__`` f, Allow for bracket notation, Shared base for all column-header objects.      Provides the ``__version__`` f, Shared base for all column-header objects.      Provides the ``__version__`` f, Allow for bracket notation, Allow for bracket notation
+
+### Community 112 - "Community 112"
+Cohesion: 0.25
+Nodes (7): FlexibleCols, Opt-in base that allows per-attribute name modification.      Behaves like ``B, Modification of the attribute can be done here.          When implemented in t, Opt-in base that allows per-attribute name modification.      Behaves like ``B, Opt-in base that allows per-attribute name modification.      Behaves like ``B, Modification of the attribute can be done here.          When implemented in t, Modification of the attribute can be done here.          When implemented in t
+
+### Community 113 - "Community 113"
+Cohesion: 0.29
+Nodes (6): Make the core step table.          Delegates to ``summarizers.make_step_table`, Make the core step table.          Delegates to ``summarizers.make_step_table`, Make the core step table.          Delegates to ``summarizers.make_step_table`, Make the core step table.          Delegates to ``summarizers.make_step_table`, Make the core step table.          Delegates to ``summarizers.make_step_table`, Make the core step table.          Delegates to ``summarizers.make_step_table`
+
+### Community 114 - "Community 114"
+Cohesion: 0.29
+Nodes (7): 1. Introduction: The Industrial Data Scalability Paradigm, 2. Core Challenges in High-Volume Data Management, 7.1 M4 SQL Implementation Template, 7.2 Glossary of Industrial Data Terms, 7.3 Metadata Registry Requirements, 7. Technical Reference and Algorithm Implementation, Appendix A – About High-Scale Time Series Visualization and Industrial Data Architecture
+
+### Community 115 - "Community 115"
+Cohesion: 0.33
+Nodes (6): Column-header definitions for the per-step summary table.      Each attribute, Column-header definitions for the per-step summary table.      Each attribute, Column-header definitions for the per-step summary table.      Each attribute, Column-header definitions for the per-step summary table.      Each attribute, Column-header definitions for the per-step summary table.      Each attribute, StepCols
+
+### Community 116 - "Community 116"
+Cohesion: 0.33
+Nodes (6): A merged object (2 tests, overlapping cycle/step) keeps every step row.      W, A merged object (2 tests, overlapping cycle/step) keeps every step row.      W, A merged object (2 tests, overlapping cycle/step) keeps every step row.      W, A merged object (2 tests, overlapping cycle/step) keeps every step row.      W, A merged object (2 tests, overlapping cycle/step) keeps every step row.      W, test_merged_object_step_table_isolated_per_test()
+
+### Community 117 - "Community 117"
 Cohesion: 0.4
-Nodes (5): _build_test_cumulative_raw(), Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca, Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca, Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca, Same increments as ``_build_cumulative_raw`` but counters never reset.      Ca
+Nodes (5): Set selected columns first in a pandas.DataFrame.      This function sets cols, Set selected columns first in a pandas.DataFrame.      This function sets cols, Set selected columns first in a pandas.DataFrame.      This function sets cols, Set selected columns first in a pandas.DataFrame.      This function sets cols, set_col_first()
+
+### Community 118 - "Community 118"
+Cohesion: 0.4
+Nodes (3): Raise ``NoDataFound`` when a required input frame is missing., Raise ``NoDataFound`` when a required input frame is missing., _require_frame()
+
+### Community 119 - "Community 119"
+Cohesion: 0.4
+Nodes (5): 5.1 The AVEVA PI to Snowflake Pipeline, 5.2 Preserving Semantic Integrity, 5.3 Warehouse-Native CDC, 5.4 Security and Observability, 5. Bridging OT and Enterprise Cloud: The ELT Framework
+
+### Community 120 - "Community 120"
+Cohesion: 0.5
+Nodes (4): Control mode of a step for the ``step_mode`` column of the raw table.      Des, Control mode of a step for the ``step_mode`` column of the raw table.      Des, Control mode of a step for the ``step_mode`` column of the raw table.      Des, StepMode
+
+### Community 121 - "Community 121"
+Cohesion: 0.5
+Nodes (3): 1. Context and guiding principle, 4. Status, Related documents
+
+### Community 122 - "Community 122"
+Cohesion: 0.5
+Nodes (4): 3.1 The M4 Algorithm, 3.2 LTTB and MinMaxLTTB, 3.3 Hierarchical Aggregation and the Visual Entity Budget, 3. Algorithmic Solutions for Scalable Visualization
+
+### Community 123 - "Community 123"
+Cohesion: 0.5
+Nodes (4): 4.1 Microsoft Fabric-Native Patterns, 4.2 Tiger Data (formerly Timescale), 4.3 TDengine Architecture, 4. Modern Database Design Patterns for Time-Series Analytics
+
+### Community 124 - "Community 124"
+Cohesion: 0.5
+Nodes (4): 6.1 IIoT Energy Monitoring, 6.2 Tesla Powerwall Dashboard, 6.3 Battery Telemetry at Scale (TDengine), 6. Case Studies and Reference Implementations
+
+### Community 125 - "Community 125"
+Cohesion: 0.5
+Nodes (4): Before Stage 0 closes, Before Stage 2 starts, Before Stage 3 starts, Open questions to resolve before each stage
+
+### Community 126 - "Community 126"
+Cohesion: 0.67
+Nodes (3): Deliverables, Stage 0 — Foundations (~3 months), Usable outcome
+
+### Community 127 - "Community 127"
+Cohesion: 0.67
+Nodes (3): Deliverables, Stage 4 — External productization (year 2), Usable outcome
+
+### Community 128 - "Community 128"
+Cohesion: 0.67
+Nodes (3): Deliverables, Stage 1 — Cell layer in production (~3 months), Usable outcome
 
 ## Knowledge Gaps
-- **669 isolated node(s):** `# TODO: dtype should be a python native "dtype object" if it exists, or a pl.Dat`, `Build the harmonized raw frame from a legacy-named frame.      Args:`, `Load each source with cellpy and write ``<name>_raw.parquet``.`, `Run the current cellpy-core engine on the raw parquet and snapshot the     step`, `Validate a native-schema raw frame against ``config.RawCols``.      Checks tha` (+664 more)
+- **761 isolated node(s):** `# TODO: dtype should be a python native "dtype object" if it exists, or a pl.Dat`, `Build the harmonized raw frame from a legacy-named frame.      Args:`, `Load each source with cellpy and write ``<name>_raw.parquet``.`, `Run the current cellpy-core engine on the raw parquet and snapshot the     step`, `Map legacy ``cycle_mode`` string to ``TestMode``.      Args:         cycle_mo` (+756 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **29 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `RawCols` connect `Community 54` to `Community 65`, `Community 2`, `Community 67`, `Community 5`, `Community 7`, `Community 105`, `Community 75`, `Community 13`, `Community 53`, `Community 21`, `Community 87`, `Community 88`, `Community 57`, `Community 56`, `Community 28`, `Community 30`, `Community 63`?**
-  _High betweenness centrality (0.110) - this node is a cross-community bridge._
-- **Why does `default_schema()` connect `Community 57` to `Community 0`, `Community 34`, `Community 7`, `Community 104`, `Community 71`, `Community 72`, `Community 49`, `Community 50`, `Community 51`, `Community 84`, `Community 85`, `Community 54`, `Community 53`, `Community 21`, `Community 62`?**
-  _High betweenness centrality (0.109) - this node is a cross-community bridge._
-- **Why does `Data` connect `Community 20` to `Community 0`, `Community 7`, `Community 11`, `Community 13`, `Community 21`, `Community 28`, `Community 30`, `Community 34`, `Community 52`, `Community 53`, `Community 54`, `Community 56`, `Community 61`, `Community 65`, `Community 68`, `Community 73`, `Community 81`, `Community 89`, `Community 104`?**
-  _High betweenness centrality (0.096) - this node is a cross-community bridge._
-- **Are the 36 inferred relationships involving `RawCols` (e.g. with `HeadersNormal` and `HeadersStepTable`) actually correct?**
-  _`RawCols` has 36 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 32 inferred relationships involving `Data` (e.g. with `Meta` and `MockMetaTestDependent`) actually correct?**
-  _`Data` has 32 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 15 inferred relationships involving `OldCellpyCellCore` (e.g. with `Meta` and `MockMetaTestDependent`) actually correct?**
-  _`OldCellpyCellCore` has 15 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 26 inferred relationships involving `default_schema()` (e.g. with `.make_core_step_table()` and `.add_scaled_summary_columns()`) actually correct?**
-  _`default_schema()` has 26 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `Data` connect `Community 20` to `Community 0`, `Community 1`, `Community 11`, `Community 13`, `Community 28`, `Community 30`, `Community 34`, `Community 52`, `Community 53`, `Community 54`, `Community 56`, `Community 61`, `Community 65`, `Community 68`, `Community 69`, `Community 73`, `Community 81`, `Community 82`, `Community 89`, `Community 104`, `Community 110`, `Community 116`?**
+  _High betweenness centrality (0.121) - this node is a cross-community bridge._
+- **Why does `RawCols` connect `Community 28` to `Community 2`, `Community 5`, `Community 7`, `Community 13`, `Community 20`, `Community 30`, `Community 53`, `Community 54`, `Community 56`, `Community 57`, `Community 63`, `Community 65`, `Community 67`, `Community 75`, `Community 81`, `Community 82`, `Community 87`, `Community 88`, `Community 105`, `Community 110`, `Community 116`?**
+  _High betweenness centrality (0.115) - this node is a cross-community bridge._
+- **Why does `default_schema()` connect `Community 57` to `Community 0`, `Community 34`, `Community 7`, `Community 104`, `Community 71`, `Community 72`, `Community 110`, `Community 49`, `Community 50`, `Community 115`, `Community 84`, `Community 85`, `Community 51`, `Community 53`, `Community 20`, `Community 28`, `Community 62`?**
+  _High betweenness centrality (0.103) - this node is a cross-community bridge._
+- **Are the 39 inferred relationships involving `RawCols` (e.g. with `HeadersNormal` and `HeadersStepTable`) actually correct?**
+  _`RawCols` has 39 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 37 inferred relationships involving `Data` (e.g. with `Meta` and `MockMetaTestDependent`) actually correct?**
+  _`Data` has 37 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 29 inferred relationships involving `default_schema()` (e.g. with `.make_core_step_table()` and `.add_scaled_summary_columns()`) actually correct?**
+  _`default_schema()` has 29 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 16 inferred relationships involving `OldCellpyCellCore` (e.g. with `Meta` and `MockMetaTestDependent`) actually correct?**
+  _`OldCellpyCellCore` has 16 INFERRED edges - model-reasoned connections that need verification._
