@@ -33,6 +33,6 @@ jobs:
         uv run ruff check
         uv run ruff format --check
 
-    - name: Run tests
-      run: uv run pytest -vv
+    - name: Run tests with coverage
+      run: uv run pytest -vv --cov=cellpycore --cov-report=term-missing
 
