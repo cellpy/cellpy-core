@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 DATA_DIR = Path(__file__).parent / "data"
-ARBIN_RAW = DATA_DIR / "arbin_cc_raw.parquet"
+CYCLER_CC_RAW = DATA_DIR / "cycler_cc_raw.parquet"
 
 
 class _BlockPint:
@@ -55,7 +55,7 @@ def test_cellpycore_imports_without_pint(pint_absent):
 
 
 @pytest.mark.skipif(
-    not ARBIN_RAW.is_file(),
+    not CYCLER_CC_RAW.is_file(),
     reason="vendored parquet fixtures missing (run dev/regenerate_test_data.py)",
 )
 def test_engine_runs_without_pint(pint_absent):
@@ -66,7 +66,7 @@ def test_engine_runs_without_pint(pint_absent):
 
     core = OldCellpyCellCore(initialize=False)
     data = Data()
-    data.raw = pd.read_parquet(ARBIN_RAW)
+    data.raw = pd.read_parquet(CYCLER_CC_RAW)
     core.make_core_step_table(data, nom_cap=1.0)
     core.make_core_summary(data, find_ir=True, find_end_voltage=True)
 

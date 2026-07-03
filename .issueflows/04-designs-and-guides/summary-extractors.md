@@ -10,7 +10,7 @@ cellpy's legacy `_ir_to_summary`, which carries a long-standing correctness bug
 (`# THIS DOES NOT WORK PROPERLY!!!!`): it read IR from the **first datapoint of the first**
 charge/discharge step per cycle, which can land IR on the wrong cycle and silently ignores
 extra IR steps (`[0]`). The buggy output was frozen in the summary oracle
-(`tests/data/arbin_cc_summary_expected.parquet`).
+(`tests/data/cycler_cc_summary_expected.parquet`).
 
 ## Decision
 
@@ -29,14 +29,14 @@ extra IR steps (`[0]`). The buggy output was frozen in the summary oracle
 4. **`ir_extractor` keyword argument** threads through `ir_to_summary` and both
    `CellpyCellCore.make_core_summary` / `OldCellpyCellCore.make_core_summary` (defaults
    preserve every existing call site).
-5. **Oracle regenerated intentionally.** `arbin_cc_summary_expected.parquet` was
+5. **Oracle regenerated intentionally.** `cycler_cc_summary_expected.parquet` was
    regenerated via `dev/regenerate_test_data.py` (stage B). cellpy's own legacy
    `_ir_to_summary` (in the `cellpy` repo) is untouched — contract preserved; only
    cellpy-core's native path is corrected.
 
 ## Notable finding (real-data fixture does not exhibit the bug)
 
-On the canonical Arbin fixture (`arbin_cc_raw.parquet`, 18 cycles) every cycle has exactly
+On the canonical cycler fixture (`cycler_cc_raw.parquet`, 18 cycles) every cycle has exactly
 **one** charge and **one** discharge step with a constant IR value within the step, so the
 old "first datapoint of first step" and new "last datapoint of last step" rules produce
 **identical** values for all cycles. The only oracle change is **cycle 18 `ir_charge`:

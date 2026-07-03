@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Rename test-data fixture prefix from vendor-specific `arbin` to generic `cycler`
+  (files, tests, regen scripts, harmonized `source_type`, and docs). (#72)
 - Code-review cleanup and test completion (#66): drop unused dependencies
   (duckdb, duckdb-engine, sqlalchemy, narwhals) and the unconfigured
   uv-dynamic-versioning; fix the falsy-override bug so an explicit `0.0` in

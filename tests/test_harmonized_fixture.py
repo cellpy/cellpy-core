@@ -1,7 +1,7 @@
 """Regression guard for the harmonized raw fixture.
 
-``tests/data/arbin_cc_harmonized_raw.parquet`` is produced by
-``dev/make_harmonized_raw.py`` (it renames the legacy ``arbin_cc_raw.parquet``
+``tests/data/cycler_cc_harmonized_raw.parquet`` is produced by
+``dev/make_harmonized_raw.py`` (it renames the legacy ``cycler_cc_raw.parquet``
 into the harmonized schema defined by ``cellpycore.config.RawCols``). These tests
 pin that the committed fixture matches the current ``RawCols`` schema and the
 known row count, so a drift between the schema and the fixture is caught.
@@ -15,9 +15,9 @@ from cellpycore.config import RawCols
 from cellpycore.timestamps import epoch_ns_to_seconds
 
 DATA_DIR = Path(__file__).parent / "data"
-HARMONIZED_RAW = DATA_DIR / "arbin_cc_harmonized_raw.parquet"
+HARMONIZED_RAW = DATA_DIR / "cycler_cc_harmonized_raw.parquet"
 
-# Row count of the source Arbin fixture (unchanged by the rename).
+# Row count of the source cycler fixture (unchanged by the rename).
 EXPECTED_ROWS = 10261
 
 
@@ -37,7 +37,7 @@ def test_harmonized_row_count_and_key_values():
     assert df.height == EXPECTED_ROWS
     # mask defaults to True; source_type is the constant set by the converter.
     assert df[cols.mask].all()
-    assert df[cols.source_type].unique().to_list() == ["arbin"]
+    assert df[cols.source_type].unique().to_list() == ["cycler"]
     # epoch_time_utc must be int64 nanoseconds since the Unix epoch UTC (2016-era
     # source), not null. ~1.47e18 ns; converting back to seconds lands in 2016.
     epoch = df[cols.epoch_time_utc]
