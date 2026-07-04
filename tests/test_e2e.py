@@ -25,6 +25,8 @@ from cellpycore import (
     default_schema,
     make_step_table,
     make_summary,
+    merge_data,
+    update_data,
 )
 
 DATA_DIR = Path(__file__).parent / "data"
@@ -49,10 +51,62 @@ def harmonized_raw() -> pl.DataFrame:
 @pytest.fixture
 def processed(harmonized_raw) -> Data:
     """Full native pipeline: validating front door -> steps -> summary."""
-    data = Data.from_raw_frame(harmonized_raw)
+    return _process_native(harmonized_raw)
+
+
+def _process_native(raw: pl.DataFrame) -> Data:
+    """Run the native public processing pipeline for an in-memory raw frame."""
+    data = Data.from_raw_frame(raw)
     make_step_table(data, nom_cap=1.0)
     make_summary(data)
     return data
+
+
+def _with_test_id(raw: pl.DataFrame, test_id: int) -> pl.DataFrame:
+    """Return ``raw`` with a fixture-compatible ``test_id`` value."""
+    raw_cols = default_schema().raw
+    return raw.with_columns(
+        pl.lit(test_id, dtype=raw.schema[raw_cols.test_id]).alias(raw_cols.test_id)
+    )
+
+
+def _assert_update_matches_oracle(updated: Data, oracle: Data) -> None:
+    """Assert an incrementally updated object matches a full recompute oracle."""
+    schema = default_schema()
+    raw_cols, step_cols, cycle_cols = schema.raw, schema.step, schema.cycle
+
+    assert updated.raw.height == oracle.raw.height
+    assert updated.steps.height == oracle.steps.height
+    assert updated.summary.height == oracle.summary.height
+
+    source = raw_cols.source_datapoint_num
+    assert updated.raw[source].min() == oracle.raw[source].min()
+    assert updated.raw[source].max() == oracle.raw[source].max()
+    assert updated.raw[source].n_unique() == oracle.raw[source].n_unique()
+
+    step_keys = [step_cols.test_id, step_cols.cycle_num, step_cols.step_num]
+    assert (
+        updated.steps.sort(step_keys)
+        .select(step_keys)
+        .equals(oracle.steps.sort(step_keys).select(step_keys))
+    )
+
+    summary_keys = [cycle_cols.test_id, cycle_cols.cycle_num]
+    got_summary = updated.summary.sort(summary_keys)
+    expected_summary = oracle.summary.sort(summary_keys)
+    assert got_summary.select(summary_keys).equals(
+        expected_summary.select(summary_keys)
+    )
+    for col in (
+        cycle_cols.charge_capacity,
+        cycle_cols.discharge_capacity,
+        cycle_cols.coulombic_efficiency,
+    ):
+        assert got_summary[col].to_list() == pytest.approx(
+            expected_summary[col].to_list(),
+            rel=1e-9,
+            nan_ok=True,
+        )
 
 
 def test_native_pipeline_matches_golden_counts(processed):
@@ -76,6 +130,61 @@ def test_native_pipeline_step_types_and_capacities(processed):
     assert (s[schema.cycle.charge_capacity] > 0).all()
     assert (s[schema.cycle.discharge_capacity] > 0).all()
     assert s[schema.cycle.coulombic_efficiency].is_finite().all()
+
+
+def test_merge_public_api_real_fixture_two_tests(harmonized_raw, processed):
+    """Merging two processed real fixtures preserves both test tracks."""
+    schema = default_schema()
+    raw_cols, cycle_cols = schema.raw, schema.cycle
+    right = _process_native(_with_test_id(harmonized_raw, 2))
+
+    merged = merge_data(processed, right)
+
+    assert merged.raw.height == 2 * harmonized_raw.height
+    assert merged.steps.height == 2 * CYCLER_CC_N_STEPS
+    assert merged.summary.height == 2 * CYCLER_CC_N_CYCLES
+    assert set(merged.raw[raw_cols.test_id].unique().to_list()) == {1, 2}
+    assert set(merged.summary[cycle_cols.test_id].unique().to_list()) == {1, 2}
+
+    right_raw = merged.raw.filter(pl.col(raw_cols.test_id) == 2)
+    assert right_raw[raw_cols.datapoint_num].min() == (
+        processed.raw[raw_cols.datapoint_num].max()
+        + right.raw[raw_cols.datapoint_num].min()
+    )
+    assert right_raw[raw_cols.datapoint_num].max() == (
+        processed.raw[raw_cols.datapoint_num].max()
+        + right.raw[raw_cols.datapoint_num].max()
+    )
+    right_cycles = (
+        merged.summary.filter(pl.col(cycle_cols.test_id) == 2)[cycle_cols.cycle_num]
+        .unique()
+        .sort()
+        .to_list()
+    )
+    assert right_cycles == list(
+        range(CYCLER_CC_N_CYCLES + 1, 2 * CYCLER_CC_N_CYCLES + 1)
+    )
+
+
+def test_update_public_and_core_real_fixture_matches_full_recompute(
+    harmonized_raw, processed
+):
+    """Updating a real split fixture matches a full public-pipeline recompute."""
+    schema = default_schema()
+    raw_cols, cycle_cols = schema.raw, schema.cycle
+    base_raw = harmonized_raw.filter(pl.col(raw_cols.source_datapoint_num) < 9000)
+    extension_raw = harmonized_raw.filter(pl.col(raw_cols.source_datapoint_num) >= 8900)
+    base = _process_native(base_raw)
+
+    updated = update_data(base, extension_raw)
+    _assert_update_matches_oracle(updated, processed)
+
+    core_updated = CellpyCellCore(initialize=False).update_core_data(
+        base, extension_raw
+    )
+    _assert_update_matches_oracle(core_updated, processed)
+    assert cycle_cols.charge_c_rate in core_updated.summary.columns
+    assert cycle_cols.ir_charge in core_updated.summary.columns
 
 
 def test_exclude_step_types_variant(harmonized_raw):
