@@ -3,7 +3,7 @@
 This sub-package provides the *shape and tools* for test-/cell-level metadata,
 without requiring that metadata be populated on the core ``Data`` object. See
 ``.issueflows/04-designs-and-guides/metadata-scaffolding.md`` for the design and
-``docs/data_format_specifications/harmonized_raw.md`` for the authoritative field
+``docs/specifications/harmonized-raw.md`` for the authoritative field
 list.
 
 Two levels of metadata:

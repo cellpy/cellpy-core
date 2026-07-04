@@ -25,7 +25,7 @@ consumes. `cycler_cc_harmonized_raw.parquet` is the one exception: it is the sam
 cycling data renamed into the **harmonized raw** schema
 (`cellpycore.config.RawCols`: `datapoint_num`, `potential`,
 `cumulative_charge_capacity`, …) — see
-[`docs/data_format_specifications/harmonized_raw.md`](../../docs/data_format_specifications/harmonized_raw.md).
+[`docs/specifications/harmonized-raw.md`](../../docs/specifications/harmonized-raw.md).
 
 ## Golden numbers
 

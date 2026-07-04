@@ -82,7 +82,7 @@ class ResetGranularity(StrEnum):
 
     Describes where a cycler's cumulative capacity / energy counter resets to
     zero. The harmonized raw format mandates ``CYCLE`` (see
-    ``docs/data_format_specifications/harmonized_raw.md`` §Capacity convention);
+    ``docs/specifications/harmonized-raw.md`` §Capacity convention);
     :func:`cellpycore.summarizers.normalize_capacity_granularity` uses this enum
     to normalize ``STEP`` / ``TEST`` cumulative raw from other cyclers to the
     mandated ``CYCLE`` convention before aggregation.
@@ -177,7 +177,7 @@ class StepMode(StrEnum):
     Note:
         Absence / "no specific mode" is represented by a null value in the
         table, not by the literal string ``"None"``. The spec table in
-        ``docs/data_format_specifications/harmonized_raw.md`` lists ``"None"``
+        ``docs/specifications/harmonized-raw.md`` lists ``"None"``
         as a sample value; that is documentation shorthand for "missing" and is
         intentionally not a member here.
 
@@ -197,7 +197,7 @@ class CycleType(StrEnum):
 
     A *reference* vocabulary (plain strings stored in the table, unknown values
     allowed, extend by adding members). Values keep the capitalization used in
-    the spec table in ``docs/data_format_specifications/harmonized_raw.md``.
+    the spec table in ``docs/specifications/harmonized-raw.md``.
 
     Not used by the engine yet.
 
@@ -566,11 +566,11 @@ class RawCols(Cols):
 
     Each attribute maps a logical quantity to the column name used in the
     harmonized raw format that cellpy-core consumes. The authoritative spec is
-    ``docs/data_format_specifications/harmonized_raw.md``; the column order here
+    ``docs/specifications/harmonized-raw.md``; the column order here
     mirrors that spec table.
     """
 
-    # Follows docs/data_format_specifications/harmonized_raw.md (authoritative,
+    # Follows docs/specifications/harmonized-raw.md (authoritative,
     # 2025-09-17). Column order mirrors the spec table.
     datapoint_num: str = "datapoint_num"
     source_datapoint_num: str = "source_datapoint_num"
@@ -594,7 +594,7 @@ class RawCols(Cols):
     potential: str = "potential"
     current: str = "current"
     # Capacity / energy are cumulative per cycle, per direction (reset each cycle).
-    # See docs/data_format_specifications/harmonized_raw.md ("Capacity convention").
+    # See docs/specifications/harmonized-raw.md ("Capacity convention").
     cumulative_charge_capacity: str = "cumulative_charge_capacity"
     cumulative_discharge_capacity: str = "cumulative_discharge_capacity"
     cumulative_charge_energy: str = "cumulative_charge_energy"

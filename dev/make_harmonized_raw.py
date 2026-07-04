@@ -2,7 +2,7 @@
 """Convert a legacy-named raw parquet into a harmonized raw parquet fixture.
 
 cellpy-core consumes the *harmonized raw* format whose authoritative spec is
-``docs/data_format_specifications/harmonized_raw.md`` and whose column names are
+``docs/specifications/harmonized-raw.md`` and whose column names are
 defined by ``cellpycore.config.RawCols``. The vendored real-data fixture
 ``tests/data/cycler_cc_raw.parquet`` is still in the legacy cellpy ``HeadersNormal``
 naming (``data_point``, ``voltage``, ``charge_capacity``, ...). This script

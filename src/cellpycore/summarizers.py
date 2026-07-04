@@ -128,7 +128,7 @@ def normalize_capacity_granularity(
     """Normalize cumulative raw capacity / energy columns to cycle-cumulative.
 
     The engine mandates **cycle-cumulative** raw capacity / energy (reset at each
-    cycle boundary; see ``docs/data_format_specifications/harmonized_raw.md``).
+    cycle boundary; see ``docs/specifications/harmonized-raw.md``).
     Cyclers that instead deliver **step-cumulative** (reset per step) or
     **test-cumulative** (never reset) raw can be normalized here before
     aggregation. The transform is granularity-agnostic: for each present column,
