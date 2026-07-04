@@ -1,8 +1,8 @@
-"""Legacy cellpy exceptions (mirrored for bridge parity)."""
+"""Cellpy Core exceptions."""
 
 
 class CellpyError(Exception):
-    """Base class for other exceptions"""
+    """Base class for other Cellpy Core exceptions"""
 
     pass
 

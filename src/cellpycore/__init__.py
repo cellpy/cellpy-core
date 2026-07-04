@@ -19,7 +19,7 @@ from cellpycore.config import (
     StepCols,
     default_schema,
 )
-from cellpycore.legacy import CellpyError, NoDataFound
+from cellpycore.exceptions import CellpyError, NoDataFound
 from cellpycore.summarizers import make_step_table, make_summary
 
 try:
