@@ -4,12 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-04
+
+- Migrate documentation to Zensical with Read the Docs hosting
+  (`.readthedocs.yaml`, `zensical.toml`, optional `docs` dependency group).
+  Restructure the docs tree (`getting-started`, `user-guide/`, `specifications/`,
+  `examples/`, `development/`); `changelog.md` and `development/roadmap.md`
+  snippet-include root `HISTORY.md` and `ROADMAP.md`. Add executable example
+  notebooks with committed markdown and plot outputs under `docs/examples/`. (#90)
+- Backfill `HISTORY.md` for the 0.1.3 release and bump to 0.1.4. (#91)
+
+## [0.1.3] - 2026-07-04
+
 - Add in-repo pre-commit hooks (`ruff check --fix`, `ruff format`) via
   `.pre-commit-config.yaml` and document one-time `uv run pre-commit install`
   setup. (#84)
 - Add `merge_data` and `update_data` for combining processed `Data` objects and
   incrementally appending new raw rows (with `CellpyCellCore` wrappers and tests).
   (#86)
+- Add merge/update end-to-end test coverage for the public merge and incremental
+  update pipeline. (#89)
 - Move `CellpyError` / `NoDataFound` from `legacy/` to top-level
   `cellpycore.exceptions` (legacy re-export kept); expand the `CellpyCellCore`
   class docstring; add `ROADMAP.md` for planned features and open design
@@ -44,6 +58,8 @@ All notable changes to this project will be documented in this file.
   API, and an opt-in pytest-benchmark suite (`uv run pytest -m benchmark`).
 - Update the README developer section to uv's project workflow: `uv sync` after
   cloning, `uv add` for new dependencies, `uv run pytest` for tests (#64).
+- Use absolute GitHub URLs for README documentation links so they resolve on PyPI.
+  (#62)
 
 ## [0.1.2] - 2026-07-02
 
