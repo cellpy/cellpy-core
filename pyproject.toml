@@ -69,6 +69,12 @@ dev = [
     "pytest-cov>=7.1.0",
     "pre-commit>=4.6.0",
 ]
+docs = [
+    "ipykernel>=7.3.0",
+    "matplotlib>=3.10.6",
+    "nbconvert>=7.17.1",
+    "zensical>=0.0.46",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

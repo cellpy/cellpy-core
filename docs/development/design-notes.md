@@ -27,7 +27,7 @@ Metadata will be kept out of the core. Important to keep metadata in mind when s
 
 
 ## Cellpy Core Input (Harmonized_Raw)
-Summarized in [harmonized_raw_definition.md](./harmonized_raw_definition.md)
+Summarized in [Harmonized raw format](../specifications/harmonized-raw.md)
 
 ## Cellpy Core Output
 *To be summarized in a separate file*

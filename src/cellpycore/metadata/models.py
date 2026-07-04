@@ -18,7 +18,7 @@ There are two levels of metadata (see issue #30 and
   many tests via a ``TestMetaCollection`` keyed by ``test_id``.
 
 The authoritative field list lives in
-``docs/data_format_specifications/harmonized_raw.md`` ("Test metadata (TestMeta)");
+``docs/specifications/harmonized-raw.md`` ("Test metadata (TestMeta)");
 the dataclasses here mirror it. Field names are also mined from legacy cellpy's
 ``cellpy.parameters.internal_settings.CellpyMetaCommon`` /
 ``CellpyMetaIndividualTest`` so the two libraries stay aligned.
@@ -118,7 +118,7 @@ class TestMeta:
     """Test-dependent metadata, one record per test run (keyed by ``test_id``).
 
     Mirrors the "Test metadata (TestMeta)" table in
-    ``docs/data_format_specifications/harmonized_raw.md`` and the test-dependent
+    ``docs/specifications/harmonized-raw.md`` and the test-dependent
     fields of legacy ``CellpyMetaIndividualTest``. ``cell`` optionally links the
     cell-dependent metadata so the two-level split is captured without forcing a
     separate table.

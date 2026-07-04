@@ -1,4 +1,4 @@
-"""Conformance tests: config.py column classes match docs/data_format_specifications.
+"""Conformance tests: config.py column classes match docs/specifications.
 
 These lock `RawCols` / `StepCols` / `CycleCols` to the authoritative spec tables
 (`harmonized_raw.md`, `step_table.md`, `cycle_table.md`) so the three

@@ -129,6 +129,6 @@ handling done for you, and the IR / C-rate orchestration
 ## Reference
 
 - Raw-format spec (authoritative column list and conventions):
-  [`docs/data_format_specifications/harmonized_raw.md`](data_format_specifications/harmonized_raw.md)
-- The `Data` object: [`docs/data-object-definition.md`](data-object-definition.md)
+  [Harmonized raw format](../specifications/harmonized-raw.md)
+- [The Data object](data-object.md)
 - Column names: `cellpycore.config` (`RawCols`, `StepCols`, `CycleCols`)

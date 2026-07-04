@@ -29,11 +29,20 @@ Source: <https://github.com/cellpy/cellpy-core>
 
 ## Documentation
 
-- [Using cellpy-core standalone (slim-consumer guide)](https://github.com/cellpy/cellpy-core/blob/main/docs/standalone-use.md) —
+Full documentation (built with [Zensical](https://zensical.org), hosted on
+Read the Docs): <https://cellpy-core.readthedocs.io/>
+
+Key pages:
+
+- [Using cellpy-core standalone (slim-consumer guide)](https://github.com/cellpy/cellpy-core/blob/main/docs/user-guide/standalone-use.md) —
   get step tables and per-cycle summaries from a native-schema polars frame
   without full cellpy.
-- [Harmonized raw format specification](https://github.com/cellpy/cellpy-core/blob/main/docs/data_format_specifications/harmonized_raw.md)
-- [The Data object](https://github.com/cellpy/cellpy-core/blob/main/docs/data-object-definition.md)
+- [Harmonized raw format specification](https://github.com/cellpy/cellpy-core/blob/main/docs/specifications/harmonized-raw.md)
+- [The Data object](https://github.com/cellpy/cellpy-core/blob/main/docs/user-guide/data-object.md)
+- [Example notebooks](https://github.com/cellpy/cellpy-core/tree/main/docs/examples)
+
+Build the docs locally with `uv run --group docs zensical serve` (config in
+`zensical.toml`; notebook-regeneration instructions in `docs/examples/index.md`).
 
 ## Developing
 
