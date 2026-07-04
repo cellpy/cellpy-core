@@ -320,7 +320,15 @@ from .config import Headers
 
 1. **Clone the repository**
 2. **Install dependencies**: `uv sync --group dev`
-3. **Install pre-commit hooks** (if available)
+3. **Install pre-commit hooks** (one-time, after step 2):
+
+   ```bash
+   uv run pre-commit install
+   ```
+
+   Hooks run `ruff check --fix` and `ruff format` on staged Python files before
+   each commit (see `.pre-commit-config.yaml`).
+
 4. **Run tests** to ensure everything works
 
 It is recommended to use the `uv` project management solution for

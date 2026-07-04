@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Add in-repo pre-commit hooks (`ruff check --fix`, `ruff format`) via
+  `.pre-commit-config.yaml` and document one-time `uv run pre-commit install`
+  setup. (#84)
 - Move `CellpyError` / `NoDataFound` from `legacy/` to top-level
   `cellpycore.exceptions` (legacy re-export kept); expand the `CellpyCellCore`
   class docstring; add `ROADMAP.md` for planned features and open design
