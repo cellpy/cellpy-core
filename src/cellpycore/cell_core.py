@@ -393,6 +393,94 @@ class CellpyCellCore:
         logger.debug(f"(dt: {(time.time() - time_00):4.2f}s)")
         return data
 
+    def merge_core_data(
+        self,
+        left: Data,
+        right: Data,
+        *,
+        renumber_cycles: bool = True,
+        allow_duplicate_test_id: bool = False,
+    ) -> Data:
+        """Merge two ``Data`` objects via ``merge_data`` using this cell's schema.
+
+        Args:
+            left: First dataset.
+            right: Second dataset, appended after ``left``.
+            renumber_cycles: Offset right-side cycle numbers and carry cumulative
+                summary values forward when True (default).
+            allow_duplicate_test_id: Reassign colliding right-side ``test_id``
+                values when True.
+
+        Returns:
+            A new merged ``Data`` object. Inputs are not modified.
+        """
+        from cellpycore.merge import merge_data
+
+        return merge_data(
+            left,
+            right,
+            schema=self.schema,
+            renumber_cycles=renumber_cycles,
+            allow_duplicate_test_id=allow_duplicate_test_id,
+        )
+
+    def update_core_data(
+        self,
+        data: Data,
+        new_raw,
+        *,
+        nom_cap: float = 1.0,
+        refresh_derived: bool = True,
+        find_ir: bool = True,
+        current_conversion_factor: float = 1.0,
+        **kwargs,
+    ) -> Data:
+        """Incrementally update ``Data`` via ``update_data`` using this cell's schema.
+
+        Args:
+            data: Processed data to update.
+            new_raw: New raw rows to append.
+            nom_cap: Nominal capacity for per-step C-rate.
+            refresh_derived: When True (default), run ``c_rates_to_summary`` and
+                ``ir_to_summary`` after rebuilding the summary (mirrors
+                ``make_core_summary`` extras).
+            find_ir: Whether to add IR columns when ``refresh_derived`` is True.
+            current_conversion_factor: Current-unit factor for C-rate columns.
+            **kwargs: Forwarded to ``update_data`` / ``make_step_table``.
+
+        Returns:
+            A new updated ``Data`` object. The input is not modified.
+        """
+        import polars as pl
+
+        from cellpycore.merge import update_data
+
+        if not isinstance(new_raw, pl.DataFrame):
+            new_raw = pl.from_pandas(new_raw)
+
+        test_mode = _cycle_mode_to_test_mode(self.cycle_mode)
+        out = update_data(
+            data,
+            new_raw,
+            schema=self.schema,
+            nom_cap=nom_cap,
+            test_mode=test_mode,
+            **kwargs,
+        )
+
+        if refresh_derived:
+            from cellpycore import summarizers
+
+            out = summarizers.c_rates_to_summary(
+                out, self.schema, current_conversion_factor=current_conversion_factor
+            )
+            if find_ir:
+                raw_cols = out.raw.columns if hasattr(out.raw, "columns") else []
+                if self.schema.raw.internal_resistance in raw_cols:
+                    out = summarizers.ir_to_summary(out, self.schema)
+
+        return out
+
     def add_scaled_summary_columns(
         self,
         data: Data,

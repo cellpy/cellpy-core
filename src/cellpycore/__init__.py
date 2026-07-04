@@ -20,6 +20,7 @@ from cellpycore.config import (
     default_schema,
 )
 from cellpycore.exceptions import CellpyError, NoDataFound
+from cellpycore.merge import merge_data, update_data
 from cellpycore.summarizers import make_step_table, make_summary
 
 try:
@@ -41,4 +42,6 @@ __all__ = [
     "default_schema",
     "make_step_table",
     "make_summary",
+    "merge_data",
+    "update_data",
 ]
