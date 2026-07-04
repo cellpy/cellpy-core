@@ -402,8 +402,10 @@ def test_function_name_with_invalid_input_raises_exception():
 
 ### Documentation Requirements
 
-Initial documentation should use markdown format and should live in the docs folder.
-Keep in mind that we intend to implement `sphinx` in a not-too-far future.
+Documentation is written in markdown, lives in the docs folder, and is built
+with [Zensical](https://zensical.org) (config in `zensical.toml`; hosted on
+Read the Docs via `.readthedocs.yaml`). Preview locally with
+`uv run --group docs zensical serve`.
 
 - **All public APIs** must be documented
 - **Examples** should be provided for complex functions
