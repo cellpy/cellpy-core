@@ -255,3 +255,12 @@ Example — destructive op:
 ## Boundaries
 
 Code/commits/PRs: write normal. "stop caveman" or "normal mode": revert. Level persist until changed or session end.
+
+## Cursor Cloud specific instructions
+
+Pure Python library (`cellpycore`), `uv`-managed, Python 3.13. No servers/DB/network — "running the app" = the library pipeline `Data.from_raw_frame` -> `make_step_table` -> `make_summary`.
+
+- `uv` lives at `~/.local/bin` (on PATH via `~/.bashrc`). The startup update script runs `uv sync --all-extras --dev`; deps are ready when a session starts.
+- `uv` provisions Python 3.13 itself (system python is 3.12); always go through `uv run`, never bare `python`.
+- Standard commands (see `pyproject.toml` / `.github/workflows/simpletest.yml`): `uv run pytest`, `uv run ruff check`, `uv run ruff format --check`. Benchmarks are deselected by default; opt in with `uv run pytest -m benchmark`.
+- Golden/e2e fixtures are vendored parquet under `tests/data/`; e2e tests skip if those files are absent.
