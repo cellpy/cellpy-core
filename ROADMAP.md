@@ -20,6 +20,8 @@ Planned features and API additions not yet implemented in the library.
   `CellpyCellCore` is still missing. See
   `.issueflows/04-designs-and-guides/test-metadata-and-merging.md`.
 
+DONE
+
 ## Incremental summarization
 
 - **Update step/summary tables from new raw rows only** — Summarizers today reprocess the
@@ -28,6 +30,9 @@ Planned features and API additions not yet implemented in the library.
   summary incrementally instead of recomputing from scratch. Likely needs defined
   merge/append semantics on `Data`, stable row keys (`test_id`, cycle/step boundaries),
   and incremental paths in `make_step_table` / `make_summary` (or companion helpers).
+
+
+DONE
 
 ## Communication protocols & persistence (open decision)
 
