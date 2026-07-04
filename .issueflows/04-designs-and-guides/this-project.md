@@ -36,9 +36,12 @@ Run **both** check and format before opening a PR. CI runs `ruff check` and
 `ruff format --check` with no `--fix`; autofix locally, then re-run the check
 commands to confirm green.
 
-Optional: install [pre-commit](https://pre-commit.com/) and add a local hook that
-runs the same ruff commands — not configured in-repo yet, but a good guard if
-you commit often without running CI locally.
+Pre-commit hooks (`.pre-commit-config.yaml`) run the same ruff autofix locally
+before each commit. One-time setup after `uv sync --group dev`:
+
+```bash
+uv run pre-commit install
+```
 
 ## Conventions
 
