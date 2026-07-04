@@ -36,22 +36,22 @@ CORE_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = CORE_ROOT / "tests" / "data"
 CELLPY_REPO = Path(os.environ.get("CELLPY_REPO", CORE_ROOT.parent / "cellpy"))
 
-# Golden numbers for the canonical Arbin .res, mirrored from cellpy's own test
+# Golden numbers for the canonical cycler fixture, mirrored from cellpy's own test
 # suite (tests/test_cell_readers.py) so cellpy-core can assert cross-library
 # parity without re-running the instrument loader.
-ARBIN_GOLDEN = {"n_steps": 103, "n_cycles": 18, "summary_cyc1_data_point": 1457}
+CYCLER_CC_GOLDEN = {"n_steps": 103, "n_cycles": 18, "summary_cyc1_data_point": 1457}
 
 # (fixture name, path within the cellpy repo, cellpy.get kwargs). Empty kwargs
 # means "use cellreader.from_raw" (avoids the auto-summary seam).
 #
-# arbin_cc      - the canonical 18-cycle Arbin .res (needs an ODBC driver); the
-#                 cross-library golden oracle (103 steps / 18 cycles).
-# arbin_small   - a tiny 47-row Arbin SQL-H5 export (1 cycle, 3 steps, real
-#                 discharge current); no ODBC needed, ideal as a fast fixture.
+# cycler_cc    - the canonical 18-cycle fixture (sourced from an Arbin .res via
+#                ODBC in stage A); cross-library golden oracle (103 steps / 18 cycles).
+# cycler_small - a tiny 47-row export (1 cycle, 3 steps, real discharge current);
+#                no ODBC needed, ideal as a fast fixture.
 RAW_SOURCES = [
-    ("arbin_cc", "testdata/data/20160805_test001_45_cc_01.res", {}),
+    ("cycler_cc", "testdata/data/20160805_test001_45_cc_01.res", {}),
     (
-        "arbin_small",
+        "cycler_small",
         "testdata/data/20200624_test001_cc_01.h5",
         {"instrument": "arbin_sql_h5"},
     ),
@@ -93,7 +93,7 @@ def stage_a_export_raw() -> bool:
 
     steptypes_src = CELLPY_REPO / "testdata/data/steps.csv"
     if steptypes_src.is_file():
-        dst = DATA_DIR / "arbin_cc_steptypes_cellpy.csv"
+        dst = DATA_DIR / "cycler_cc_steptypes_cellpy.csv"
         shutil.copyfile(steptypes_src, dst)
         print(f"[stage A] copied {dst.name} (cellpy step-type golden)")
     else:
@@ -120,7 +120,7 @@ def stage_b_engine_snapshot() -> bool:
         )
         return False
 
-    raw_path = DATA_DIR / "arbin_cc_raw.parquet"
+    raw_path = DATA_DIR / "cycler_cc_raw.parquet"
     if not raw_path.is_file():
         print(f"[stage B] {raw_path.name} not found; run stage A first.")
         return False
@@ -133,7 +133,7 @@ def stage_b_engine_snapshot() -> bool:
     data.raw = raw
     core.make_core_step_table(data, nom_cap=1.0)
     steps = data.steps.reset_index(drop=True)
-    steps_out = DATA_DIR / "arbin_cc_steps_expected.parquet"
+    steps_out = DATA_DIR / "cycler_cc_steps_expected.parquet"
     steps.to_parquet(steps_out)
 
     # --- per-cycle summary ---
@@ -142,7 +142,7 @@ def stage_b_engine_snapshot() -> bool:
     core.make_core_step_table(data_s, nom_cap=1.0)
     core.make_core_summary(data_s, find_ir=True, find_end_voltage=True)
     summary = data_s.summary.reset_index(drop=True)
-    summary_out = DATA_DIR / "arbin_cc_summary_expected.parquet"
+    summary_out = DATA_DIR / "cycler_cc_summary_expected.parquet"
     summary.to_parquet(summary_out)
 
     n_steps = len(steps)
@@ -154,16 +154,16 @@ def stage_b_engine_snapshot() -> bool:
         f"[stage B] wrote {summary_out.name}  ({n_cycles} cycles, {summary.shape[1]} cols)"
     )
     print(
-        f"[stage B] golden check: n_steps={n_steps} (expect {ARBIN_GOLDEN['n_steps']}), "
-        f"max_cycle={max_cycle} (expect {ARBIN_GOLDEN['n_cycles']}), "
-        f"n_cycles={n_cycles} (expect {ARBIN_GOLDEN['n_cycles']}), "
-        f"summary_cyc1_data_point={cyc1_dp} (expect {ARBIN_GOLDEN['summary_cyc1_data_point']})"
+        f"[stage B] golden check: n_steps={n_steps} (expect {CYCLER_CC_GOLDEN['n_steps']}), "
+        f"max_cycle={max_cycle} (expect {CYCLER_CC_GOLDEN['n_cycles']}), "
+        f"n_cycles={n_cycles} (expect {CYCLER_CC_GOLDEN['n_cycles']}), "
+        f"summary_cyc1_data_point={cyc1_dp} (expect {CYCLER_CC_GOLDEN['summary_cyc1_data_point']})"
     )
     ok = (
-        n_steps == ARBIN_GOLDEN["n_steps"]
-        and max_cycle == ARBIN_GOLDEN["n_cycles"]
-        and n_cycles == ARBIN_GOLDEN["n_cycles"]
-        and cyc1_dp == ARBIN_GOLDEN["summary_cyc1_data_point"]
+        n_steps == CYCLER_CC_GOLDEN["n_steps"]
+        and max_cycle == CYCLER_CC_GOLDEN["n_cycles"]
+        and n_cycles == CYCLER_CC_GOLDEN["n_cycles"]
+        and cyc1_dp == CYCLER_CC_GOLDEN["summary_cyc1_data_point"]
     )
     if not ok:
         print("[stage B] WARNING: engine output does not match the cellpy goldens!")

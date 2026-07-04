@@ -68,7 +68,7 @@ headers/units. Defend it with tests, not vigilance:
   `HeadersStepTable` / `CellpyUnits`) equals `cellpy.parameters.internal_settings`
   field-by-field (tracked: jepegit/cellpy#378).
 - **Golden fixtures** as a cross-library oracle: cellpy-core already vendors
-  `tests/data/arbin_cc_*.parquet` and asserts cellpy's published goldens (103 steps / 18
+  `tests/data/cycler_cc_*.parquet` and asserts cellpy's published goldens (103 steps / 18
   cycles / cycle-1 `data_point` 1457). Extend as more of the core is ported.
 - Target the legacy bridge `OldCellpyCellCore` for the first integration so cellpy sees the
   headers/units it already expects (the seam is ~5 edit points, not a rewrite).

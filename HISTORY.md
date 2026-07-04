@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Reorganise legacy bridge, units, and test mock helpers into dedicated
+  subpackages (`legacy/`, `units/`, `testing/`): split implementation into
+  focused modules, update importers, and remove the old top-level modules. (#77)
+- Add pytest coverage reporting to CI: `pytest-cov` in the dev group,
+  `[tool.coverage.run]` config, and `--cov=cellpycore` in the test workflow. (#69)
+- Document the per-step `<signal>_<stat>` engine contract (B1) and default unset
+  `cycle_mode` to NORMAL via `_cycle_mode_to_test_mode`, so initialized and
+  uninitialized `CellpyCellCore` share the same polarity unless `"anode"` is set
+  explicitly. (#70)
+- Fix units fallback so `get_converter_to_specific` and
+  `nominal_capacity_as_absolute` accept explicit values or `CellMeta` instead of
+  crashing on bare `Data`; thread optional `cell_meta` through
+  `add_scaled_summary_columns`. (#68)
+- Move broken `selectors.py` helpers to bridge-only `legacy_selectors.py` with
+  `legacy_schema()` default and unit + golden tests. (#67)
+- Rename test-data fixture prefix from vendor-specific `arbin` to generic `cycler`
+  (files, tests, regen scripts, harmonized `source_type`, and docs). (#72)
 - Code-review cleanup and test completion (#66): drop unused dependencies
   (duckdb, duckdb-engine, sqlalchemy, narwhals) and the unconfigured
   uv-dynamic-versioning; fix the falsy-override bug so an explicit `0.0` in

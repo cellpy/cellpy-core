@@ -66,6 +66,7 @@ dev = [
     "matplotlib>=3.10.6",
     "marimo>=0.23.10",
     "pytest-benchmark>=5.2.3",
+    "pytest-cov>=7.1.0",
 ]
 
 [tool.pytest.ini_options]
@@ -77,6 +78,12 @@ addopts = "-v --tb=short -m 'not benchmark'"
 markers = [
     "benchmark: performance benchmarks (opt-in: pytest -m benchmark)",
 ]
+
+[tool.coverage.run]
+source = ["cellpycore"]
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.ruff]
 line-length = 88

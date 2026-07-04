@@ -10,7 +10,7 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from cellpycore import config, selectors, summarizers
+from cellpycore import config, summarizers
 from cellpycore.cell_core import CellpyCellCore, Data, OldCellpyCellCore
 from cellpycore.config import (
     CycleCols,
@@ -128,14 +128,6 @@ def test_no_module_header_globals():
         "units",
     ):
         assert not hasattr(summarizers, name), f"summarizers.{name} should not exist"
-    for name in ("headers_step_table", "headers_summary", "headers_normal"):
-        assert not hasattr(selectors, name), f"selectors.{name} should not exist"
-
-
-def test_no_legacy_selector_functions():
-    """The pandas selector pair was removed once cellpy migrated off it (#45)."""
-    for name in ("create_selector", "summary_selector_exluder"):
-        assert not hasattr(selectors, name), f"selectors.{name} should not exist"
 
 
 def test_schema_property_reflects_headers():
@@ -392,6 +384,94 @@ def test_make_summary_anode_flips_coulombic_columns():
         assert cd_anode[i] == pytest.approx(dc[i] - cc[i])
 
 
+# --- issue #70: stat-column contract + cycle_mode default --------------------
+_STAT_SUFFIXES = ("mean", "std", "min", "max", "first", "last", "delta")
+
+_STEP_TABLE_BASES = (
+    "datapoint_num",
+    "test_time",
+    "step_time",
+    "current",
+    "potential",
+    "charge_capacity",
+    "discharge_capacity",
+    "internal_resistance",
+)
+
+
+def test_step_table_stat_columns_match_stepcols_defaults():
+    """Per-step stat columns follow the fixed ``<base>_<stat>`` engine contract."""
+    schema = default_schema()
+    shdr = schema.step
+    data = Data()
+    data.raw = _build_raw(RawCols())
+
+    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    steps = data.steps
+
+    for base in _STEP_TABLE_BASES:
+        for stat in _STAT_SUFFIXES:
+            col = f"{base}_{stat}"
+            assert col in steps.columns
+            attr = f"{base}_{stat}"
+            if hasattr(shdr, attr):
+                assert getattr(shdr, attr) == col
+
+
+def test_default_cycle_mode_is_normal_convention():
+    """Fresh Data() with unset cycle_mode uses NORMAL CE via CellpyCellCore."""
+    nhdr = RawCols()
+    chdr = default_schema().cycle
+    data = Data()
+    data.raw = _build_cumulative_raw(nhdr)
+
+    core = CellpyCellCore()
+    core.data = data
+    assert core.cycle_mode is None
+
+    data = core.make_core_step_table(data, nom_cap=1.0)
+    data = core.make_core_summary(data)
+    s = data.summary
+
+    cc = s[chdr.charge_capacity].to_list()
+    dc = s[chdr.discharge_capacity].to_list()
+    ce = s[chdr.coulombic_efficiency].to_list()
+    cd = s[chdr.coulombic_difference].to_list()
+    for i in range(len(cc)):
+        assert ce[i] == pytest.approx(100.0 * dc[i] / cc[i])
+        assert cd[i] == pytest.approx(cc[i] - dc[i])
+
+
+def test_cycle_mode_anode_via_cellpy_cell_core():
+    """Explicit cycle_mode='anode' still selects INVERTED CE direction."""
+    nhdr = RawCols()
+    chdr = default_schema().cycle
+    data = Data()
+    data.raw = _build_cumulative_raw(nhdr)
+
+    core = CellpyCellCore()
+    core.data = data
+    core.cycle_mode = "anode"
+
+    data = core.make_core_step_table(data, nom_cap=1.0)
+    data = core.make_core_summary(data)
+    s = data.summary
+
+    cc = s[chdr.charge_capacity].to_list()
+    dc = s[chdr.discharge_capacity].to_list()
+    ce = s[chdr.coulombic_efficiency].to_list()
+    cd = s[chdr.coulombic_difference].to_list()
+    for i in range(len(cc)):
+        assert ce[i] == pytest.approx(100.0 * cc[i] / dc[i])
+        assert cd[i] == pytest.approx(dc[i] - cc[i])
+
+
+def test_initialized_and_uninitialized_core_share_cycle_mode_default():
+    """initialize=True vs False must not diverge on default polarity."""
+    assert CellpyCellCore(initialize=False).cycle_mode is None
+    assert CellpyCellCore(initialize=True).cycle_mode is None
+
+
 def test_c_rates_to_summary_native():
     """c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)."""
     nhdr = RawCols()
@@ -539,6 +619,33 @@ def test_native_add_scaled_summary_columns_end_to_end():
     grav = data.summary[f"{chdr.charge_capacity}_gravimetric"].to_list()
     for b, g in zip(base, grav):
         assert g == pytest.approx(10.0 * b)
+
+
+def test_native_add_scaled_summary_columns_with_cell_meta():
+    """Units fallback via ``cell_meta`` works without ``specific_converters``."""
+    pytest.importorskip("pint")
+
+    from cellpycore.metadata.models import CellMeta
+
+    cell = CellpyCellCore(initialize=False)
+    nhdr = cell.schema.raw
+    chdr = cell.schema.cycle
+
+    data = _data_with_raw(nhdr)
+    cell.make_core_step_table(data, nom_cap=1.0)
+    cell.make_core_summary(data)
+    cell.add_scaled_summary_columns(
+        data,
+        nom_cap_abs=1.0,
+        normalization_cycles=None,
+        specifics=["gravimetric"],
+        cell_meta=CellMeta(mass=2.0),
+    )
+
+    base = data.summary[chdr.charge_capacity].to_list()
+    grav = data.summary[f"{chdr.charge_capacity}_gravimetric"].to_list()
+    for b, g in zip(base, grav):
+        assert g == pytest.approx(500.0 * b)
 
 
 # --- issue #41: per-test key + composite group keys -------------------------
@@ -858,12 +965,12 @@ def test_step_table_skips_ref_potential_when_absent():
 
 def test_mock_raw_data_carries_ref_potential():
     """The synthetic mock raw fixture exercises the ref_potential column."""
-    from cellpycore._helpers import create_raw_data
+    from cellpycore.testing.mock_data import create_raw_data
 
     nhdr = RawCols()
     raw = create_raw_data()
     assert nhdr.ref_potential in raw.columns
-    # constant offset vs the cell potential (see _helpers.create_raw_data)
+    # constant offset vs the cell potential (see testing.mock_data.create_raw_data)
     diff = (raw[nhdr.potential] - raw[nhdr.ref_potential]).unique().to_list()
     assert diff == pytest.approx([0.2])
 

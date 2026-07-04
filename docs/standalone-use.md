@@ -23,7 +23,7 @@ from cellpycore.cell_core import CellpyCellCore, Data
 
 core = CellpyCellCore()
 core.data = Data.from_raw_frame(my_polars_frame)  # validates against config.RawCols
-core.cycle_mode = "standard"                      # see the cycle-mode trap below
+core.cycle_mode = "anode"                          # half-cells only; unset = normal
 
 data = core.make_core_step_table(
     core.data,
@@ -50,16 +50,19 @@ a polars `DataFrame` carrying the load-bearing `RawCols` columns with sane
 dtypes and reports every problem in a single error. Pass `validate=False` to
 skip the checks (e.g. in a hot loop after the shape is known-good).
 
-### The cycle-mode trap
+### The cycle-mode default
 
 `cycle_mode` decides the coulombic-efficiency direction (and which capacity
-column "comes first"). For historical cellpy reasons the metadata placeholder
-on a fresh `Data` defaults to `"anode"` (anode half-cell, inverted convention)
-— **not** `"standard"`. Set it explicitly:
+column "comes first"). A fresh ``Data`` leaves ``cycle_mode`` unset
+(``None``), which the engine treats as **normal** convention — set it
+explicitly for half-cells:
 
+- unset / `"standard"` / `"cathode"` / `"full_cell"` / … — normal convention
+  (`CE = 100 * discharge / charge`).
 - `"anode"` — anode half-cell (inverted; `CE = 100 * charge / discharge`).
-- anything else (`"standard"`, `"cathode"`, `"full_cell"`, …) — normal
-  convention (`CE = 100 * discharge / charge`).
+
+Legacy cellpy historically defaulted to `"anode"`; the cellpy bridge must set
+that when loading real cells. Do not rely on implicit defaults across layers.
 
 ### Useful knobs
 
@@ -99,8 +102,9 @@ handling done for you, and the IR / C-rate orchestration
 - **Order matters.** Step table before summary — `make_summary` reads
   `data.steps`.
 - **No metadata required.** `Data()` ships a `MockMetaTestDependent`
-  placeholder; the engine never needs populated cell metadata. Only
-  `cycle_mode` changes the math (CE direction — see the trap above).
+  placeholder; the engine never needs populated cell metadata. Only an
+  explicit `cycle_mode` (e.g. `"anode"`) changes the math (CE direction — see
+  above).
 - **Units by value.** The core never sees unit objects. The caller precomputes
   plain floats: `nom_cap` / `nom_cap_abs`, `current_conversion_factor`, and the
   `specific_converters` mapping. The pint-backed helpers in `cellpycore.units`
