@@ -22,39 +22,38 @@ merge it"). A branch keeps history, issues/PRs, tags and CI unified.
 git -C ../cellpy worktree add ../cellpy-integration 377-core-seam
 ```
 
-## 2. Local dev wiring (uv path source)
+## 2. Local dev wiring (PyPI pin + editable overlay)
 
-`cellpy` already depends on core via a **git** reference (the release/consumer truth):
+`cellpy` depends on core via a **PyPI pin** (the release/consumer truth):
 
 ```toml
 # cellpy/pyproject.toml -> [project.dependencies]
-"cellpycore @ git+https://github.com/cellpy/cellpy-core.git@main",
+"cellpycore==0.1.4",
 ```
 
-For day-to-day development, add a **local editable override** so edits in the sibling
-working copy are picked up immediately — no commit/push/re-pin cycle:
+For day-to-day dual-repo development, install the sibling checkout **editable after
+sync** — do **not** commit a `[tool.uv.sources]` path override (Dependabot cannot
+regenerate `uv.lock` when a sibling path is required):
 
-```toml
-# cellpy/pyproject.toml
-[tool.uv.sources]
-cellpycore = { path = "../cellpy-core", editable = true }
+```bash
+cd ../cellpy
+uv sync --no-sources
+uv pip install -e ../cellpy-core
+# or: scripts/dev_sync.sh
 ```
 
 Key properties:
 
-- **Two sources of truth, on purpose.** `[tool.uv.sources]` is **not** written into the
-  built wheel metadata. A released/installed `cellpy` still uses the `git+https…@<ref>`
-  reference in `[project.dependencies]`; the path source only applies inside this
-  workspace. (`[tool.hatch.metadata] allow-direct-references = true` is what permits the
-  direct git reference.)
-- **`editable = true`** → core is an editable install; since core is pure Python, changes
-  are live without reinstall.
+- **PyPI pin is consumer truth.** The lockfile is generated with `UV_NO_SOURCES=1 uv lock`
+  so CI, releases, and Dependabot resolve `cellpycore` from PyPI.
+- **Editable overlay is local-only.** `uv pip install -e ../cellpy-core` replaces the
+  PyPI install in `.venv`; since core is pure Python, changes are live without reinstall.
 - **Relative path** `../cellpy-core` matches the `…/cellpy` + `…/cellpy-core` sibling
   layout.
-- **Pin for releases.** Before tagging a `cellpy` release, change `@main` to a specific
-  cellpy-core **tag/commit** so the release maps to a known core revision.
-- **Ad-hoc equivalents:** `uv add --editable ../cellpy-core` (edits pyproject + lock) or a
-  one-off `uv pip install -e ../cellpy-core`.
+- **Pin for releases.** Before tagging a `cellpy` release, bump the exact `==` pin to the
+  intended cellpy-core PyPI version, then `UV_NO_SOURCES=1 uv lock && uv sync --no-sources`.
+- **Optional local override:** developers may add `[tool.uv.sources]` with a path locally
+  (uncommitted) if they prefer `uv sync` alone — never commit it.
 
 Python floors already agree (`requires-python = ">=3.13"` in both), so nothing blocks the
 wiring.
