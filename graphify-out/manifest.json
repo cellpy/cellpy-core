@@ -1,246 +1,932 @@
 {
-  "C:\\scripting\\cellpy-core\\dev\\check_polars.py": {
-    "mtime": 1783076787.8010132,
-    "hash": "22ed6bea0a66c9a895c70c239e82c42c"
+  "/home/jepe/scripting/cellpy-core/tests/test_config_columns.py": {
+    "mtime": 1783077810.7497098,
+    "ast_hash": "e7c29963cb6d9a6313aae2a9e966a686",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\dev\\col_structure_development.py": {
-    "mtime": 1783076787.8079662,
-    "hash": "32a79032dfd2520ebc3780ce7690acc6"
+  "/home/jepe/scripting/cellpy-core/tests/test_import.py": {
+    "mtime": 1783077810.7497098,
+    "ast_hash": "e49bfc9e96130dd7eb71e4bb2fc35b33",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\dev\\demo_mock_data.py": {
-    "mtime": 1783092241.4171798,
-    "hash": "797ca942364f5d059e06f80c3baf682a"
+  "/home/jepe/scripting/cellpy-core/tests/test_golden.py": {
+    "mtime": 1783152322.9293556,
+    "ast_hash": "00e9e7eaeca6fcdf9a0d13d55febce46",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\dev\\make_harmonized_raw.py": {
-    "mtime": 1783081001.5860884,
-    "hash": "ffccdb5d3b08179fb5dd6a994094549a"
+  "/home/jepe/scripting/cellpy-core/tests/test_creation.py": {
+    "mtime": 1783152322.9293556,
+    "ast_hash": "370c961db4e2c7e0b3babe1d02ed9ddf",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\dev\\regenerate_test_data.py": {
-    "mtime": 1783081001.588965,
-    "hash": "ba2bb4d6480ec35c380d07ede25d0b63"
+  "/home/jepe/scripting/cellpy-core/tests/__init__.py": {
+    "mtime": 1783077810.74571,
+    "ast_hash": "2f537e73f68defa6373cfac2d5d229f9",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\dev\\view_test_data.py": {
-    "mtime": 1783076787.8183875,
-    "hash": "381707e3244adb4962ff65e4fc4e4079"
+  "/home/jepe/scripting/cellpy-core/tests/test_schema.py": {
+    "mtime": 1783152322.9333556,
+    "ast_hash": "be7e2a6836eba7ec1aa2cf1126dab730",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\cell_core.py": {
-    "mtime": 1783092261.1576765,
-    "hash": "f175e25b9f96fe98af1445df7b99f2b7"
+  "/home/jepe/scripting/cellpy-core/tests/test_metadata.py": {
+    "mtime": 1783077810.7497098,
+    "ast_hash": "99f50b43036087566a87c8de4c8e3291",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\config.py": {
-    "mtime": 1783092246.7154655,
-    "hash": "d126771d6c3562a212fefdf5a2e36454"
+  "/home/jepe/scripting/cellpy-core/tests/test_legacy_selectors.py": {
+    "mtime": 1783152322.9333556,
+    "ast_hash": "0ae747f96ebca7bcdaf839eb55dc020c",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\extractors.py": {
-    "mtime": 1783076787.8558426,
-    "hash": "b8a0980e0461de468accbc553c0decc5"
+  "/home/jepe/scripting/cellpy-core/tests/test_header_mapping.py": {
+    "mtime": 1783152322.9293556,
+    "ast_hash": "7a913d680153084517b4e882bf836b65",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\settings_base.py": {
-    "mtime": 1783076787.8667142,
-    "hash": "06d106e9081984b20c222fe899093b00"
+  "/home/jepe/scripting/cellpy-core/tests/test_units_converters.py": {
+    "mtime": 1783152322.9333556,
+    "ast_hash": "489c08e9a10128196cf0fde6335b7452",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\summarizers.py": {
-    "mtime": 1783091639.7902982,
-    "hash": "8da6428e96854cb3597556e7402b4f4f"
+  "/home/jepe/scripting/cellpy-core/tests/conftest.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "c98a122ca2e1676e54e46d43f2d0e333",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\timestamps.py": {
-    "mtime": 1783076787.8703523,
-    "hash": "247aca7786ee5249aa1553e990d36071"
+  "/home/jepe/scripting/cellpy-core/tests/test_benchmarks.py": {
+    "mtime": 1783152322.9293556,
+    "ast_hash": "47ce1b536180732bb7ffdb0d2902f0f8",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\__init__.py": {
-    "mtime": 1783092244.229037,
-    "hash": "54b1e28f62221ff83302b4e89f9cc4f3"
+  "/home/jepe/scripting/cellpy-core/tests/test_timestamps.py": {
+    "mtime": 1783077810.7497098,
+    "ast_hash": "32f3038033a88758540dfb9818c1d6fc",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\legacy\\exceptions.py": {
-    "mtime": 1783092394.246458,
-    "hash": "9cfbc363381062792e8ca0022d42c187"
+  "/home/jepe/scripting/cellpy-core/tests/test_units_optional.py": {
+    "mtime": 1783152322.9333556,
+    "ast_hash": "1ad46b364de665836481842eca7997c4",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\legacy\\headers.py": {
-    "mtime": 1783092400.6980312,
-    "hash": "8943ce407fbf4fe62c87e30b9dd650f1"
+  "/home/jepe/scripting/cellpy-core/tests/test_harmonized_fixture.py": {
+    "mtime": 1783152322.9293556,
+    "ast_hash": "ca19ca10674d3cd2d5f25c72cca60879",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\legacy\\limits.py": {
-    "mtime": 1783092395.1298957,
-    "hash": "fc29a917877ff9eac555298aad20606b"
+  "/home/jepe/scripting/cellpy-core/tests/test_exclude_types.py": {
+    "mtime": 1783077810.7497098,
+    "ast_hash": "57e2f4df4ab3466d276bd119a0881c1f",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\legacy\\mapping.py": {
-    "mtime": 1783076787.8578575,
-    "hash": "9e3271cb780de400e3c01834ca015dab"
+  "/home/jepe/scripting/cellpy-core/tests/test_limits.py": {
+    "mtime": 1783077810.7497098,
+    "ast_hash": "e2bc4379e656496891f0e1c973a1ae28",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\legacy\\meta.py": {
-    "mtime": 1783092395.596609,
-    "hash": "be115fa4bed56371c132fdedd3a3a513"
+  "/home/jepe/scripting/cellpy-core/tests/test_e2e.py": {
+    "mtime": 1783152322.9293556,
+    "ast_hash": "4385ec73ec4c6e3c31b89f754261526d",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\legacy\\mock_core.py": {
-    "mtime": 1783092402.150218,
-    "hash": "c5fd99e2bb43f40d62b6a6b8530f3d6f"
+  "/home/jepe/scripting/cellpy-core/dev/view_test_data.py": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "381707e3244adb4962ff65e4fc4e4079",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\legacy\\selectors.py": {
-    "mtime": 1783087630.4679413,
-    "hash": "03d672ea794e32f551ffe766bce6bdef"
+  "/home/jepe/scripting/cellpy-core/dev/regenerate_test_data.py": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "ba2bb4d6480ec35c380d07ede25d0b63",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\legacy\\__init__.py": {
-    "mtime": 1783092416.383329,
-    "hash": "3ba7faf24e6daaf24d57dd2928f6ae9b"
+  "/home/jepe/scripting/cellpy-core/dev/check_polars.py": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "22ed6bea0a66c9a895c70c239e82c42c",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\metadata\\io.py": {
-    "mtime": 1782376758.101906,
-    "hash": "ba46ae222145e7feb2810b3b43ab1e62"
+  "/home/jepe/scripting/cellpy-core/dev/col_structure_development.py": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "32a79032dfd2520ebc3780ce7690acc6",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\metadata\\models.py": {
-    "mtime": 1782376758.1043944,
-    "hash": "4e097f78a2f32f8cf8cc693106238db7"
+  "/home/jepe/scripting/cellpy-core/dev/make_harmonized_raw.py": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "ffccdb5d3b08179fb5dd6a994094549a",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\metadata\\__init__.py": {
-    "mtime": 1783076787.860014,
-    "hash": "83f89a80c4a0b35de9cf71b1e92eddcd"
+  "/home/jepe/scripting/cellpy-core/dev/demo_mock_data.py": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "797ca942364f5d059e06f80c3baf682a",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\testing\\mock_data.py": {
-    "mtime": 1783092217.7052577,
-    "hash": "8dae08285af5bce4e2a0f52fe84b2d45"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/config.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "d126771d6c3562a212fefdf5a2e36454",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\testing\\__init__.py": {
-    "mtime": 1783092216.2823048,
-    "hash": "be8416d0079c5793c00927e19833a3d5"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/__init__.py": {
+    "mtime": 1783154281.6329777,
+    "ast_hash": "c62744faef8782c090287204c3dcf513",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\units\\converters.py": {
-    "mtime": 1783092391.2424786,
-    "hash": "8fed97b79c7b7190256604326ed09565"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/summarizers.py": {
+    "mtime": 1783154282.2529774,
+    "ast_hash": "9df21221fb4135415a64ac38acc13537",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\units\\spec.py": {
-    "mtime": 1783092384.598318,
-    "hash": "9ce1a044f4719d319336dc103b92bddf"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/settings_base.py": {
+    "mtime": 1783077810.74571,
+    "ast_hash": "06d106e9081984b20c222fe899093b00",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\src\\cellpycore\\units\\__init__.py": {
-    "mtime": 1783092391.6836264,
-    "hash": "9c4ade3225811426cf90496be253f39d"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/exceptions.py": {
+    "mtime": 1783154281.6289775,
+    "ast_hash": "20c995eaef25602f82149b3c3f0babe4",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\conftest.py": {
-    "mtime": 1783092260.929025,
-    "hash": "c98a122ca2e1676e54e46d43f2d0e333"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/extractors.py": {
+    "mtime": 1783077810.74571,
+    "ast_hash": "b8a0980e0461de468accbc553c0decc5",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_benchmarks.py": {
-    "mtime": 1783081001.6122303,
-    "hash": "47ce1b536180732bb7ffdb0d2902f0f8"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/timestamps.py": {
+    "mtime": 1783077810.74571,
+    "ast_hash": "247aca7786ee5249aa1553e990d36071",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_config_columns.py": {
-    "mtime": 1783076787.881833,
-    "hash": "e7c29963cb6d9a6313aae2a9e966a686"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/cell_core.py": {
+    "mtime": 1783154282.0409775,
+    "ast_hash": "df0cd9b0acfa80625075876243057929",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_creation.py": {
-    "mtime": 1783092260.929025,
-    "hash": "370c961db4e2c7e0b3babe1d02ed9ddf"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/testing/__init__.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "be8416d0079c5793c00927e19833a3d5",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_e2e.py": {
-    "mtime": 1783081001.6142244,
-    "hash": "4385ec73ec4c6e3c31b89f754261526d"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/testing/mock_data.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "8dae08285af5bce4e2a0f52fe84b2d45",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_exclude_types.py": {
-    "mtime": 1783076787.8853567,
-    "hash": "57e2f4df4ab3466d276bd119a0881c1f"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/units/spec.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "9ce1a044f4719d319336dc103b92bddf",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_golden.py": {
-    "mtime": 1783087630.4732568,
-    "hash": "00e9e7eaeca6fcdf9a0d13d55febce46"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/units/__init__.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "9c4ade3225811426cf90496be253f39d",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_harmonized_fixture.py": {
-    "mtime": 1783081001.618224,
-    "hash": "ca19ca10674d3cd2d5f25c72cca60879"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/units/converters.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "8fed97b79c7b7190256604326ed09565",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_header_mapping.py": {
-    "mtime": 1783092261.1576765,
-    "hash": "7a913d680153084517b4e882bf836b65"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/legacy/selectors.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "03d672ea794e32f551ffe766bce6bdef",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_import.py": {
-    "mtime": 1783076787.8897276,
-    "hash": "e49bfc9e96130dd7eb71e4bb2fc35b33"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/legacy/__init__.py": {
+    "mtime": 1783154281.8889775,
+    "ast_hash": "c57398695a4c6ab0f34fd381b1432b84",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_legacy_selectors.py": {
-    "mtime": 1783092261.1576765,
-    "hash": "0ae747f96ebca7bcdaf839eb55dc020c"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/legacy/limits.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "fc29a917877ff9eac555298aad20606b",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_limits.py": {
-    "mtime": 1783076787.8897276,
-    "hash": "e2bc4379e656496891f0e1c973a1ae28"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/legacy/headers.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "8943ce407fbf4fe62c87e30b9dd650f1",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_metadata.py": {
-    "mtime": 1782376758.105394,
-    "hash": "99f50b43036087566a87c8de4c8e3291"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/legacy/mapping.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "9e3271cb780de400e3c01834ca015dab",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_schema.py": {
-    "mtime": 1783092242.0789468,
-    "hash": "be7e2a6836eba7ec1aa2cf1126dab730"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/legacy/meta.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "be115fa4bed56371c132fdedd3a3a513",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_timestamps.py": {
-    "mtime": 1782463891.2938235,
-    "hash": "32f3038033a88758540dfb9818c1d6fc"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/legacy/mock_core.py": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "c5fd99e2bb43f40d62b6a6b8530f3d6f",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_units_converters.py": {
-    "mtime": 1783089059.346113,
-    "hash": "489c08e9a10128196cf0fde6335b7452"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/metadata/models.py": {
+    "mtime": 1783077810.74571,
+    "ast_hash": "4e097f78a2f32f8cf8cc693106238db7",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\test_units_optional.py": {
-    "mtime": 1783092429.8238554,
-    "hash": "1ad46b364de665836481842eca7997c4"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/metadata/__init__.py": {
+    "mtime": 1783077810.74571,
+    "ast_hash": "83f89a80c4a0b35de9cf71b1e92eddcd",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\__init__.py": {
-    "mtime": 1783076787.8703523,
-    "hash": "2f537e73f68defa6373cfac2d5d229f9"
+  "/home/jepe/scripting/cellpy-core/src/cellpycore/metadata/io.py": {
+    "mtime": 1783077810.74571,
+    "ast_hash": "ba46ae222145e7feb2810b3b43ab1e62",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\AGENTS.md": {
-    "mtime": 1783022342.101908,
-    "hash": "7a39a20dddacd1c2c4f9a24b8b625907"
+  "/home/jepe/scripting/cellpy-core/.vscode/settings.json": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "4e8d88920c3328a1f8fdc599870e5df9",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\HISTORY.md": {
-    "mtime": 1783091817.5799646,
-    "hash": "c07e27daa3c3fa23d7d240cfda09e3e0"
+  "/home/jepe/scripting/cellpy-core/AGENTS.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "7a39a20dddacd1c2c4f9a24b8b625907",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\README.md": {
-    "mtime": 1783076787.8010132,
-    "hash": "af8a31090106af189612454f64bc26af"
+  "/home/jepe/scripting/cellpy-core/README.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "af8a31090106af189612454f64bc26af",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\docs\\data-object-definition.md": {
-    "mtime": 1781377090.3656018,
-    "hash": "5ed76d31fa63fcf1d49cabb6ba71dff8"
+  "/home/jepe/scripting/cellpy-core/HISTORY.md": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "39d6012d1dc3b05c061603499e87a206",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\docs\\development.md": {
-    "mtime": 1759747504.263098,
-    "hash": "6fae96da423f8f7a371573891a915eb2"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/grill-me/SKILL.md": {
+    "mtime": 1783077814.861709,
+    "ast_hash": "288a65d8b148e76a0d56f3b8aa5615d5",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\docs\\functionality.md": {
-    "mtime": 1759758025.1171713,
-    "hash": "3927130f195046efbb6e56e95c28bad6"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-graphify/SKILL.md": {
+    "mtime": 1783077814.8577092,
+    "ast_hash": "98c2485a29c052abdc5af2c90a5e937c",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\docs\\issue-workflow.md": {
-    "mtime": 1783085914.7813883,
-    "hash": "73315510f482a4fdc158dd523a4570e3"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-pause/SKILL.md": {
+    "mtime": 1783077814.849709,
+    "ast_hash": "1b28093fc43f082627539cc506f04b58",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\docs\\standalone-use.md": {
-    "mtime": 1783091639.758927,
-    "hash": "339f27363d431cd56dec14d52f4dd1e4"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/caveman/SKILL.md": {
+    "mtime": 1783077814.861709,
+    "ast_hash": "92ea5293b6d57b46ca9439a7aab38114",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\docs\\data_format_specifications\\cycle_table.md": {
-    "mtime": 1783002593.1535895,
-    "hash": "0adfa996ee5cee9114da4bf9ddb9fc5f"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-history-update/SKILL.md": {
+    "mtime": 1783077814.8577092,
+    "ast_hash": "756a7c03261f311a241d6c434675b134",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\docs\\data_format_specifications\\harmonized_raw.md": {
-    "mtime": 1783081001.5923326,
-    "hash": "3a7a603f22fd87cbc99622cf7f1a5e23"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-start/SKILL.md": {
+    "mtime": 1783077814.845709,
+    "ast_hash": "0f6c449d0b9b1f8de79006e12978f45e",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\docs\\data_format_specifications\\step_table.md": {
-    "mtime": 1783074018.0208473,
-    "hash": "d5c96e566b18789ca7c0bac6d6f2b133"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-cleanup/SKILL.md": {
+    "mtime": 1783077814.849709,
+    "ast_hash": "4102e8a3a09c888c259fe6e25ab789a2",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\local\\data orchestration strategy.md": {
-    "mtime": 1781376050.9664407,
-    "hash": "442780bdad6c727a668d92e3f2f824a6"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-close/SKILL.md": {
+    "mtime": 1783077814.849709,
+    "ast_hash": "856ac8709f9edfb0ab5debe7cb2d617a",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\tests\\data\\README.md": {
-    "mtime": 1783081001.5943322,
-    "hash": "c83c4af2fbe774d128f9babdac0bf478"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-status/SKILL.md": {
+    "mtime": 1783077814.8537092,
+    "ast_hash": "a9ae0e956059b616ea14abc93908b557",
+    "semantic_hash": ""
   },
-  "C:\\scripting\\cellpy-core\\local\\media\\image1.png": {
-    "mtime": 1781376030.0823224,
-    "hash": "51bde718384cd71bf3c15b8ec4235575"
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow/SKILL.md": {
+    "mtime": 1783077814.833709,
+    "ast_hash": "f66985638cac60bd19af21af83187747",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-comments/SKILL.md": {
+    "mtime": 1783077814.8417091,
+    "ast_hash": "9f0b3617cef04451350df5eda942fc2c",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-pick/SKILL.md": {
+    "mtime": 1783077814.8377092,
+    "ast_hash": "374e5415cceb1e200d1b71cb710370b9",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-fix/SKILL.md": {
+    "mtime": 1783077814.8537092,
+    "ast_hash": "9b92d8b43c454c988e788b266aadd746",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-plan/SKILL.md": {
+    "mtime": 1783077814.845709,
+    "ast_hash": "d3ccc48d134f3af3941bb79fe618e8a3",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-yolo/SKILL.md": {
+    "mtime": 1783077814.8537092,
+    "ast_hash": "d3328ff9da8fb269b6706bf581f6e48f",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-version-bump/SKILL.md": {
+    "mtime": 1783077814.8577092,
+    "ast_hash": "27329cdda768c42a74cca5979b2f3ee7",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.cursor/skills/iflow-init/SKILL.md": {
+    "mtime": 1783077814.8417091,
+    "ast_hash": "27faefe22010abdc34e808dd0140ab16",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/tests/data/README.md": {
+    "mtime": 1783152322.9213555,
+    "ast_hash": "c83c4af2fbe774d128f9babdac0bf478",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/docs/development.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "6fae96da423f8f7a371573891a915eb2",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/docs/functionality.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "3927130f195046efbb6e56e95c28bad6",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/docs/standalone-use.md": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "339f27363d431cd56dec14d52f4dd1e4",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/docs/data-object-definition.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "5ed76d31fa63fcf1d49cabb6ba71dff8",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/docs/issue-workflow.md": {
+    "mtime": 1783077814.8777092,
+    "ast_hash": "23d9b08712e883e8218b61536a6caeea",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/docs/data_format_specifications/harmonized_raw.md": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "3a7a603f22fd87cbc99622cf7f1a5e23",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/docs/data_format_specifications/step_table.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "d5c96e566b18789ca7c0bac6d6f2b133",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/docs/data_format_specifications/cycle_table.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "0adfa996ee5cee9114da4bf9ddb9fc5f",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/cellpy-core-integration-into-cellpy.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "ebfebd0e5a59dbf327edfcc2fc05f4dc",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/column-headers-review.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "08457a9e62831ca8b49c1d909fd297e9",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/cellpy-core-migration.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "acaf84b6951b14bf10cf599bae46ce54",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/selector-dead-code-deferral.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "26ba7580648adb632836054b68d214a0",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/test-data-and-fixtures.md": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "a6d655012295beecc92ecd605ff68d16",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/release-procedure.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "875f7f80cc03375e04dcb298848f2755",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/summary-extractors.md": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "919fcd4948576766f962d3128ffc1d0c",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/test-metadata-and-merging.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "eb9be6a5ffbcb79f7fb684bc8617c2d4",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/step-table-polars-migration.md": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "82c0750b6a0a9da4c99d59e66ffac6d7",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/metadata-scaffolding.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "4ec5482c65e9d5d822fb538e45cc60ba",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/this-project.md": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "3b5ca664a1b49965cc503833f275eddc",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/cellpy-core-integration-roadmap.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "aad92e406da26481bd0eb588c4422799",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/04-designs-and-guides/code-review-2026-07.md": {
+    "mtime": 1783152322.9093556,
+    "ast_hash": "7e3eb3484f97ffcf29406830489a0d98",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue55_original.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "2178efa33a0100c01aca8168ac976a67",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue36_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "af4e1a5f69f8107f0980d9579ecab535",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue56_original.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "626ca89a1de830de7980749af3bb8e68",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue21_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "07906f3ae7d91175fdaf83f1be233f00",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue42_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "eb9f22f0592f220b9df04ade2484a2fd",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue12_original.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "af8a0336ed33cc39d1a0c3946b54a616",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue77_original.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "7856a10202a4c3b6a09c4cbebcf21c43",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue62_plan.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "82bef43d5a4189e9a1e6c787c9031022",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue36_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "6d70ed1c8d497946b022378b3b0163e9",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue29_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "a628b22cc32a247a8fadf0d102167b04",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue72_original.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "5b9a0f50d2a74ce8b453470686424d79",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue29_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "f8c6dac1ad26393d96d07c90f0b6c77e",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue70_plan.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "550ab1318a0a1549b542071dd9e19319",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue13_plan.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "5a777f44ec2ef18bed9555d0687aeb02",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue40_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "5556f427afe4fd790243e097ad9532cd",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue64_plan.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "f1cde93153d215af266bb89cf68356a2",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue21_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "5534e907efebfb613d4d5c3d4f370276",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue72_status.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "d1d7f96d41375ff508e4e0b81d4c67bf",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue23_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "87509473623de2d48ba4d9e768c8cdf8",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue45_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "cad37402a6a6f8d0249fbe93bdf08596",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue43_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "74041855943f618a6757d1b54de897e5",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue43_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "7a4e0f9c830963cf42a650672743f9a5",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue45_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "ada13399bd83507ed0280204545e32e5",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue62_original.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "35da9c67053c2ebacc4c600f72ebb90b",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue13_status.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "e98031b7d41feed33a9d4527ce0a5642",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue22_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "8e3292822d134a041178086d90680c93",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue43_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "aaaf2dbe54c28e02d73376f1ed338d78",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue77_status.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "2a950a83c8ca8144cbd53020743c6af1",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue68_status.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "6f016f16282c3d372b44b919dea54275",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue29_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "18b0a77e501e1ac5064b6d7e5eb68fbc",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue34_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "54300b5259e8d2138f21395375b3604a",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue44_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "7e36374bf2139207ca1d95c1149d697a",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue66_plan.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "600a007563cfe51d6236aafd0602843e",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue69_original.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "428dc68cf301d1201552589d83ce3358",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue50_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "51a7cb94fab2854ad842c75440162fde",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue50_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "232390a706fc0d5ae270521812720652",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue41_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "ac8a99cc64484bb60eba17b19686a9c8",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue54_status.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "57b5422b1a0c1b5b13badf800303c3f2",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue66_original.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "4e321cc145d7eeff8ed909e40360e6cb",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue66_status.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "4450db0e2a9594443fe18b2842f09625",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue44_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "3512ea81cfe8d7d722b04d6b490c6b89",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue45_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "4b938d4be03b05d7b22cb4bcfd4dbb3c",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue39_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "f265e3a4bbacc0840229a3aeb0f6d451",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue69_status.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "71684a678ecfdf50a6cceab1cb06b3ce",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue40_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "4887e5ee727f399858be2ecdbb4da367",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue70_status.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "c037eddd468147bbcf134452e56db864",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue62_status.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "aa684dd1e24c94b47d92d9509adb7aea",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue30_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "e591505109bd6a55404b59582a0033c5",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue56_status.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "21616aa5fd00613b31c90765e1cd31c7",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue10_status.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "f7c85a6b7e3bbbb27e2e316dc49149cc",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue77_plan.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "7f9f6d09c1fde25d0791f9669fb5035f",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue67_original.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "a37a61bb70c01c12585412b6e04a6154",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue22_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "70940590df295b8b5d845a29d436e734",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue21_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "cc097800be878ab2b3aa98b01c00ad9e",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue42_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "58ba538ee60f417205ae343a97bf0c7d",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue22_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "37c22207f48a4005980265c3e1da599b",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue56_plan.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "03311240e0c62b86f5dda38b139dfcc9",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue68_original.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "f4f9370374275a3b450f54cf428798ef",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue64_original.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "5bbd357a3f9e1bdf343533e5adbb5fb1",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue23_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "a861b5193b6e99b29632d9d20bc4fd74",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue55_plan.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "71bbb32a27901f4656ca91f27908ddd5",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue13_original.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "4d3e44ebe9506f1f3403bd9fa7daa3a7",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue54_plan.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "8e5e3e3b3ef7d62e85eecbfa7361e3f3",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue50_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "e98376d033f0b4ab3db351f67c67b922",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue12_status.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "304f89eda49e2cf0cc66b4ec65d068d6",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue23_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "f5dca529c63c62bc3a4bbda5bb5968a8",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue10_original.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "f8d2353b3a5bb7614bd3879f4b573287",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue41_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "871446882534cf5c99973ad77c6e6168",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue64_status.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "6d83d913495efbcbcededc866820d32c",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue69_plan.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "4bab10d139d98d342d59f8b3d98e3725",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue10_plan.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "6902e192456d13d27514310e5bd9b2ae",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue54_original.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "15e0b5722ba41c95a81277c211817107",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue32_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "bc706b27b8878b8007293ffee95a2419",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue39_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "0b85c0f381c850c9ce68418d512dbac4",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue32_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "c66df092302e9b98e16670137988755c",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue32_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "67e253979af6377a9d7e11a352dc0a6a",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue24_status.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "b43175d7f2da954bf80fb47ab51b7d6a",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue12_plan.md": {
+    "mtime": 1782046515.1652055,
+    "ast_hash": "b39fa8b3455bf2f132293ad31c006205",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue55_status.md": {
+    "mtime": 1783077810.73771,
+    "ast_hash": "e0c622f2bb31e56e5b930b83fcd50a52",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue67_status.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "6a67bcb7933c95b737b4edcc83d6802b",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue24_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "60a30bc8aa62747d257775c778464a70",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue34_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "8afbe10b0039236c6310dbfe08c11ac2",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue67_plan.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "de346dfd6af9ee1e40031541ef7d49c2",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue30_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "bdbd1b706b35eed17e0da096a5b60efc",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue70_original.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "1b064bbe58bba71856ee05a6495044e1",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue68_plan.md": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "811802fb410cdf3da3fecd020f60bd79",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue40_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "bf8685debbdfef2d45e0f40431e8a84d",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue30_plan.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "76eb5c32902fb65a4c0b50fbc9e14b78",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue41_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "3a754d0c25de6397ef164c435df91915",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue39_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "b981fe6449d2145b7b0da4af84ff1c58",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/03-solved-issues/issue42_original.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "24f11fdd1b7d5f133ae0cdd2cc78d8bc",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/00-tools/README.md": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "069be4a0f6a021c6d93957a5d6791b2e",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/01-current-issues/issue82_status.md": {
+    "mtime": 1783154284.128977,
+    "ast_hash": "b5c02e80464cf3102c680c7b4f6a9a69",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.issueflows/01-current-issues/issue82_original.md": {
+    "mtime": 1783154215.5809925,
+    "ast_hash": "79a6fb87f89454c8f0f2e9a04f554393",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.github/workflows/simpletest.yml": {
+    "mtime": 1783152322.9053557,
+    "ast_hash": "8157b11e465e67115201ccaa892a4a80",
+    "semantic_hash": ""
+  },
+  "/home/jepe/scripting/cellpy-core/.github/workflows/release.yml": {
+    "mtime": 1783077810.7337098,
+    "ast_hash": "f494f22e80d34341223cda9d09aeebf4",
+    "semantic_hash": ""
   }
 }

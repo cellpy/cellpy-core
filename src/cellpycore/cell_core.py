@@ -3,11 +3,9 @@ import logging
 import time
 from typing import Callable, Iterable, List, Optional, Sequence, TypeVar, Union
 
-# The CellpyCell (currently named CellpyCellCore) is the main class that the full cellpy package
-# should interact with.
-# The Data class can be accessed through the data property (setter and getter).
 from cellpycore import config
-from cellpycore.legacy import Meta, MockMetaTestDependent, NoDataFound, mapping
+from cellpycore.exceptions import NoDataFound
+from cellpycore.legacy import Meta, MockMetaTestDependent, mapping
 from cellpycore.metadata.models import CellMeta
 
 DataFrame = TypeVar("DataFrame")
@@ -160,9 +158,71 @@ class Data:
         return self.summary is not None
 
 
-class CellpyCellCore:  # Rename to CellpyCell when cellpy core is ready
-    # TODO: move the data object to slim
-    # TODO: copy div settings to slim
+class CellpyCellCore:
+    """Native orchestration class for the cellpy-core summarization engine.
+
+    Primary entry point for the full cellpy package and for slim standalone
+    consumers. Attach a native-schema polars raw frame to a ``Data`` object,
+    then run the step-table and summary pipeline without the legacy pandas /
+    ``Headers*`` bridge (``OldCellpyCellCore``).
+
+    The cell holds the column-header schema (``raw_cols``, ``cycle_cols``,
+    ``step_cols``), exposes ``data`` and ``cycle_mode``, and delegates
+    computation to ``summarizers`` through ``make_core_step_table``,
+    ``make_core_summary``, and ``add_scaled_summary_columns``. Subclass to
+    add application-specific helpers (cached views, loaders, etc.) while
+    reusing the engine wiring.
+
+    Attributes:
+        raw_cols: Raw-frame column names (default ``config.RawCols``).
+        cycle_cols: Per-cycle summary column names (default ``config.CycleCols``).
+        step_cols: Step-table column names (default ``config.StepCols``).
+        data: The attached ``Data`` instance (raises ``NoDataFound`` when unset).
+        cycle_mode: Charge/discharge convention (e.g. ``"anode"`` for  anodehalf-cells).
+            When ``data`` is attached, read/write goes through
+            ``data.meta_test_dependent``; otherwise the value is kept on the cell.
+        schema: Bundled ``config.Schema`` built from the three ``*_cols`` objects.
+
+    Note:
+        Processing order matters: run ``make_core_step_table`` before
+        ``make_core_summary`` (the summary engine reads ``data.steps``).
+        ``cycle_mode`` controls coulombic-efficiency direction and the default
+        capacity column in ``add_scaled_summary_columns``. Unset ``cycle_mode``
+        maps to normal convention; set ``"anode"`` explicitly for half-cells.
+
+    Example:
+        Basic pipeline::
+
+            from cellpycore import CellpyCellCore, Data
+
+            cell = CellpyCellCore()
+            cell.data = Data.from_raw_frame(raw_polars_frame)
+            cell.cycle_mode = "anode"  # anode half-cell; omit for normal convention
+
+            data = cell.make_core_step_table(cell.data, nom_cap=1.0)
+            data = cell.make_core_summary(data)
+            data = cell.add_scaled_summary_columns(
+                data,
+                nom_cap_abs=1.0,
+                normalization_cycles=None,
+                specific_converters={"gravimetric": f_g, "areal": f_a},
+            )
+
+        Subclassing for custom helpers::
+
+            from functools import cached_property
+
+            from cellpycore import CellpyCellCore
+
+            class MyCell(CellpyCellCore):
+                @cached_property
+                def tests(self):
+                    return build_tests_summary(self.data)
+
+            # Note: build_tests_summary is a custom function that builds a summary frame for the tests.
+            # It is currently not part of cellpy core, but is on the roadmap to be added.
+
+    """
 
     def __init__(
         self,

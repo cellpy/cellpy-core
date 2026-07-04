@@ -5,7 +5,7 @@ the cellpy<->core parity contract tests. Not part of the slim native API.
 """
 
 from cellpycore.config import STEP_TYPES  # noqa: F401  (re-exported; see note below)
-from cellpycore.legacy.exceptions import CellpyError, NoDataFound
+from cellpycore.exceptions import CellpyError, NoDataFound
 from cellpycore.legacy.headers import (
     BaseHeaders,
     HeadersNormal,

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Move `CellpyError` / `NoDataFound` from `legacy/` to top-level
+  `cellpycore.exceptions` (legacy re-export kept); expand the `CellpyCellCore`
+  class docstring; add `ROADMAP.md` for planned features and open design
+  questions. (#82)
 - Reorganise legacy bridge, units, and test mock helpers into dedicated
   subpackages (`legacy/`, `units/`, `testing/`): split implementation into
   focused modules, update importers, and remove the old top-level modules. (#77)

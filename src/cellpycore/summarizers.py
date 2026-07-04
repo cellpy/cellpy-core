@@ -7,8 +7,9 @@ import polars as pl
 
 from cellpycore.cell_core import Data
 from cellpycore.config import ResetGranularity, Schema, TestMode, default_schema
+from cellpycore.exceptions import NoDataFound
 from cellpycore.extractors import LastIRExtractor, SummaryExtractor
-from cellpycore.legacy import CellpyLimits, NoDataFound
+from cellpycore.legacy import CellpyLimits
 
 logger = logging.getLogger(__name__)
 
