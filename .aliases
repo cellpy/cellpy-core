@@ -54,3 +54,12 @@ release() {
     git push || return 1
     gh release create "$tag" --generate-notes
 }
+
+# `acp "commit message"` — stage all, commit, push
+acp() {
+    if [ $# -lt 1 ]; then
+        echo 'acp: usage: acp "commit message"'
+        return 1
+    fi
+    git add -A && git commit -m "$1" && git push
+}
