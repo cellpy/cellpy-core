@@ -4,9 +4,8 @@
 
 ### BDF format
 
-Read and export in BDF format; should it be a part of cellpy-core, or should it be a part of another repo (cellpy-io)?
-
-Idea: create a folder called scripts in cellpy-core repo and put it there for now. Then we can decide later where to finally put it.
+Resolved by issue #100: interim prototype lives under `scripts/bdf/`; decision and
+revisit criteria recorded in `.issueflows/04-designs-and-guides/bdf-io-placement.md`.
 
 
 ### Ordered headers

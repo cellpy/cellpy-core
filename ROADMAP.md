@@ -34,6 +34,14 @@ DONE
 
 DONE
 
+## BDF read/export (interim placement decided)
+
+- **Battery Data Format (BDF) adapter** — An experimental read/export prototype lives
+  under `scripts/bdf/` (standalone `cellpy_bdf` package, not part of the public API).
+  Long-term home (cellpy-io vs core extra) is an open question; decision, alternatives
+  and revisit criteria are recorded in
+  `.issueflows/04-designs-and-guides/bdf-io-placement.md` (issue #100).
+
 ## Communication protocols & persistence (open decision)
 
 - **Should core ship out-of-the-box I/O beyond compute?** Today `cellpycore.metadata.io`
