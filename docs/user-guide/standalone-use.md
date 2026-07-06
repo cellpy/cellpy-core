@@ -50,6 +50,25 @@ a polars `DataFrame` carrying the load-bearing `RawCols` columns with sane
 dtypes and reports every problem in a single error. Pass `validate=False` to
 skip the checks (e.g. in a hot loop after the shape is known-good).
 
+### Dtypes
+
+The authoritative column -> polars dtype map lives on the schema:
+`RawCols().dtype_map()` (one entry per column; `epoch_time_utc` is `Int64`
+nanoseconds, `mask` is `Boolean`, and so on — matching the
+[harmonized raw spec](../specifications/harmonized-raw.md)). When converting
+foreign raw data (e.g. a legacy pandas frame turned into polars), don't
+hand-maintain dtypes — cast through the helper first:
+
+```python
+from cellpycore import cast_raw_frame
+
+data = Data.from_raw_frame(cast_raw_frame(df))
+```
+
+`cast_raw_frame` strictly casts every mapped column present in the frame,
+skips absent optional columns, and passes extra columns (e.g. custom `aux_*`
+columns) through untouched.
+
 ### The cycle-mode default
 
 `cycle_mode` decides the coulombic-efficiency direction (and which capacity

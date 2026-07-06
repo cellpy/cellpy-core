@@ -34,6 +34,10 @@ Original cycler files are converted to this format, in order to unify the format
 
 Set up a flexible structure that allows for more columns.
 
+The *Data type* column below has a code home: `cellpycore.config.RawCols.dtype_map()`
+returns the authoritative column -> polars dtype map, and
+`cellpycore.cast_raw_frame` casts a frame to it (issue #97).
+
 | Column name | Data type | Unit | Sample data |  Comment |
 | --- | --- | --- | --- | --- |
 | datapoint_num | int | - | 1234 | index, corrected sequential datapoints |

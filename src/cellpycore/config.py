@@ -13,6 +13,10 @@ the settings. It should allow for both "dot notation" and "bracket notation" to 
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import polars as pl
 
 
 class TestMode(StrEnum):
@@ -631,6 +635,62 @@ class RawCols(Cols):
     aux_temperature_cell: str = "aux_temperature_cell"
     aux_temperature_chamber: str = "aux_temperature_chamber"
     aux_pressure_cell: str = "aux_pressure_cell"
+
+    def dtype_map(self) -> "dict[str, pl.DataType]":
+        """Return the authoritative column name -> polars dtype map.
+
+        Single source of truth for the polars dtype of every ``RawCols``
+        column, aligned with the spec table in
+        ``docs/specifications/harmonized-raw.md`` (ints ``Int64``, floats
+        ``Float64``, strings ``Utf8``, ``mask`` ``Boolean``,
+        ``epoch_time_utc`` ``Int64`` nanoseconds since the Unix epoch, UTC).
+
+        Instance method (not classmethod) so renamed schemas — subclass
+        overrides or ``FlexibleCols`` transforms — resolve through attribute
+        access, mirroring ``Cols.ordered_names``.
+
+        Returns:
+            dict[str, pl.DataType]: One entry per ``RawCols`` column
+            (required and optional alike), keyed by the resolved column name.
+
+        Example:
+            >>> import polars as pl
+            >>> RawCols().dtype_map()["epoch_time_utc"] is pl.Int64
+            True
+        """
+        import polars as pl
+
+        return {
+            self.datapoint_num: pl.Int64,
+            self.source_datapoint_num: pl.Int64,
+            self.mask: pl.Boolean,
+            self.epoch_time_utc: pl.Int64,
+            self.test_time: pl.Float64,
+            self.step_time: pl.Float64,
+            self.source_type: pl.Utf8,
+            self.source_uuid: pl.Utf8,
+            self.test_id: pl.Int64,
+            self.step_num: pl.Int64,
+            self.source_step_num: pl.Int64,
+            self.step_type: pl.Utf8,
+            self.step_type_detail: pl.Utf8,
+            self.step_mode: pl.Utf8,
+            self.cycle_num: pl.Int64,
+            self.cycle_type: pl.Utf8,
+            self.potential: pl.Float64,
+            self.current: pl.Float64,
+            self.cumulative_charge_capacity: pl.Float64,
+            self.cumulative_discharge_capacity: pl.Float64,
+            self.cumulative_charge_energy: pl.Float64,
+            self.cumulative_discharge_energy: pl.Float64,
+            self.step_charge_power: pl.Float64,
+            self.step_discharge_power: pl.Float64,
+            self.internal_resistance: pl.Float64,
+            self.ref_potential: pl.Float64,
+            self.aux_temperature_cell: pl.Float64,
+            self.aux_temperature_chamber: pl.Float64,
+            self.aux_pressure_cell: pl.Float64,
+        }
 
 
 def default_schema() -> Schema:

@@ -104,6 +104,54 @@ def validate_raw_frame(raw, raw_cols: Optional[config.Cols] = None) -> None:
         )
 
 
+def cast_raw_frame(raw, raw_cols: Optional[config.RawCols] = None):
+    """Cast a raw frame's columns to the native ``RawCols`` dtypes.
+
+    Convenience for consumers converting foreign raw data (e.g. legacy pandas
+    frames turned into polars) to the harmonized raw format: every column
+    present in ``raw`` that appears in ``raw_cols.dtype_map()`` is cast to its
+    authoritative dtype. Columns missing from the frame (optional columns) are
+    skipped, and extra columns (e.g. custom ``aux_*`` columns) pass through
+    untouched.
+
+    Casts are strict — a lossy or impossible cast raises instead of silently
+    coercing. Typical use is casting before the validating front door::
+
+        data = Data.from_raw_frame(cast_raw_frame(df))
+
+    Args:
+        raw: The raw frame to cast (must be a ``polars.DataFrame``).
+        raw_cols: The raw column-header schema providing ``dtype_map()``.
+            Defaults to the native ``config.RawCols``.
+
+    Returns:
+        A new ``polars.DataFrame`` with the covered columns cast.
+
+    Raises:
+        TypeError: If ``raw`` is not a ``polars.DataFrame``.
+        polars.exceptions.InvalidOperationError: If a cast fails (e.g. a
+            non-numeric string in an integer column).
+    """
+    import polars as pl
+
+    if not isinstance(raw, pl.DataFrame):
+        raise TypeError(
+            "raw must be a polars.DataFrame in the native cellpy-core schema "
+            f"(got {type(raw).__name__}); pandas frames with legacy headers "
+            "belong on the legacy bridge (OldCellpyCellCore)."
+        )
+
+    if raw_cols is None:
+        raw_cols = config.RawCols()
+
+    casts = [
+        pl.col(name).cast(dtype)
+        for name, dtype in raw_cols.dtype_map().items()
+        if name in raw.columns
+    ]
+    return raw.with_columns(casts) if casts else raw
+
+
 class Data:
     def __init__(self):
         self.meta_test_dependent: Meta = MockMetaTestDependent()

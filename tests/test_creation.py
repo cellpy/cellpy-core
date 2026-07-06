@@ -2,7 +2,7 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from cellpycore.cell_core import CellpyCellCore, Data
+from cellpycore.cell_core import CellpyCellCore, Data, cast_raw_frame
 from cellpycore.config import RawCols
 from cellpycore.legacy import MockMetaTestDependent
 from cellpycore.testing.mock_data import create_raw_data
@@ -69,3 +69,46 @@ def test_from_raw_frame_rejects_non_polars_input():
     df = create_raw_data().to_pandas()
     with pytest.raises(TypeError, match="polars.DataFrame"):
         Data.from_raw_frame(df)
+
+
+def test_cast_raw_frame_fixes_dtypes_then_validates():
+    cols = RawCols()
+    df = create_raw_data().with_columns(
+        pl.col(cols.epoch_time_utc).cast(pl.Float64),
+        pl.col(cols.cycle_num).cast(pl.Int32),
+    )
+    with pytest.raises(ValueError):
+        Data.from_raw_frame(df)
+
+    cast = cast_raw_frame(df)
+    assert cast.schema[cols.epoch_time_utc] == pl.Int64
+    assert cast.schema[cols.cycle_num] == pl.Int64
+    assert Data.from_raw_frame(cast).raw is cast
+
+
+def test_cast_raw_frame_skips_missing_and_keeps_extra_columns():
+    cols = RawCols()
+    df = create_raw_data().drop([cols.step_time])
+    df = df.with_columns(pl.lit("custom").alias("aux_note_operator"))
+
+    cast = cast_raw_frame(df)
+    assert cols.step_time not in cast.columns
+    assert cast.schema["aux_note_operator"] == pl.Utf8
+
+
+def test_cast_raw_frame_is_noop_on_conforming_frame():
+    df = create_raw_data()
+    assert_frame_equal(cast_raw_frame(df), df)
+
+
+def test_cast_raw_frame_strict_cast_failure_raises():
+    cols = RawCols()
+    df = create_raw_data().with_columns(pl.lit("not-a-number").alias(cols.cycle_num))
+    with pytest.raises(pl.exceptions.InvalidOperationError):
+        cast_raw_frame(df)
+
+
+def test_cast_raw_frame_rejects_non_polars_input():
+    df = create_raw_data().to_pandas()
+    with pytest.raises(TypeError, match="polars.DataFrame"):
+        cast_raw_frame(df)

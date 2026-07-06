@@ -39,48 +39,12 @@ class RawCols(Cols):
 
 ### Create a dtype map — [#97](https://github.com/cellpy/cellpy-core/issues/97)
 
-Currently we have to map the dtypes "by hand", e.g. by creating a function like this:
-
-```python
-
-
-def rawcols_dtype_map() -> dict[str, pl.DataType]:
-    c = RawCols()
-    return {
-        c.datapoint_num: pl.Int64,
-        c.source_datapoint_num: pl.Int64,
-        c.mask: pl.Boolean,
-        c.epoch_time_utc: pl.Int64,
-        c.test_time: pl.Float64,
-        c.step_time: pl.Float64,
-        c.source_type: pl.Utf8,
-        c.source_uuid: pl.Utf8,
-        c.test_id: pl.Int64,
-        c.step_num: pl.Int64,
-        c.source_step_num: pl.Int64,
-        c.step_type: pl.Utf8,
-        c.step_type_detail: pl.Utf8,
-        c.step_mode: pl.Utf8,
-        c.cycle_num: pl.Int64,
-        c.cycle_type: pl.Utf8,
-        c.potential: pl.Float64,
-        c.current: pl.Float64,
-        c.cumulative_charge_capacity: pl.Float64,
-        c.cumulative_discharge_capacity: pl.Float64,
-        c.cumulative_charge_energy: pl.Float64,
-        c.cumulative_discharge_energy: pl.Float64,
-        c.step_charge_power: pl.Float64,
-        c.step_discharge_power: pl.Float64,
-        c.internal_resistance: pl.Float64,
-        c.ref_potential: pl.Float64,
-        c.aux_temperature_cell: pl.Float64,
-        c.aux_temperature_chamber: pl.Float64,
-        c.aux_pressure_cell: pl.Float64,
-    }
-
-```
-
-Important to have a single point of truth. Consider adding to config.py. And also add helper functions (ala the validate_raw_frame function). Not sure how to structure it so that it will be easy maintainable. Hmmm....
+Resolved by issue #97: the authoritative column -> polars dtype map lives on the
+schema as `config.RawCols.dtype_map()`, and `cell_core.cast_raw_frame` (exported
+top-level) strictly casts a frame to it before `Data.from_raw_frame`. Key dtypes
+(`epoch_time_utc` Int64, `mask` Boolean) are pinned by tests. `StepCols` /
+`CycleCols` dtype maps were deliberately deferred (engine-produced outputs, not
+consumer input).
 
 ## Do we have an Issue?
 
