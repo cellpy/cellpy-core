@@ -1,6 +1,6 @@
 # Issue #98 — status
 
-- [ ] Done
+- [x] Done
 
 ## What's done
 
@@ -30,4 +30,7 @@
 
 ## Remaining work
 
-- `/iflow-close`: changelog/version decision, PR review + merge.
+- None. Closed via `/iflow-close`: `HISTORY.md` bullet added under
+  `[Unreleased]` (no version bump requested), PR
+  [#105](https://github.com/cellpy/cellpy-core/pull/105) open against `main`.
+  Post-merge: run `/iflow-cleanup`.
