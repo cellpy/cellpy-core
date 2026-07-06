@@ -12,6 +12,13 @@ All notable changes to this project will be documented in this file.
 - Split the per-step C-rate out of `make_step_table` into the separate opt-in
   `add_step_c_rate` function (breaking: the `add_c_rate` / `nom_cap` parameters
   are removed from the core step builder; the legacy bridge keeps them). (#98)
+- Rename the absolute nominal-capacity parameter to `nom_cap_abs` across the
+  native entry points (`add_step_c_rate`, `make_core_step_table`,
+  `equivalent_cycles_to_summary`, `c_rates_to_summary`, `update_data`,
+  `update_core_data`); the old `nom_cap` keyword is a deprecated alias that
+  emits a `DeprecationWarning`. The legacy bridge keeps `nom_cap`. Docs gain a
+  units-by-value glossary (`nom_cap_abs` vs `current_conversion_factor` vs
+  `specific_converters`). (#99)
 
 ## [0.1.4] - 2026-07-04
 

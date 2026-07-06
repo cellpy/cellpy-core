@@ -77,7 +77,7 @@ because `make_summary` reads `data.steps`.
 
 ```python
 data = Data.from_raw_frame(raw)
-make_step_table(data)  # optional C-rate: add_step_c_rate(data, nom_cap=...)
+make_step_table(data)  # optional C-rate: add_step_c_rate(data, nom_cap_abs=...)
 make_summary(data)
 
 print(f"steps:   {data.steps.height} rows")

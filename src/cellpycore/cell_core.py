@@ -247,7 +247,7 @@ class CellpyCellCore:
             cell.data = Data.from_raw_frame(raw_polars_frame)
             cell.cycle_mode = "anode"  # anode half-cell; omit for normal convention
 
-            data = cell.make_core_step_table(cell.data, nom_cap=1.0)
+            data = cell.make_core_step_table(cell.data, nom_cap_abs=1.0)
             data = cell.make_core_summary(data)
             data = cell.add_scaled_summary_columns(
                 data,
@@ -477,10 +477,11 @@ class CellpyCellCore:
         data: Data,
         new_raw,
         *,
-        nom_cap: float = 1.0,
+        nom_cap_abs: float = 1.0,
         refresh_derived: bool = True,
         find_ir: bool = True,
         current_conversion_factor: float = 1.0,
+        nom_cap: Optional[float] = None,
         **kwargs,
     ) -> Data:
         """Incrementally update ``Data`` via ``update_data`` using this cell's schema.
@@ -488,12 +489,13 @@ class CellpyCellCore:
         Args:
             data: Processed data to update.
             new_raw: New raw rows to append.
-            nom_cap: Nominal capacity for per-step C-rate.
+            nom_cap_abs: Absolute nominal capacity for per-step C-rate.
             refresh_derived: When True (default), run ``c_rates_to_summary`` and
                 ``ir_to_summary`` after rebuilding the summary (mirrors
                 ``make_core_summary`` extras).
             find_ir: Whether to add IR columns when ``refresh_derived`` is True.
             current_conversion_factor: Current-unit factor for C-rate columns.
+            nom_cap: Deprecated alias for ``nom_cap_abs``.
             **kwargs: Forwarded to ``update_data`` / ``make_step_table``.
 
         Returns:
@@ -502,6 +504,9 @@ class CellpyCellCore:
         import polars as pl
 
         from cellpycore.merge import update_data
+        from cellpycore.summarizers import _resolve_nom_cap_abs
+
+        nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
 
         if not isinstance(new_raw, pl.DataFrame):
             new_raw = pl.from_pandas(new_raw)
@@ -511,7 +516,7 @@ class CellpyCellCore:
             data,
             new_raw,
             schema=self.schema,
-            nom_cap=nom_cap,
+            nom_cap_abs=nom_cap_abs,
             test_mode=test_mode,
             **kwargs,
         )
@@ -629,10 +634,12 @@ class CellpyCellCore:
         override_step_types: Optional[dict] = None,
         override_raw_limits: Optional[dict] = None,
         usteps: bool = False,
-        nom_cap: Optional[float] = None,
+        nom_cap_abs: Optional[float] = None,
         skip_steps: Optional[Sequence] = None,
         sort_rows: bool = True,
         from_data_point: Optional[int] = None,
+        *,
+        nom_cap: Optional[float] = None,
     ) -> Union[Data, "DataFrame"]:
         """Make the core step table.
 
@@ -640,7 +647,8 @@ class CellpyCellCore:
         then appends the per-step C-rate via ``summarizers.add_step_c_rate``
         (the downstream summary extras, e.g. ``c_rates_to_summary``, need it).
         The instrument resolution limits (``raw_limits``) and the absolute
-        nominal capacity (``nom_cap``, for the C-rate) are supplied by the caller.
+        nominal capacity (``nom_cap_abs``, for the C-rate) are supplied by the
+        caller.
 
         Args:
             data: The data to make the step table from.
@@ -651,16 +659,20 @@ class CellpyCellCore:
             override_step_types: Override the detected step types.
             override_raw_limits: Override individual raw limits.
             usteps: Whether to investigate all (sub-)steps within a cycle.
-            nom_cap: Absolute nominal capacity used for the C-rate (default 1.0).
+            nom_cap_abs: Absolute nominal capacity used for the C-rate
+                (default 1.0).
             skip_steps: Step numbers to skip.
             sort_rows: Whether to sort the rows after processing.
             from_data_point: First data point to use (returns a DataFrame when set).
+            nom_cap: Deprecated alias for ``nom_cap_abs``.
 
         Returns:
             Data object with the step table, or a DataFrame when ``from_data_point``
             is given.
         """
         from cellpycore import summarizers
+
+        nom_cap_abs = summarizers._resolve_nom_cap_abs(nom_cap_abs, nom_cap)
 
         kwargs = dict(
             schema=self.schema,
@@ -677,13 +689,15 @@ class CellpyCellCore:
             kwargs["raw_limits"] = raw_limits
 
         result = summarizers.make_step_table(data, **kwargs)
-        _nom_cap = nom_cap if nom_cap is not None else 1.0
+        _nom_cap_abs = nom_cap_abs if nom_cap_abs is not None else 1.0
         if from_data_point is not None:
             # The engine returned a bare steps frame; append the C-rate directly.
             return result.with_columns(
-                summarizers._step_c_rate_expr(self.schema.step, _nom_cap)
+                summarizers._step_c_rate_expr(self.schema.step, _nom_cap_abs)
             )
-        return summarizers.add_step_c_rate(result, self.schema, nom_cap=_nom_cap)
+        return summarizers.add_step_c_rate(
+            result, self.schema, nom_cap_abs=_nom_cap_abs
+        )
 
 
 class OldCellpyCellCore(CellpyCellCore):

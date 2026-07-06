@@ -1,5 +1,6 @@
 import logging
 import types
+import warnings
 from dataclasses import asdict
 from typing import Optional, Sequence, TypeVar, Union
 
@@ -516,37 +517,60 @@ def make_step_table(
     return data
 
 
-def _step_c_rate_expr(shdr: StepCols, nom_cap: float) -> "pl.Expr":
+def _resolve_nom_cap_abs(nom_cap_abs: float, nom_cap: Optional[float]) -> float:
+    """Resolve the deprecated ``nom_cap`` keyword alias (issue #99).
+
+    When the caller passes the old ``nom_cap`` keyword, emit a
+    ``DeprecationWarning`` and honour it; otherwise return ``nom_cap_abs``.
+    """
+    if nom_cap is not None:
+        warnings.warn(
+            "`nom_cap` is deprecated; use `nom_cap_abs` instead",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return nom_cap
+    return nom_cap_abs
+
+
+def _step_c_rate_expr(shdr: StepCols, nom_cap_abs: float) -> "pl.Expr":
     """Expression for the per-step C-rate (legacy ``rate_avr``).
 
-    ``c_rate = abs(round(current_mean / nom_cap, DIGITS_C_RATE))``; the nominal
-    capacity is supplied by the caller (by value).
+    ``c_rate = abs(round(current_mean / nom_cap_abs, DIGITS_C_RATE))``; the
+    absolute nominal capacity is supplied by the caller (by value).
     """
     return (
-        (pl.col("current_mean") / nom_cap).round(DIGITS_C_RATE).abs().alias(shdr.c_rate)
+        (pl.col("current_mean") / nom_cap_abs)
+        .round(DIGITS_C_RATE)
+        .abs()
+        .alias(shdr.c_rate)
     )
 
 
 def add_step_c_rate(
     data: Data,
     schema: Optional[Schema] = None,
-    nom_cap: float = 1.0,
+    nom_cap_abs: float = 1.0,
+    *,
+    nom_cap: Optional[float] = None,
 ) -> Data:
     """Append the per-step C-rate (``c_rate`` / legacy ``rate_avr``) to the steps.
 
     Separate opt-in step after :func:`make_step_table` (mirroring the
     post-summary helpers such as :func:`c_rates_to_summary`): computes
-    ``abs(round(current_mean / nom_cap, DIGITS_C_RATE))`` for each step row and
-    adds it as the ``c_rate`` column of ``data.steps``.
+    ``abs(round(current_mean / nom_cap_abs, DIGITS_C_RATE))`` for each step row
+    and adds it as the ``c_rate`` column of ``data.steps``.
 
     Args:
         data (core.Data): The data object (needs ``steps`` with a
             ``current_mean`` column).
         schema: The column-header schema to use. Defaults to the native
             cellpy-core schema when not provided.
-        nom_cap (float): The absolute nominal capacity used to compute the
-            C-rate. Supplied by the caller (by value) so this function needs no
-            unit handling. Defaults to 1.0.
+        nom_cap_abs (float): The absolute nominal capacity (same unit as the
+            raw capacity columns, e.g. Ah) used to compute the C-rate.
+            Supplied by the caller (by value) so this function needs no unit
+            handling. Defaults to 1.0.
+        nom_cap (float): Deprecated alias for ``nom_cap_abs``.
 
     Returns:
         core.Data: The data object with the ``c_rate`` column added to the steps.
@@ -555,6 +579,7 @@ def add_step_c_rate(
         NoDataFound: If ``data.steps`` is missing.
         ValueError: If the step table lacks the ``current_mean`` column.
     """
+    nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
     if schema is None:
         schema = default_schema()
     shdr = schema.step
@@ -567,7 +592,7 @@ def add_step_c_rate(
     if "current_mean" not in steps.columns:
         raise ValueError("steps missing required column(s): current_mean")
 
-    data.steps = steps.with_columns(_step_c_rate_expr(shdr, nom_cap))
+    data.steps = steps.with_columns(_step_c_rate_expr(shdr, nom_cap_abs))
     return data
 
 
@@ -904,28 +929,33 @@ def _calculate_nominal_capacity_from_cycles(
 def equivalent_cycles_to_summary(
     data: Data,
     schema: Optional[Schema] = None,
-    nom_cap: float = 1.0,
+    nom_cap_abs: float = 1.0,
     normalization_cycles: Union[Sequence, int, None] = None,
     step_txt: Optional[str] = None,
+    *,
+    nom_cap: Optional[float] = None,
 ) -> Data:
     """Add the ``normalized_cycle_index`` (equivalent cycles) column to the summary.
 
-    Polars-native: ``normalized_cycle_index = test_cumulated_charge_capacity / nom_cap``.
+    Polars-native:
+    ``normalized_cycle_index = test_cumulated_charge_capacity / nom_cap_abs``.
 
     Args:
         data (Data): The data object.
         schema: The column-header schema to use. Defaults to the native
             cellpy-core schema when not provided.
-        nom_cap (float): The nominal capacity (default: 1.0).
+        nom_cap_abs (float): The absolute nominal capacity (default: 1.0).
         normalization_cycles (Union[Sequence, int, None]): The cycles for
-            normalization; when given, ``nom_cap`` is derived from them.
-        step_txt (str): The summary capacity column used to derive ``nom_cap``
-            from ``normalization_cycles`` (defaults to the native cycle
-            charge-capacity column).
+            normalization; when given, ``nom_cap_abs`` is derived from them.
+        step_txt (str): The summary capacity column used to derive
+            ``nom_cap_abs`` from ``normalization_cycles`` (defaults to the
+            native cycle charge-capacity column).
+        nom_cap (float): Deprecated alias for ``nom_cap_abs``.
 
     Returns:
         Data: The data object with ``normalized_cycle_index`` added to the summary.
     """
+    nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
     if schema is None:
         schema = default_schema()
     headers_summary = schema.cycle
@@ -939,12 +969,12 @@ def equivalent_cycles_to_summary(
         summary = pl.from_pandas(summary)
 
     if normalization_cycles is not None:
-        nom_cap = _calculate_nominal_capacity_from_cycles(
+        nom_cap_abs = _calculate_nominal_capacity_from_cycles(
             summary, schema, normalization_cycles, step_txt
         )
 
     data.summary = summary.with_columns(
-        (pl.col(headers_summary.test_cumulated_charge_capacity) / nom_cap).alias(
+        (pl.col(headers_summary.test_cumulated_charge_capacity) / nom_cap_abs).alias(
             headers_summary.normalized_cycle_index
         )
     )
@@ -954,16 +984,18 @@ def equivalent_cycles_to_summary(
 def c_rates_to_summary(
     data: Data,
     schema: Optional[Schema] = None,
-    nom_cap: float = 1.0,
+    nom_cap_abs: float = 1.0,
     normalization_cycles: Union[Sequence, int, None] = None,
     step_txt: Optional[str] = None,
     current_conversion_factor: float = 1.0,
+    *,
+    nom_cap: Optional[float] = None,
 ) -> Data:
     """Add per-cycle charge / discharge C-rates to the summary.
 
     Polars-native: takes the first charge (resp. discharge) step's per-step
     C-rate (``c_rate``) in each cycle, scales it by ``current_conversion_factor /
-    nom_cap``, and joins it onto the summary as ``charge_c_rate`` /
+    nom_cap_abs``, and joins it onto the summary as ``charge_c_rate`` /
     ``discharge_c_rate``.
 
     The current-unit conversion is handled by value: the caller computes the
@@ -975,18 +1007,20 @@ def c_rates_to_summary(
         data (core.Data): The data object (needs ``summary`` and ``steps``).
         schema: The column-header schema to use. Defaults to the native
             cellpy-core schema when not provided.
-        nom_cap (float): The nominal capacity (default: 1.0).
+        nom_cap_abs (float): The absolute nominal capacity (default: 1.0).
         normalization_cycles (Union[Sequence, int, None]): The cycles for
-            normalization; when given, ``nom_cap`` is derived from them.
-        step_txt (str): The summary capacity column used to derive ``nom_cap``
-            from ``normalization_cycles`` (defaults to the native cycle
-            charge-capacity column).
+            normalization; when given, ``nom_cap_abs`` is derived from them.
+        step_txt (str): The summary capacity column used to derive
+            ``nom_cap_abs`` from ``normalization_cycles`` (defaults to the
+            native cycle charge-capacity column).
         current_conversion_factor (float): The precomputed factor to convert the
             raw current unit to the output current unit (default: 1.0).
+        nom_cap (float): Deprecated alias for ``nom_cap_abs``.
 
     Returns:
         core.Data: The data object with the C-rates added to the summary.
     """
+    nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
     if schema is None:
         schema = default_schema()
     headers_summary = schema.cycle
@@ -1006,7 +1040,7 @@ def c_rates_to_summary(
         steps = pl.from_pandas(steps)
 
     if normalization_cycles is not None:
-        nom_cap = _calculate_nominal_capacity_from_cycles(
+        nom_cap_abs = _calculate_nominal_capacity_from_cycles(
             summary, schema, normalization_cycles, step_txt
         )
 
@@ -1034,7 +1068,9 @@ def c_rates_to_summary(
             .group_by(group_keys, maintain_order=True)
             .agg(pl.col(headers_steps.c_rate).first().alias(out_name))
             .with_columns(
-                (pl.col(out_name) / nom_cap * current_conversion_factor).alias(out_name)
+                (pl.col(out_name) / nom_cap_abs * current_conversion_factor).alias(
+                    out_name
+                )
             )
         )
 

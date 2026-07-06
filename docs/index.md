@@ -13,7 +13,7 @@ from cellpycore import Data, add_step_c_rate, make_step_table, make_summary
 
 data = Data.from_raw_frame(pl.read_parquet("my_native_raw.parquet"))
 make_step_table(data)
-add_step_c_rate(data, nom_cap=1.0)  # optional: per-step C-rate
+add_step_c_rate(data, nom_cap_abs=1.0)  # optional: per-step C-rate
 make_summary(data)
 print(data.steps, data.summary)
 ```

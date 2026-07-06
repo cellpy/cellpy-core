@@ -198,14 +198,14 @@ def test_make_step_table_emits_no_c_rate():
 
 
 def test_nom_cap_scales_c_rate_by_value():
-    """c_rate = abs(current_mean / nom_cap): doubling nom_cap halves the rate."""
+    """c_rate = abs(current_mean / nom_cap_abs): doubling nom_cap_abs halves the rate."""
     nhdr = RawCols()
     schema = _native_schema()
 
     res1 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
-    res1 = summarizers.add_step_c_rate(res1, schema, nom_cap=1.0)
+    res1 = summarizers.add_step_c_rate(res1, schema, nom_cap_abs=1.0)
     res2 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
-    res2 = summarizers.add_step_c_rate(res2, schema, nom_cap=2.0)
+    res2 = summarizers.add_step_c_rate(res2, schema, nom_cap_abs=2.0)
 
     def _charge_rate(steps):
         return steps.filter(pl.col(StepCols.step_type) == "charge")[
@@ -223,7 +223,7 @@ def test_add_step_c_rate_uses_injected_schema():
     schema = Schema(raw=nhdr, cycle=CycleCols(), step=shdr)
 
     data = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
-    data = summarizers.add_step_c_rate(data, schema, nom_cap=1.0)
+    data = summarizers.add_step_c_rate(data, schema, nom_cap_abs=1.0)
 
     assert "RATE_MARKER" in data.steps.columns
     assert StepCols.c_rate not in data.steps.columns
@@ -234,6 +234,35 @@ def test_add_step_c_rate_missing_steps_raises_no_data_found():
 
     with pytest.raises(NoDataFound, match="steps"):
         summarizers.add_step_c_rate(Data(), schema=_native_schema())
+
+
+def test_deprecated_nom_cap_kwarg_warns_and_scales():
+    """Old ``nom_cap=`` keyword still works but emits a DeprecationWarning (#99)."""
+    nhdr = RawCols()
+    schema = _native_schema()
+
+    res_new = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
+    res_new = summarizers.add_step_c_rate(res_new, schema, nom_cap_abs=2.0)
+
+    res_old = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
+    with pytest.warns(DeprecationWarning, match="nom_cap_abs"):
+        res_old = summarizers.add_step_c_rate(res_old, schema, nom_cap=2.0)
+
+    assert (
+        res_old.steps[StepCols.c_rate].to_list()
+        == res_new.steps[StepCols.c_rate].to_list()
+    )
+
+
+def test_deprecated_nom_cap_kwarg_on_make_core_step_table():
+    """Native ``make_core_step_table`` accepts the deprecated ``nom_cap=`` (#99)."""
+    core = CellpyCellCore(initialize=False)
+    data = _data_with_raw(core.schema.raw)
+
+    with pytest.warns(DeprecationWarning, match="nom_cap_abs"):
+        data = core.make_core_step_table(data, nom_cap=1.0)
+
+    assert core.schema.step.c_rate in data.steps.columns
 
 
 def test_raw_limits_affect_classification():
@@ -458,7 +487,7 @@ def test_default_cycle_mode_is_normal_convention():
     core.data = data
     assert core.cycle_mode is None
 
-    data = core.make_core_step_table(data, nom_cap=1.0)
+    data = core.make_core_step_table(data, nom_cap_abs=1.0)
     data = core.make_core_summary(data)
     s = data.summary
 
@@ -482,7 +511,7 @@ def test_cycle_mode_anode_via_cellpy_cell_core():
     core.data = data
     core.cycle_mode = "anode"
 
-    data = core.make_core_step_table(data, nom_cap=1.0)
+    data = core.make_core_step_table(data, nom_cap_abs=1.0)
     data = core.make_core_summary(data)
     s = data.summary
 
@@ -509,9 +538,9 @@ def test_c_rates_to_summary_native():
 
     data = _data_with_raw(nhdr)
     summarizers.make_step_table(data, schema=schema)
-    summarizers.add_step_c_rate(data, schema, nom_cap=2.0)
+    summarizers.add_step_c_rate(data, schema, nom_cap_abs=2.0)
     summarizers.make_summary(data, schema=schema)
-    summarizers.c_rates_to_summary(data, schema, nom_cap=1.0)
+    summarizers.c_rates_to_summary(data, schema, nom_cap_abs=1.0)
 
     assert chdr.charge_c_rate in data.summary.columns
     assert chdr.discharge_c_rate in data.summary.columns
@@ -632,7 +661,7 @@ def test_native_add_scaled_summary_columns_end_to_end():
     chdr = cell.schema.cycle
 
     data = _data_with_raw(nhdr)
-    cell.make_core_step_table(data, nom_cap=1.0)
+    cell.make_core_step_table(data, nom_cap_abs=1.0)
     cell.make_core_summary(data)
     cell.add_scaled_summary_columns(
         data,
@@ -662,7 +691,7 @@ def test_native_add_scaled_summary_columns_with_cell_meta():
     chdr = cell.schema.cycle
 
     data = _data_with_raw(nhdr)
-    cell.make_core_step_table(data, nom_cap=1.0)
+    cell.make_core_step_table(data, nom_cap_abs=1.0)
     cell.make_core_summary(data)
     cell.add_scaled_summary_columns(
         data,

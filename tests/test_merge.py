@@ -83,7 +83,7 @@ def _processed_data(
         scale=scale,
     )
     summarizers.make_step_table(data, schema=schema)
-    summarizers.add_step_c_rate(data, schema, nom_cap=1.0)
+    summarizers.add_step_c_rate(data, schema, nom_cap_abs=1.0)
     summarizers.make_summary(data, schema=schema)
     return data
 
@@ -232,7 +232,7 @@ def _process_raw(raw: pl.DataFrame, schema: Schema) -> Data:
     data = Data()
     data.raw = raw
     summarizers.make_step_table(data, schema=schema)
-    summarizers.add_step_c_rate(data, schema, nom_cap=1.0)
+    summarizers.add_step_c_rate(data, schema, nom_cap_abs=1.0)
     summarizers.make_summary(data, schema=schema)
     return data
 
