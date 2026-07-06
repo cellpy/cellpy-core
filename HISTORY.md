@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Add `RawCols.dtype_map()` (authoritative column -> polars dtype map) and the
+  `cast_raw_frame` helper; export `cast_raw_frame` and `validate_raw_frame`
+  from the top-level API. (#97)
 - Fix `SyntaxWarning` from `return` in `finally` block in `legacy/mock_core.py` on Python 3.14+ import. (#95)
 - Add `Cols.ordered_names()` for declaration-order column enumeration on `RawCols`, `StepCols`, and `CycleCols`. (#96)
 - Split the per-step C-rate out of `make_step_table` into the separate opt-in

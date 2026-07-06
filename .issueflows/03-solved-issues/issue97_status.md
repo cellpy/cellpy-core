@@ -1,6 +1,6 @@
 # Issue #97 — status
 
-- [ ] Done
+- [x] Done
 
 ## What's done
 
@@ -20,8 +20,12 @@
   clean; end-to-end demo (sloppy dtypes -> cast -> validate -> step table ->
   summary) verified.
 
+- Closed via `/iflow-close`: `HISTORY.md` bullet under `[Unreleased]` (no
+  version bump requested), design note added
+  (`04-designs-and-guides/rawcols-dtype-map.md`), PR #106 open against `main`.
+
 ## Remaining work
 
-- `/iflow-close`: version bump decision, changelog, PR finalization.
-- Deferred (per plan): `StepCols` / `CycleCols` dtype maps (engine outputs,
-  not consumer input) — open a follow-up issue if wanted.
+- None for this issue. Deferred (per plan, by design): `StepCols` /
+  `CycleCols` dtype maps (engine outputs, not consumer input) — open a
+  follow-up issue if a concrete need appears.
