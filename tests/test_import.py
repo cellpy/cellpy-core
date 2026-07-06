@@ -54,6 +54,19 @@ def test_cellpycore_version():
         pytest.fail(f"Failed to import cellpycore for version test: {e}")
 
 
+def test_cellpycore_import_no_syntax_warning():
+    """Import must not emit SyntaxWarning (e.g. return in finally on Py 3.14+)."""
+    import subprocess
+
+    result = subprocess.run(
+        [sys.executable, "-W", "error::SyntaxWarning", "-c", "import cellpycore"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
 def test_cellpycore_in_sys_modules():
     """Test that cellpycore is properly registered in sys.modules."""
     assert "cellpycore" in sys.modules
