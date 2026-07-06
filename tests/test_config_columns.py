@@ -6,12 +6,7 @@ representations cannot silently drift again. The expected column sets below are
 transcribed from those specs.
 """
 
-from cellpycore.config import CycleCols, RawCols, StepCols
-
-
-def _declared_columns(cols_cls) -> dict:
-    """Map declared column attribute -> its string value for a Cols subclass."""
-    return {name: getattr(cols_cls, name) for name in cols_cls.__annotations__}
+from cellpycore.config import Cols, CycleCols, RawCols, StepCols
 
 
 def _aggregates(signal: str) -> list:
@@ -177,22 +172,29 @@ CYCLE_EXPECTED = [
 
 
 def test_raw_cols_match_spec():
-    declared = _declared_columns(RawCols)
-    assert list(declared) == RAW_EXPECTED
-    # each column attribute value equals its name
-    assert all(declared[name] == name for name in declared)
+    names = RawCols.ordered_names()
+    assert names == RAW_EXPECTED
+    assert names == list(RawCols.__annotations__)
 
 
 def test_step_cols_match_spec():
-    declared = _declared_columns(StepCols)
-    assert list(declared) == STEP_EXPECTED
-    assert all(declared[name] == name for name in declared)
+    names = StepCols.ordered_names()
+    assert names == STEP_EXPECTED
+    assert names == list(StepCols.__annotations__)
 
 
 def test_cycle_cols_match_spec():
-    declared = _declared_columns(CycleCols)
-    assert list(declared) == CYCLE_EXPECTED
-    assert all(declared[name] == name for name in declared)
+    names = CycleCols.ordered_names()
+    assert names == CYCLE_EXPECTED
+    assert names == list(CycleCols.__annotations__)
+
+
+def test_ordered_names_skips_underscore_prefixed():
+    class _SampleCols(Cols):
+        visible: str = "visible"
+        _private: str = "skip"
+
+    assert _SampleCols.ordered_names() == ["visible"]
 
 
 def test_no_legacy_raw_names():

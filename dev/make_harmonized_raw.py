@@ -111,9 +111,7 @@ def build_harmonized(raw: pl.DataFrame, cols: RawCols) -> pl.DataFrame:
 
     # Emit every remaining RawCols column as null so the fixture is a complete
     # harmonized-schema example, ordered to match the spec table.
-    ordered = [
-        getattr(cols, name) for name in vars(RawCols) if not name.startswith("_")
-    ]
+    ordered = RawCols.ordered_names()
     missing = [name for name in ordered if name not in out.columns]
     out = out.with_columns([pl.lit(None).alias(name) for name in missing])
     return out.select(ordered)

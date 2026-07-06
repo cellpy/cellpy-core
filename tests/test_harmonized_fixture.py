@@ -21,14 +21,9 @@ HARMONIZED_RAW = DATA_DIR / "cycler_cc_harmonized_raw.parquet"
 EXPECTED_ROWS = 10261
 
 
-def _rawcols_names() -> set[str]:
-    cols = RawCols()
-    return {getattr(cols, name) for name in vars(RawCols) if not name.startswith("_")}
-
-
 def test_harmonized_columns_match_rawcols():
     df = pl.read_parquet(HARMONIZED_RAW)
-    assert set(df.columns) == _rawcols_names()
+    assert list(df.columns) == RawCols.ordered_names()
 
 
 def test_harmonized_row_count_and_key_values():
