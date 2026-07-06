@@ -11,7 +11,13 @@ guaranteed top-level API.
 
 from importlib.metadata import PackageNotFoundError, version
 
-from cellpycore.cell_core import CellpyCellCore, Data, OldCellpyCellCore
+from cellpycore.cell_core import (
+    CellpyCellCore,
+    Data,
+    OldCellpyCellCore,
+    cast_raw_frame,
+    validate_raw_frame,
+)
 from cellpycore.config import (
     CycleCols,
     RawCols,
@@ -40,9 +46,11 @@ __all__ = [
     "StepCols",
     "__version__",
     "add_step_c_rate",
+    "cast_raw_frame",
     "default_schema",
     "make_step_table",
     "make_summary",
     "merge_data",
     "update_data",
+    "validate_raw_frame",
 ]

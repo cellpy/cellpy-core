@@ -212,3 +212,32 @@ def test_no_legacy_raw_names():
 def test_power_not_power_capacity_in_step():
     for gone in ("power_capacity_mean", "power_capacity_delta"):
         assert gone not in StepCols.__annotations__
+
+
+# --- RawCols.dtype_map (issue #97) --------------------------------------------
+
+
+def test_raw_dtype_map_covers_all_columns_in_order():
+    assert list(RawCols().dtype_map()) == RawCols.ordered_names()
+
+
+def test_raw_dtype_map_pins_key_dtypes():
+    import polars as pl
+
+    dtypes = RawCols().dtype_map()
+    assert dtypes["epoch_time_utc"] == pl.Int64
+    assert dtypes["mask"] == pl.Boolean
+    assert dtypes["datapoint_num"] == pl.Int64
+    assert dtypes["test_time"] == pl.Float64
+    assert dtypes["source_type"] == pl.Utf8
+
+
+def test_raw_dtype_map_resolves_renamed_columns():
+    import polars as pl
+
+    class _RenamedRaw(RawCols):
+        mask: str = "flag"
+
+    dtypes = _RenamedRaw().dtype_map()
+    assert dtypes["flag"] == pl.Boolean
+    assert "mask" not in dtypes
