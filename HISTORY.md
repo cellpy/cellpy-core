@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Fix `SyntaxWarning` from `return` in `finally` block in `legacy/mock_core.py` on Python 3.14+ import. (#95)
+
 ## [0.1.4] - 2026-07-04
 
 - Migrate documentation to Zensical with Read the Docs hosting
