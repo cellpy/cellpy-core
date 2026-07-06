@@ -10,7 +10,12 @@ import polars as pl
 
 from cellpycore import config
 from cellpycore.cell_core import Data
-from cellpycore.summarizers import _ensure_test_id, make_step_table, make_summary
+from cellpycore.summarizers import (
+    _ensure_test_id,
+    _step_c_rate_expr,
+    make_step_table,
+    make_summary,
+)
 
 if TYPE_CHECKING:
     from cellpycore.config import Schema
@@ -158,8 +163,9 @@ def update_data(
         data: Processed ``Data`` with ``raw``, ``steps``, and ``summary``.
         new_raw: New raw rows to append (may overlap the tail of ``data.raw``).
         schema: Column-header schema. Defaults to ``config.default_schema()``.
-        nom_cap: Nominal capacity for per-step C-rate (forwarded to
-            ``make_step_table``).
+        nom_cap: Nominal capacity for the per-step C-rate appended to the
+            rebuilt step rows (via ``add_step_c_rate``), so they match the kept
+            steps.
         partition_col: Column used to detect overlap. Defaults to
             ``source_datapoint_num``, falling back to ``datapoint_num``.
         test_mode: Cell convention forwarded to ``make_summary``.
@@ -237,12 +243,15 @@ def update_data(
     new_steps = make_step_table(
         slice_data,
         schema=schema,
-        nom_cap=nom_cap,
         from_data_point=from_data_point,
         **step_table_kwargs,
     )
     if not isinstance(new_steps, pl.DataFrame):
         new_steps = pl.from_pandas(new_steps)
+    # When the kept steps carry ``c_rate`` (added post-step via add_step_c_rate),
+    # append it to the rebuilt rows too so the vertical concat schemas match.
+    if shdr.c_rate in kept_steps.columns:
+        new_steps = new_steps.with_columns(_step_c_rate_expr(shdr, nom_cap))
 
     combined_steps = pl.concat([kept_steps, new_steps], how="vertical")
 

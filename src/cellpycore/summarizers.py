@@ -6,7 +6,13 @@ from typing import Optional, Sequence, TypeVar, Union
 import polars as pl
 
 from cellpycore.cell_core import Data
-from cellpycore.config import ResetGranularity, Schema, TestMode, default_schema
+from cellpycore.config import (
+    ResetGranularity,
+    Schema,
+    StepCols,
+    TestMode,
+    default_schema,
+)
 from cellpycore.exceptions import NoDataFound
 from cellpycore.extractors import LastIRExtractor, SummaryExtractor
 from cellpycore.legacy import CellpyLimits
@@ -324,8 +330,6 @@ def make_step_table(
     override_step_types=None,
     override_raw_limits=None,
     usteps=False,
-    add_c_rate=True,
-    nom_cap=None,
     skip_steps=None,
     sort_rows=True,
     from_data_point=None,
@@ -359,10 +363,6 @@ def make_step_table(
             'current_hard' to 0.1 by providing {'current_hard': 0.1}.
         usteps (bool): investigate all steps including same steps within
             one cycle (this is useful for e.g. GITT).
-        add_c_rate (bool): include a per-step C-rate estimate (rate_avr).
-        nom_cap (float): the absolute nominal capacity used to compute the C-rate
-            (rate_avr = abs(current_avr / nom_cap)). Supplied by the caller (by
-            value) so this function needs no unit handling. Defaults to 1.0.
         skip_steps (list of integers): list of step numbers that should not
             be processed (future feature - not used yet).
         sort_rows (bool): sort the rows after processing.
@@ -372,8 +372,13 @@ def make_step_table(
 
     Note:
         Per-step statistic columns are emitted as ``<base>_<stat>`` (fixed engine
-        contract). Only group keys, ``step_type``, and ``c_rate`` honour injected
-        ``StepCols`` renames. See ``config.StepCols`` for the full contract.
+        contract). Only group keys and ``step_type`` honour injected ``StepCols``
+        renames. See ``config.StepCols`` for the full contract.
+
+    Note:
+        The per-step C-rate (``c_rate`` / legacy ``rate_avr``) is *not* part of
+        the base step table; append it with :func:`add_step_c_rate` when needed
+        (e.g. before :func:`c_rates_to_summary`).
 
     Returns:
         core.Data: The data object with the step table added if from_data_point is None,
@@ -468,17 +473,6 @@ def make_step_table(
     # Mirror pandas groupby key ordering (ascending) for stable row positions.
     steps = steps.sort(by)
 
-    # Per-step C-rate (legacy ``rate_avr`` = abs(current_avr / nom_cap)); the
-    # nominal capacity is supplied by the caller (by value).
-    if add_c_rate:
-        _nom_cap = nom_cap if nom_cap is not None else 1.0
-        steps = steps.with_columns(
-            (pl.col("current_mean") / _nom_cap)
-            .round(DIGITS_C_RATE)
-            .abs()
-            .alias(shdr.c_rate)
-        )
-
     bases = {base for _, base in signals}
     step_type = _classify_steps(
         bases,
@@ -519,6 +513,61 @@ def make_step_table(
     if from_data_point is not None:
         return steps
     data.steps = steps
+    return data
+
+
+def _step_c_rate_expr(shdr: StepCols, nom_cap: float) -> "pl.Expr":
+    """Expression for the per-step C-rate (legacy ``rate_avr``).
+
+    ``c_rate = abs(round(current_mean / nom_cap, DIGITS_C_RATE))``; the nominal
+    capacity is supplied by the caller (by value).
+    """
+    return (
+        (pl.col("current_mean") / nom_cap).round(DIGITS_C_RATE).abs().alias(shdr.c_rate)
+    )
+
+
+def add_step_c_rate(
+    data: Data,
+    schema: Optional[Schema] = None,
+    nom_cap: float = 1.0,
+) -> Data:
+    """Append the per-step C-rate (``c_rate`` / legacy ``rate_avr``) to the steps.
+
+    Separate opt-in step after :func:`make_step_table` (mirroring the
+    post-summary helpers such as :func:`c_rates_to_summary`): computes
+    ``abs(round(current_mean / nom_cap, DIGITS_C_RATE))`` for each step row and
+    adds it as the ``c_rate`` column of ``data.steps``.
+
+    Args:
+        data (core.Data): The data object (needs ``steps`` with a
+            ``current_mean`` column).
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+        nom_cap (float): The absolute nominal capacity used to compute the
+            C-rate. Supplied by the caller (by value) so this function needs no
+            unit handling. Defaults to 1.0.
+
+    Returns:
+        core.Data: The data object with the ``c_rate`` column added to the steps.
+
+    Raises:
+        NoDataFound: If ``data.steps`` is missing.
+        ValueError: If the step table lacks the ``current_mean`` column.
+    """
+    if schema is None:
+        schema = default_schema()
+    shdr = schema.step
+
+    _require_frame(data.steps, "steps")
+    steps = data.steps
+    # The engine is polars-native; accept a pandas frame for convenience.
+    if not isinstance(steps, pl.DataFrame):
+        steps = pl.from_pandas(steps)
+    if "current_mean" not in steps.columns:
+        raise ValueError("steps missing required column(s): current_mean")
+
+    data.steps = steps.with_columns(_step_c_rate_expr(shdr, nom_cap))
     return data
 
 

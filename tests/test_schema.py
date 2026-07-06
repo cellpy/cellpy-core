@@ -162,7 +162,7 @@ def test_make_step_table_uses_injected_schema():
     schema = Schema(raw=nhdr, cycle=CycleCols(), step=shdr)
 
     data = _data_with_raw(nhdr)
-    result = summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    result = summarizers.make_step_table(data, schema=schema)
 
     assert "CYCLE_MARKER" in result.steps.columns
     assert "charge" in set(result.steps[shdr.step_type].to_list())
@@ -175,17 +175,26 @@ def test_two_schemas_do_not_share_state():
     shdr_a = StepCols()
     shdr_a.cycle_num = "CYCLE_A"
     res_a = summarizers.make_step_table(
-        _data_with_raw(nhdr), schema=Schema(nhdr, CycleCols(), shdr_a), nom_cap=1.0
+        _data_with_raw(nhdr), schema=Schema(nhdr, CycleCols(), shdr_a)
     )
 
     shdr_b = StepCols()
     shdr_b.cycle_num = "CYCLE_B"
     res_b = summarizers.make_step_table(
-        _data_with_raw(nhdr), schema=Schema(nhdr, CycleCols(), shdr_b), nom_cap=1.0
+        _data_with_raw(nhdr), schema=Schema(nhdr, CycleCols(), shdr_b)
     )
 
     assert "CYCLE_A" in res_a.steps.columns and "CYCLE_A" not in res_b.steps.columns
     assert "CYCLE_B" in res_b.steps.columns and "CYCLE_B" not in res_a.steps.columns
+
+
+def test_make_step_table_emits_no_c_rate():
+    """The base step builder emits no ``c_rate``; that is add_step_c_rate's job."""
+    nhdr = RawCols()
+    schema = _native_schema()
+
+    res = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
+    assert StepCols.c_rate not in res.steps.columns
 
 
 def test_nom_cap_scales_c_rate_by_value():
@@ -193,8 +202,10 @@ def test_nom_cap_scales_c_rate_by_value():
     nhdr = RawCols()
     schema = _native_schema()
 
-    res1 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema, nom_cap=1.0)
-    res2 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema, nom_cap=2.0)
+    res1 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
+    res1 = summarizers.add_step_c_rate(res1, schema, nom_cap=1.0)
+    res2 = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
+    res2 = summarizers.add_step_c_rate(res2, schema, nom_cap=2.0)
 
     def _charge_rate(steps):
         return steps.filter(pl.col(StepCols.step_type) == "charge")[
@@ -204,20 +215,39 @@ def test_nom_cap_scales_c_rate_by_value():
     assert _charge_rate(res1.steps) == pytest.approx(2 * _charge_rate(res2.steps))
 
 
+def test_add_step_c_rate_uses_injected_schema():
+    """add_step_c_rate honours the injected StepCols rename for ``c_rate``."""
+    nhdr = RawCols()
+    shdr = StepCols()
+    shdr.c_rate = "RATE_MARKER"
+    schema = Schema(raw=nhdr, cycle=CycleCols(), step=shdr)
+
+    data = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
+    data = summarizers.add_step_c_rate(data, schema, nom_cap=1.0)
+
+    assert "RATE_MARKER" in data.steps.columns
+    assert StepCols.c_rate not in data.steps.columns
+
+
+def test_add_step_c_rate_missing_steps_raises_no_data_found():
+    from cellpycore.legacy import NoDataFound
+
+    with pytest.raises(NoDataFound, match="steps"):
+        summarizers.add_step_c_rate(Data(), schema=_native_schema())
+
+
 def test_raw_limits_affect_classification():
     """Step-type classification uses the supplied raw_limits, not a fixed default."""
     nhdr = RawCols()
     schema = _native_schema()
 
-    res_default = summarizers.make_step_table(
-        _data_with_raw(nhdr), schema=schema, nom_cap=1.0
-    )
+    res_default = summarizers.make_step_table(_data_with_raw(nhdr), schema=schema)
     assert "charge" in _types(res_default.steps)
 
     huge_current_limit = dict(summarizers.DEFAULT_RAW_LIMITS)
     huge_current_limit["current_hard"] = 1.0e6
     res_huge = summarizers.make_step_table(
-        _data_with_raw(nhdr), schema=schema, nom_cap=1.0, raw_limits=huge_current_limit
+        _data_with_raw(nhdr), schema=schema, raw_limits=huge_current_limit
     )
     # with a huge current limit, the charge/discharge steps are no longer detected
     assert "charge" not in _types(res_huge.steps)
@@ -252,7 +282,7 @@ def test_make_summary_missing_raw_columns_are_named():
     nhdr = RawCols()
     schema = _native_schema()
     data = _data_with_raw(nhdr)
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     data.raw = data.raw.drop(columns=[nhdr.cumulative_charge_capacity])
     with pytest.raises(ValueError, match=nhdr.cumulative_charge_capacity):
         summarizers.make_summary(data, schema=schema)
@@ -292,13 +322,12 @@ def test_override_raw_limits_zero_is_honoured():
         data.raw = pd.DataFrame(records)
         return data
 
-    res_default = summarizers.make_step_table(_fresh_data(), schema=schema, nom_cap=1.0)
+    res_default = summarizers.make_step_table(_fresh_data(), schema=schema)
     assert _types(res_default.steps) == {"rest"}
 
     res_zero = summarizers.make_step_table(
         _fresh_data(),
         schema=schema,
-        nom_cap=1.0,
         override_raw_limits={"current_hard": 0.0},
     )
     assert "rest" not in _types(res_zero.steps)
@@ -311,7 +340,7 @@ def test_make_summary_native_schema():
     chdr = schema.cycle
 
     data = _data_with_raw(nhdr)
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     summarizers.make_summary(data, schema=schema)
     s = data.summary
 
@@ -361,7 +390,7 @@ def test_make_summary_anode_flips_coulombic_columns():
     def _summ(test_mode):
         data = Data()
         data.raw = _build_cumulative_raw(nhdr)
-        summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+        summarizers.make_step_table(data, schema=schema)
         summarizers.make_summary(data, schema=schema, test_mode=test_mode)
         return data.summary
 
@@ -406,7 +435,7 @@ def test_step_table_stat_columns_match_stepcols_defaults():
     data = Data()
     data.raw = _build_raw(RawCols())
 
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     steps = data.steps
 
     for base in _STEP_TABLE_BASES:
@@ -479,7 +508,8 @@ def test_c_rates_to_summary_native():
     chdr = schema.cycle
 
     data = _data_with_raw(nhdr)
-    summarizers.make_step_table(data, schema=schema, nom_cap=2.0)
+    summarizers.make_step_table(data, schema=schema)
+    summarizers.add_step_c_rate(data, schema, nom_cap=2.0)
     summarizers.make_summary(data, schema=schema)
     summarizers.c_rates_to_summary(data, schema, nom_cap=1.0)
 
@@ -497,7 +527,7 @@ def test_ir_to_summary_native():
     chdr = schema.cycle
 
     data = _data_with_raw(nhdr)
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     summarizers.make_summary(data, schema=schema)
     summarizers.ir_to_summary(data, schema)
 
@@ -712,7 +742,7 @@ def test_merged_object_step_table_isolated_per_test():
 
     data = Data()
     data.raw = _build_merged_raw(nhdr)
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     steps = data.steps
 
     # 2 tests * 2 cycles * 2 steps = 8 rows, and test_id present with both tests.
@@ -731,7 +761,7 @@ def test_merged_object_summary_cumulation_resets_per_test():
 
     data = Data()
     data.raw = _build_merged_raw(nhdr)
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     summarizers.make_summary(data, schema=schema)
     s = data.summary.sort([chdr.test_id, chdr.cycle_num])
 
@@ -766,7 +796,7 @@ def test_single_test_defaults_test_id_to_zero():
     data = _data_with_raw(nhdr)  # _build_raw has no test_id column
     assert nhdr.test_id not in data.raw.columns
 
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     summarizers.make_summary(data, schema=schema)
 
     assert set(data.steps[shdr.test_id].to_list()) == {0}
@@ -927,7 +957,7 @@ def test_step_table_aggregates_ref_potential_when_present():
     raw[nhdr.ref_potential] = raw[nhdr.potential] - 0.2
     data.raw = raw
 
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     steps = data.steps
 
     for col in _ref_stat_columns(shdr):
@@ -954,7 +984,7 @@ def test_step_table_skips_ref_potential_when_absent():
     data = _data_with_raw(nhdr)  # _build_raw carries no ref_potential
     assert nhdr.ref_potential not in data.raw.columns
 
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
     steps = data.steps
 
     for col in _ref_stat_columns(shdr):

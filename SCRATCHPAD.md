@@ -96,23 +96,10 @@ C:\scripting\cellpy-core\src\cellpycore\legacy\mock_core.py:66: SyntaxWarning: '
 
 ### Add scaled step summary columns as separate step — [#98](https://github.com/cellpy/cellpy-core/issues/98)
 
-Should use the same pattern as we do for cycle summary. It should not be an option within the  core make step table, but appended afterwards if user wants to
-
-Check first what implications it has on downstream functions (like making the cycle summary). If not too high-cost - split the make_step_table into two functions, i.e. 
-move this out to separate function:
-
-```python
-    # Per-step C-rate (legacy ``rate_avr`` = abs(current_avr / nom_cap)); the
-    # nominal capacity is supplied by the caller (by value).
-    if add_c_rate:
-        _nom_cap = nom_cap if nom_cap is not None else 1.0
-        steps = steps.with_columns(
-            (pl.col("current_mean") / _nom_cap)
-            .round(DIGITS_C_RATE)
-            .abs()
-            .alias(shdr.c_rate)
-        )
-```
+Resolved by issue #98: `make_step_table` builds the base table only; the per-step
+C-rate is appended by the separate opt-in `summarizers.add_step_c_rate` (the
+`add_c_rate` flag survives only on the `OldCellpyCellCore` bridge). See
+`.issueflows/04-designs-and-guides/step-c-rate-split.md`.
 
 ### Unclear example — [#99](https://github.com/cellpy/cellpy-core/issues/99)
 

@@ -581,7 +581,6 @@ class CellpyCellCore:
         override_step_types: Optional[dict] = None,
         override_raw_limits: Optional[dict] = None,
         usteps: bool = False,
-        add_c_rate: bool = True,
         nom_cap: Optional[float] = None,
         skip_steps: Optional[Sequence] = None,
         sort_rows: bool = True,
@@ -589,7 +588,9 @@ class CellpyCellCore:
     ) -> Union[Data, "DataFrame"]:
         """Make the core step table.
 
-        Delegates to ``summarizers.make_step_table`` using this cell's schema.
+        Delegates to ``summarizers.make_step_table`` using this cell's schema,
+        then appends the per-step C-rate via ``summarizers.add_step_c_rate``
+        (the downstream summary extras, e.g. ``c_rates_to_summary``, need it).
         The instrument resolution limits (``raw_limits``) and the absolute
         nominal capacity (``nom_cap``, for the C-rate) are supplied by the caller.
 
@@ -602,7 +603,6 @@ class CellpyCellCore:
             override_step_types: Override the detected step types.
             override_raw_limits: Override individual raw limits.
             usteps: Whether to investigate all (sub-)steps within a cycle.
-            add_c_rate: Whether to include the per-step C-rate (rate_avr).
             nom_cap: Absolute nominal capacity used for the C-rate (default 1.0).
             skip_steps: Step numbers to skip.
             sort_rows: Whether to sort the rows after processing.
@@ -621,8 +621,6 @@ class CellpyCellCore:
             override_step_types=override_step_types,
             override_raw_limits=override_raw_limits,
             usteps=usteps,
-            add_c_rate=add_c_rate,
-            nom_cap=nom_cap,
             skip_steps=skip_steps,
             sort_rows=sort_rows,
             from_data_point=from_data_point,
@@ -630,7 +628,14 @@ class CellpyCellCore:
         if raw_limits is not None:
             kwargs["raw_limits"] = raw_limits
 
-        return summarizers.make_step_table(data, **kwargs)
+        result = summarizers.make_step_table(data, **kwargs)
+        _nom_cap = nom_cap if nom_cap is not None else 1.0
+        if from_data_point is not None:
+            # The engine returned a bare steps frame; append the C-rate directly.
+            return result.with_columns(
+                summarizers._step_c_rate_expr(self.schema.step, _nom_cap)
+            )
+        return summarizers.add_step_c_rate(result, self.schema, nom_cap=_nom_cap)
 
 
 class OldCellpyCellCore(CellpyCellCore):
@@ -739,8 +744,6 @@ class OldCellpyCellCore(CellpyCellCore):
             override_step_types=override_step_types,
             override_raw_limits=override_raw_limits,
             usteps=usteps,
-            add_c_rate=add_c_rate,
-            nom_cap=nom_cap,
             skip_steps=skip_steps,
             sort_rows=False,  # the bridge handles legacy sorting + 'index' column
             from_data_point=from_data_point,
@@ -750,6 +753,14 @@ class OldCellpyCellCore(CellpyCellCore):
 
         result = summarizers.make_step_table(tmp, **kwargs)
         native_steps = result if from_data_point is not None else result.steps
+        if add_c_rate:
+            # Appended before the legacy rename/reorder so ``rate_avr`` keeps its
+            # byte-for-byte legacy position and values.
+            native_steps = native_steps.with_columns(
+                summarizers._step_c_rate_expr(
+                    default_schema().step, nom_cap if nom_cap is not None else 1.0
+                )
+            )
 
         legacy_steps = self._native_steps_to_legacy(native_steps, sort_rows=sort_rows)
         # The native engine only classifies step ``type`` from the specifications;
