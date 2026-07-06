@@ -60,7 +60,6 @@ def set_col_first(df, col_names):
         for col_name in col_names:
             column_headings.pop(column_headings.index(col_name))
             column_headings.insert(0, col_name)
-
     finally:
         df = df.reindex(columns=column_headings)
-        return df
+    return df
