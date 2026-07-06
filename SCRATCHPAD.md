@@ -1,15 +1,26 @@
 # Thoughts and possible issues
 
+Tracked on GitHub:
+
+| Topic | Issue |
+|---|---|
+| BDF format / scripts folder | [#100](https://github.com/cellpy/cellpy-core/issues/100) |
+| Ordered headers | [#96](https://github.com/cellpy/cellpy-core/issues/96) |
+| RawCols dtype map | [#97](https://github.com/cellpy/cellpy-core/issues/97) |
+| Syntax warning (`mock_core.py`) | [#95](https://github.com/cellpy/cellpy-core/issues/95) |
+| Split step C-rate from `make_step_table` | [#98](https://github.com/cellpy/cellpy-core/issues/98) |
+| Unclear standalone-use docs | [#99](https://github.com/cellpy/cellpy-core/issues/99) |
+
 ## Thoughts and ideas
 
-### BDF format
+### BDF format — [#100](https://github.com/cellpy/cellpy-core/issues/100)
 
 Read and export in BDF format; should it be a part of cellpy-core, or should it be a part of another repo (cellpy-io)?
 
 Idea: create a folder called scripts in cellpy-core repo and put it there for now. Then we can decide later where to finally put it.
 
 
-### Ordered headers
+### Ordered headers — [#96](https://github.com/cellpy/cellpy-core/issues/96)
 
 Consider adding explicit ordering to the headers, e.g.
 
@@ -27,7 +38,7 @@ class RawCols(Cols):
 
 ```
 
-### Create a dtype map
+### Create a dtype map — [#97](https://github.com/cellpy/cellpy-core/issues/97)
 
 Currently we have to map the dtypes "by hand", e.g. by creating a function like this:
 
@@ -74,7 +85,7 @@ Important to have a single point of truth. Consider adding to config.py. And als
 
 ## Do we have an Issue?
 
-### Syntax warning
+### Syntax warning — [#95](https://github.com/cellpy/cellpy-core/issues/95)
 
 When importing `cellpycore` using jupyterlab with python 3.14 we got this message:
 
@@ -84,7 +95,7 @@ C:\scripting\cellpy-core\src\cellpycore\legacy\mock_core.py:66: SyntaxWarning: '
 
 ```
 
-### Add scaled step summary columns as separate step
+### Add scaled step summary columns as separate step — [#98](https://github.com/cellpy/cellpy-core/issues/98)
 
 Should use the same pattern as we do for cycle summary. It should not be an option within the  core make step table, but appended afterwards if user wants to
 
@@ -104,7 +115,7 @@ move this out to separate function:
         )
 ```
 
-### Unclear example
+### Unclear example — [#99](https://github.com/cellpy/cellpy-core/issues/99)
 
 The example in the docs is a bit unclear.
 
