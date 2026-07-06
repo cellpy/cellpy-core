@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 - Fix `SyntaxWarning` from `return` in `finally` block in `legacy/mock_core.py` on Python 3.14+ import. (#95)
+- Add `Cols.ordered_names()` for declaration-order column enumeration on `RawCols`, `StepCols`, and `CycleCols`. (#96)
 
 ## [0.1.4] - 2026-07-04
 

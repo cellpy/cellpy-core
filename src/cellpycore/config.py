@@ -281,7 +281,29 @@ class Cols(BaseCols):
     ``FlexibleCols`` (which incurs some performance loss).
     """
 
-    pass
+    @classmethod
+    def ordered_names(cls) -> list[str]:
+        """Return native column name strings in class declaration order.
+
+        Iterates ``cls.__annotations__`` (declaration order) and resolves each
+        attribute on a fresh instance so ``FlexibleCols`` subclasses can
+        transform names via ``__getattribute__``. Attributes whose names start
+        with ``_`` are omitted.
+
+        Returns:
+            list[str]: Column name strings in spec/declaration order.
+
+        Note:
+            Prefer this over ``vars(RawCols)`` (picks up non-column class
+            entries) or ``dataclasses.fields(RawCols)`` (only sees inherited
+            ``BaseCols`` fields such as ``__version__``, not subclass columns).
+        """
+        cols = cls()
+        return [
+            getattr(cols, name)
+            for name in cls.__annotations__
+            if not name.startswith("_")
+        ]
 
 
 @dataclass(frozen=True)
