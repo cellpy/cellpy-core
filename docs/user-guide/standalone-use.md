@@ -89,13 +89,17 @@ from cellpycore import summarizers
 
 data = Data.from_raw_frame(my_polars_frame)
 data = summarizers.make_step_table(data)
+data = summarizers.add_step_c_rate(data, nom_cap=my_nom_cap_abs)  # optional
 data = summarizers.make_summary(data)   # test_mode=config.TestMode.INVERTED for anode cells
 ```
 
-The class is worth it when you want the `cycle_mode` string → `config.TestMode`
-handling done for you, and the IR / C-rate orchestration
-(`make_core_summary` chains `make_summary` + `ir_to_summary` +
-`c_rates_to_summary` in the right order).
+The base step table carries no C-rate; `add_step_c_rate` is the separate
+opt-in step that appends `c_rate` (legacy `rate_avr`) — required before
+`c_rates_to_summary`. The class is worth it when you want the `cycle_mode`
+string → `config.TestMode` handling done for you, and the C-rate / IR
+orchestration (`make_core_step_table` chains `make_step_table` +
+`add_step_c_rate`; `make_core_summary` chains `make_summary` +
+`ir_to_summary` + `c_rates_to_summary` in the right order).
 
 ## The contract the caller must honor
 

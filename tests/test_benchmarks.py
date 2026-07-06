@@ -54,7 +54,7 @@ def large_raw(harmonized_raw) -> pl.DataFrame:
 
 def _steps(raw: pl.DataFrame) -> Data:
     data = Data.from_raw_frame(raw, validate=False)
-    make_step_table(data, nom_cap=1.0)
+    make_step_table(data)
     return data
 
 

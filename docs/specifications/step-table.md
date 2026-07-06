@@ -98,4 +98,4 @@ calculations and to classify steps.
 | ref_potential_first | float | Volt (V) | 3.4500 |
 | ref_potential_last | float | Volt (V) | 3.4500 |
 | ref_potential_delta | float | % | 3.4500 |
-| c_rate | float | 1/h (C) | 0.05 | Per-step C-rate estimate (legacy `rate_avr`) |
+| c_rate | float | 1/h (C) | 0.05 | Per-step C-rate estimate (legacy `rate_avr`); not part of the base `make_step_table` output — appended by the separate opt-in `add_step_c_rate(data, nom_cap=...)` (called by `make_core_step_table`) |

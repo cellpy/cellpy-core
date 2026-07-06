@@ -22,6 +22,7 @@ from cellpycore import (
     RawCols,
     Schema,
     StepCols,
+    add_step_c_rate,
     default_schema,
     make_step_table,
     make_summary,
@@ -57,7 +58,8 @@ def processed(harmonized_raw) -> Data:
 def _process_native(raw: pl.DataFrame) -> Data:
     """Run the native public processing pipeline for an in-memory raw frame."""
     data = Data.from_raw_frame(raw)
-    make_step_table(data, nom_cap=1.0)
+    make_step_table(data)
+    add_step_c_rate(data, nom_cap=1.0)
     make_summary(data)
     return data
 
@@ -198,7 +200,7 @@ def test_exclude_step_types_variant(harmonized_raw):
 
     def _summary(exclude):
         data = Data.from_raw_frame(harmonized_raw)
-        make_step_table(data, nom_cap=1.0)
+        make_step_table(data)
         make_summary(data, exclude_step_types=exclude)
         return data.summary
 
@@ -273,7 +275,7 @@ def test_empty_raw_frame_is_handled():
     empty = _tiny_raw(_records(1, 1, "charge", 0)).clear()
     data = Data()
     data.raw = empty
-    make_step_table(data, nom_cap=1.0)
+    make_step_table(data)
     assert data.steps.height == 0
     assert cols.cycle_num in empty.columns  # sanity: schema intact
 
@@ -283,7 +285,7 @@ def test_cycle_without_charge_step():
     schema = default_schema()
     data = Data()
     data.raw = _tiny_raw(_records(1, 1, "discharge", 0))
-    make_step_table(data, nom_cap=1.0)
+    make_step_table(data)
     make_summary(data)
 
     assert data.summary.height == 1
@@ -299,7 +301,7 @@ def test_parallel_step_tables_with_two_schemas(harmonized_raw):
         shdr.cycle_num = marker
         schema = Schema(raw=RawCols(), cycle=CycleCols(), step=shdr)
         data = Data.from_raw_frame(harmonized_raw)
-        make_step_table(data, schema=schema, nom_cap=1.0)
+        make_step_table(data, schema=schema)
         return data.steps
 
     with ThreadPoolExecutor(max_workers=2) as pool:

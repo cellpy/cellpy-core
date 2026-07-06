@@ -82,7 +82,8 @@ def _processed_data(
         dp_start=dp_start,
         scale=scale,
     )
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
+    summarizers.add_step_c_rate(data, schema, nom_cap=1.0)
     summarizers.make_summary(data, schema=schema)
     return data
 
@@ -230,7 +231,8 @@ def test_merge_requires_raw_on_both_sides():
 def _process_raw(raw: pl.DataFrame, schema: Schema) -> Data:
     data = Data()
     data.raw = raw
-    summarizers.make_step_table(data, schema=schema, nom_cap=1.0)
+    summarizers.make_step_table(data, schema=schema)
+    summarizers.add_step_c_rate(data, schema, nom_cap=1.0)
     summarizers.make_summary(data, schema=schema)
     return data
 

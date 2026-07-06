@@ -9,10 +9,11 @@ extend; instrument loaders, file IO, and unit handling stay out of the core.
 
 ```python
 import polars as pl
-from cellpycore import Data, make_step_table, make_summary
+from cellpycore import Data, add_step_c_rate, make_step_table, make_summary
 
 data = Data.from_raw_frame(pl.read_parquet("my_native_raw.parquet"))
-make_step_table(data, nom_cap=1.0)
+make_step_table(data)
+add_step_c_rate(data, nom_cap=1.0)  # optional: per-step C-rate
 make_summary(data)
 print(data.steps, data.summary)
 ```

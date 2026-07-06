@@ -27,8 +27,8 @@ from cellpycore import Data, make_step_table, make_summary
 raw = pl.read_parquet("my_native_raw.parquet")  # harmonized-raw schema
 
 data = Data.from_raw_frame(raw)   # 1. validating front door
-make_step_table(data, nom_cap=1.0)  # 2. per-step table -> data.steps
-make_summary(data)                  # 3. per-cycle summary -> data.summary
+make_step_table(data)             # 2. per-step table -> data.steps
+make_summary(data)                # 3. per-cycle summary -> data.summary
 
 print(data.steps)
 print(data.summary)
@@ -43,6 +43,15 @@ with sane dtypes, and reports every problem in a single error. Pass
     Build the step table before the summary — `make_summary` reads
     `data.steps` and raises if it is missing.
 
+Need the per-step C-rate (`c_rate`, legacy `rate_avr`)? Append it as a
+separate step after `make_step_table`:
+
+```python
+from cellpycore import add_step_c_rate
+
+add_step_c_rate(data, nom_cap=1.0)  # nom_cap: absolute nominal capacity
+```
+
 ## Trying it without instrument data
 
 You don't need a cycler file to explore the API; the package ships a mock-data
@@ -53,7 +62,7 @@ from cellpycore.testing.mock_data import create_raw_data
 from cellpycore import Data, make_step_table, make_summary
 
 data = Data.from_raw_frame(create_raw_data())
-make_step_table(data, nom_cap=1.0)
+make_step_table(data)
 make_summary(data)
 ```
 
