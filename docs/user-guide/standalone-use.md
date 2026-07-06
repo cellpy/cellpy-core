@@ -27,7 +27,7 @@ core.cycle_mode = "anode"                          # half-cells only; unset = no
 
 data = core.make_core_step_table(
     core.data,
-    nom_cap=my_nom_cap_abs,              # absolute (e.g. Ah), for the per-step C-rate
+    nom_cap_abs=my_nom_cap_abs,          # absolute (e.g. Ah), for the per-step C-rate
     raw_limits=my_instrument_limits,     # optional; DEFAULT_RAW_LIMITS otherwise
 )
 data = core.make_core_summary(
@@ -108,7 +108,7 @@ from cellpycore import summarizers
 
 data = Data.from_raw_frame(my_polars_frame)
 data = summarizers.make_step_table(data)
-data = summarizers.add_step_c_rate(data, nom_cap=my_nom_cap_abs)  # optional
+data = summarizers.add_step_c_rate(data, nom_cap_abs=my_nom_cap_abs)  # optional
 data = summarizers.make_summary(data)   # test_mode=config.TestMode.INVERTED for anode cells
 ```
 
@@ -129,10 +129,26 @@ orchestration (`make_core_step_table` chains `make_step_table` +
   explicit `cycle_mode` (e.g. `"anode"`) changes the math (CE direction — see
   above).
 - **Units by value.** The core never sees unit objects. The caller precomputes
-  plain floats: `nom_cap` / `nom_cap_abs`, `current_conversion_factor`, and the
-  `specific_converters` mapping. The pint-backed helpers in `cellpycore.units`
-  are an optional fallback (install the `units` extra) — the engine itself does
-  not require pint.
+  plain floats; the pint-backed helpers in `cellpycore.units` are an optional
+  fallback (install the `units` extra) — the engine itself does not require
+  pint. Glossary of the by-value knobs:
+  - `nom_cap_abs` — the **absolute** nominal capacity, in the same unit as the
+    raw capacity columns (e.g. Ah). One value, used everywhere it appears:
+    the per-step C-rate (`add_step_c_rate` / `make_core_step_table`) and the
+    summary normalization (`add_scaled_summary_columns`,
+    `equivalent_cycles_to_summary`, `c_rates_to_summary`). The old `nom_cap`
+    keyword is a deprecated alias (warns since #99). Not to be confused with
+    the *metadata field* `CellMeta.nom_cap`, which may be specific (qualified
+    by `nom_cap_specifics`).
+  - `current_conversion_factor` — converts the raw **current** unit to the
+    output current unit for the per-cycle `charge_c_rate` / `discharge_c_rate`
+    columns (`make_core_summary` / `c_rates_to_summary`). Default 1.0 = no
+    conversion.
+  - `specific_converters` — mapping `mode -> factor` (e.g.
+    `{"gravimetric": 1/mass}`) that scales the **capacity-like** summary
+    columns into their specific variants in `add_scaled_summary_columns`.
+    Unrelated to `current_conversion_factor`: one scales currents, the other
+    capacities.
 - **Raw shape assumptions.**
   - `epoch_time_utc` is int64 nanoseconds since the Unix epoch, UTC (see
     `cellpycore.timestamps` for conversion helpers); `test_time` / `step_time`

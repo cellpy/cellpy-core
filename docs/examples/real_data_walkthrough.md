@@ -89,7 +89,7 @@ fig.tight_layout()
 The class handles the `cycle_mode` string for you. This cell is an **anode
 half-cell**, so coulombic efficiency is computed in the inverted direction
 (`CE = 100 * charge / discharge`). `make_core_step_table` also estimates a
-per-step C-rate from `nom_cap` (absolute, in the same unit as
+per-step C-rate from `nom_cap_abs` (absolute, in the same unit as
 capacity — pass your cell's real value).
 
 
@@ -100,7 +100,7 @@ core = CellpyCellCore()
 core.data = Data.from_raw_frame(raw)
 core.cycle_mode = "anode"
 
-data = core.make_core_step_table(core.data, nom_cap=NOM_CAP)
+data = core.make_core_step_table(core.data, nom_cap_abs=NOM_CAP)
 data = core.make_core_summary(data, current_conversion_factor=1.0)
 
 print(f"steps:   {data.steps.height} rows")

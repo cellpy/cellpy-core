@@ -67,40 +67,12 @@ C-rate is appended by the separate opt-in `summarizers.add_step_c_rate` (the
 
 ### Unclear example — [#99](https://github.com/cellpy/cellpy-core/issues/99)
 
-The example in the docs is a bit unclear.
-
-`nom_cap` vs `nom_cap_abs`
-
-`current_conversion_factor` vs `specific_converters`
-
-It might be because we have not been consistent in naming of parameters / arguments. 
-
-```python
-
-# Example in docs:
-
-from cellpycore.cell_core import CellpyCellCore, Data
-
-core = CellpyCellCore()
-core.data = Data.from_raw_frame(my_polars_frame)  # validates against config.RawCols
-core.cycle_mode = "anode"                          # half-cells only; unset = normal
-
-data = core.make_core_step_table(
-    core.data,
-    nom_cap=my_nom_cap_abs,              # absolute (e.g. Ah), for the per-step C-rate
-    raw_limits=my_instrument_limits,     # optional; DEFAULT_RAW_LIMITS otherwise
-)
-data = core.make_core_summary(
-    data,
-    current_conversion_factor=1.0,       # raw-current -> output-current, by value
-)
-# optional: specific / normalized columns
-data = core.add_scaled_summary_columns(
-    data,
-    nom_cap_abs=my_nom_cap_abs,
-    normalization_cycles=None,
-    specific_converters={"gravimetric": f_g, "areal": f_a, "absolute": f_abs},
-)
-
-steps, summary = data.steps, data.summary  # polars frames (StepCols / CycleCols)
-```
+Resolved by issue #99: the canonical parameter name is `nom_cap_abs` across the
+native step and summary entry points (`add_step_c_rate`, `make_core_step_table`,
+`equivalent_cycles_to_summary`, `c_rates_to_summary`, `update_data` /
+`update_core_data`); the old `nom_cap` keyword is a deprecated alias that emits
+a `DeprecationWarning`. The legacy `OldCellpyCellCore` bridge keeps `nom_cap`
+(old-cellpy seam). `current_conversion_factor` vs `specific_converters` are
+different knobs (currents vs capacities) — clarified in the glossary in
+`docs/user-guide/standalone-use.md`. See
+`.issueflows/04-designs-and-guides/nom-cap-naming.md`.

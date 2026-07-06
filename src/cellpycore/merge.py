@@ -12,6 +12,7 @@ from cellpycore import config
 from cellpycore.cell_core import Data
 from cellpycore.summarizers import (
     _ensure_test_id,
+    _resolve_nom_cap_abs,
     _step_c_rate_expr,
     make_step_table,
     make_summary,
@@ -148,9 +149,10 @@ def update_data(
     new_raw: pl.DataFrame,
     *,
     schema: Optional["Schema"] = None,
-    nom_cap: float = 1.0,
+    nom_cap_abs: float = 1.0,
     partition_col: str | None = None,
     test_mode: config.TestMode = config.TestMode.NORMAL,
+    nom_cap: Optional[float] = None,
     **step_table_kwargs: Any,
 ) -> Data:
     """Incrementally update processed ``Data`` with new raw rows.
@@ -163,14 +165,16 @@ def update_data(
         data: Processed ``Data`` with ``raw``, ``steps``, and ``summary``.
         new_raw: New raw rows to append (may overlap the tail of ``data.raw``).
         schema: Column-header schema. Defaults to ``config.default_schema()``.
-        nom_cap: Nominal capacity for the per-step C-rate appended to the
-            rebuilt step rows (via ``add_step_c_rate``), so they match the kept
-            steps.
+        nom_cap_abs: Absolute nominal capacity for the per-step C-rate appended
+            to the rebuilt step rows (via ``add_step_c_rate``), so they match
+            the kept steps.
         partition_col: Column used to detect overlap. Defaults to
             ``source_datapoint_num``, falling back to ``datapoint_num``.
         test_mode: Cell convention forwarded to ``make_summary``.
+        nom_cap: Deprecated alias for ``nom_cap_abs``.
         **step_table_kwargs: Extra keyword arguments forwarded to
-            ``make_step_table`` (except ``schema``, ``nom_cap``, ``from_data_point``).
+            ``make_step_table`` (except ``schema``, ``nom_cap_abs``,
+            ``from_data_point``).
 
     Returns:
         A new ``Data`` object. The input is not modified.
@@ -180,6 +184,7 @@ def update_data(
             more than one ``test_id`` is present, or ``new_raw`` starts at or
             before the beginning of the existing partition range (full reload).
     """
+    nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
     if schema is None:
         schema = config.default_schema()
     nhdr, shdr = schema.raw, schema.step
@@ -251,7 +256,7 @@ def update_data(
     # When the kept steps carry ``c_rate`` (added post-step via add_step_c_rate),
     # append it to the rebuilt rows too so the vertical concat schemas match.
     if shdr.c_rate in kept_steps.columns:
-        new_steps = new_steps.with_columns(_step_c_rate_expr(shdr, nom_cap))
+        new_steps = new_steps.with_columns(_step_c_rate_expr(shdr, nom_cap_abs))
 
     combined_steps = pl.concat([kept_steps, new_steps], how="vertical")
 

@@ -49,7 +49,7 @@ separate step after `make_step_table`:
 ```python
 from cellpycore import add_step_c_rate
 
-add_step_c_rate(data, nom_cap=1.0)  # nom_cap: absolute nominal capacity
+add_step_c_rate(data, nom_cap_abs=1.0)  # nom_cap_abs: absolute nominal capacity
 ```
 
 ## Trying it without instrument data

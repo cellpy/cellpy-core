@@ -59,7 +59,7 @@ def _process_native(raw: pl.DataFrame) -> Data:
     """Run the native public processing pipeline for an in-memory raw frame."""
     data = Data.from_raw_frame(raw)
     make_step_table(data)
-    add_step_c_rate(data, nom_cap=1.0)
+    add_step_c_rate(data, nom_cap_abs=1.0)
     make_summary(data)
     return data
 
