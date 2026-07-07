@@ -32,6 +32,10 @@ nav = [
         { "Step table" = "specifications/step-table.md" },
         { "Cycle table" = "specifications/cycle-table.md" },
     ] },
+    { "API reference" = [
+        "api/index.md",
+        { "Public API" = "api/public.md" },
+    ] },
     { "Development" = [
         { "Development guide" = "development/guide.md" },
         { "Design notes" = "development/design-notes.md" },
@@ -123,3 +127,23 @@ custom_checkbox = true
 [project.markdown_extensions.pymdownx.snippets]
 base_path = ["."]
 check_paths = true
+
+# ----------------------------------------------------------------------------
+# API reference (mkdocstrings)
+# https://zensical.org/docs/setup/extensions/mkdocstrings/
+# ----------------------------------------------------------------------------
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["src"]
+inventories = ["https://docs.python.org/3/objects.inv"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+docstring_style = "google"
+docstring_section_style = "list"
+inherited_members = true
+merge_init_into_class = true
+separate_signature = true
+show_root_heading = true
+show_root_full_path = false
+show_signature_annotations = true
+show_source = false
+heading_level = 2

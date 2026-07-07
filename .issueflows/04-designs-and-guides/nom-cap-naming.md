@@ -25,8 +25,9 @@ confusing.
   keeps `add_c_rate` / `nom_cap` — it mirrors legacy cellpy's signature
   across the seam and must not warn.
 - `current_conversion_factor` (current-unit factor for the per-cycle C-rate
-  columns) and `specific_converters` (mode -> factor for specific capacity
-  columns) are semantically different and keep their names; the relationship
+  columns) and `specific_conversion_factors` (mode -> factor for specific
+  capacity columns; deprecated alias `specific_converters`) are semantically
+  different; both use the `_conversion_factor(s)` suffix and the relationship
   is documented in the glossary in `docs/user-guide/standalone-use.md`.
 
 ## Alternatives considered

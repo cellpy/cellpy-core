@@ -39,8 +39,8 @@ data = core.add_scaled_summary_columns(
     data,
     nom_cap_abs=my_nom_cap_abs,
     normalization_cycles=None,
-    specific_converters={"gravimetric": f_g, "areal": f_a, "absolute": f_abs},
-)
+    specific_conversion_factors={"gravimetric": f_g, "areal": f_a, "absolute": f_abs},
+) # Note, f_abs should always be 1.0 in standalone mode if charge units match
 
 steps, summary = data.steps, data.summary  # polars frames (StepCols / CycleCols)
 ```
@@ -49,6 +49,33 @@ steps, summary = data.steps, data.summary  # polars frames (StepCols / CycleCols
 a polars `DataFrame` carrying the load-bearing `RawCols` columns with sane
 dtypes and reports every problem in a single error. Pass `validate=False` to
 skip the checks (e.g. in a hot loop after the shape is known-good).
+
+
+### Unit conversion
+
+If you have `pint` installed, you can use `cellpy-core` to help calculate the
+conversion factors.
+
+```python
+from cellpycore import units
+
+# Absolute nominal capacity
+my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific(nom_cap_gravimetric, mass)
+# or
+my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific(
+    nom_cap_areal, area, specific_type="areal"
+)
+
+# Current conversion factor
+my_current_conversion_factor = units.calculate_current_conversion_factor("mA")
+
+# Specific conversion factors
+my_specific_conversion_factors = units.calculate_specific_conversion_factors(
+    mass=mass, area=area
+)
+# {"gravimetric": f_g, "areal": f_a, "absolute": 1.0} when charge units match
+```
+
 
 ### Dtypes
 
@@ -144,11 +171,11 @@ orchestration (`make_core_step_table` chains `make_step_table` +
     output current unit for the per-cycle `charge_c_rate` / `discharge_c_rate`
     columns (`make_core_summary` / `c_rates_to_summary`). Default 1.0 = no
     conversion.
-  - `specific_converters` — mapping `mode -> factor` (e.g.
+  - `specific_conversion_factors` — mapping `mode -> factor` (e.g.
     `{"gravimetric": 1/mass}`) that scales the **capacity-like** summary
     columns into their specific variants in `add_scaled_summary_columns`.
-    Unrelated to `current_conversion_factor`: one scales currents, the other
-    capacities.
+    Pairs with `current_conversion_factor` (current vs capacity scaling).
+    The old name `specific_converters` is a deprecated alias.
 - **Raw shape assumptions.**
   - `epoch_time_utc` is int64 nanoseconds since the Unix epoch, UTC (see
     `cellpycore.timestamps` for conversion helpers); `test_time` / `step_time`

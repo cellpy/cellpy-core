@@ -265,6 +265,30 @@ def test_deprecated_nom_cap_kwarg_on_make_core_step_table():
     assert core.schema.step.c_rate in data.steps.columns
 
 
+def test_deprecated_specific_converters_kwarg_still_scales():
+    """``specific_converters=`` is a deprecated alias for ``specific_conversion_factors``."""
+    cell = CellpyCellCore(initialize=False)
+    nhdr = cell.schema.raw
+    chdr = cell.schema.cycle
+
+    data = _data_with_raw(nhdr)
+    cell.make_core_step_table(data, nom_cap_abs=1.0)
+    cell.make_core_summary(data)
+
+    with pytest.warns(DeprecationWarning, match="specific_conversion_factors"):
+        cell.add_scaled_summary_columns(
+            data,
+            nom_cap_abs=1.0,
+            normalization_cycles=None,
+            specific_converters={"gravimetric": 10.0, "areal": 2.0, "absolute": 1.0},
+        )
+
+    base = data.summary[chdr.charge_capacity].to_list()
+    grav = data.summary[f"{chdr.charge_capacity}_gravimetric"].to_list()
+    for b, g in zip(base, grav):
+        assert g == pytest.approx(10.0 * b)
+
+
 def test_raw_limits_affect_classification():
     """Step-type classification uses the supplied raw_limits, not a fixed default."""
     nhdr = RawCols()
@@ -667,7 +691,11 @@ def test_native_add_scaled_summary_columns_end_to_end():
         data,
         nom_cap_abs=1.0,
         normalization_cycles=None,
-        specific_converters={"gravimetric": 10.0, "areal": 2.0, "absolute": 1.0},
+        specific_conversion_factors={
+            "gravimetric": 10.0,
+            "areal": 2.0,
+            "absolute": 1.0,
+        },
     )
 
     assert chdr.normalized_cycle_index in data.summary.columns
@@ -681,7 +709,7 @@ def test_native_add_scaled_summary_columns_end_to_end():
 
 
 def test_native_add_scaled_summary_columns_with_cell_meta():
-    """Units fallback via ``cell_meta`` works without ``specific_converters``."""
+    """Units fallback via ``cell_meta`` works without ``specific_conversion_factors``."""
     pytest.importorskip("pint")
 
     from cellpycore.metadata.models import CellMeta

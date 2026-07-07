@@ -533,6 +533,26 @@ def _resolve_nom_cap_abs(nom_cap_abs: float, nom_cap: Optional[float]) -> float:
     return nom_cap_abs
 
 
+def _resolve_specific_conversion_factors(
+    specific_conversion_factors: Optional[dict],
+    specific_converters: Optional[dict],
+) -> Optional[dict]:
+    """Resolve the deprecated ``specific_converters`` keyword alias.
+
+    When the caller passes the old ``specific_converters`` keyword, emit a
+    ``DeprecationWarning`` and honour it; otherwise return
+    ``specific_conversion_factors``.
+    """
+    if specific_converters is not None:
+        warnings.warn(
+            "`specific_converters` is deprecated; use `specific_conversion_factors` instead",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return specific_converters
+    return specific_conversion_factors
+
+
 def _step_c_rate_expr(shdr: StepCols, nom_cap_abs: float) -> "pl.Expr":
     """Expression for the per-step C-rate (legacy ``rate_avr``).
 
