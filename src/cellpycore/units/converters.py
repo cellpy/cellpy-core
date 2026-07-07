@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import functools
 import logging
+import numbers
 import warnings
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional, TypeVar, Union
 
 from cellpycore.metadata.models import CellMeta
 from cellpycore.units.spec import CellpyUnits
@@ -102,17 +103,77 @@ def _resolve_raw_units(
     return CellpyUnits()
 
 
+QuantityValue = Union[float, int, str]
+
+
+def _default_unit(units: CellpyUnits, key: str) -> str:
+    """Return the unit string for ``key`` on a ``CellpyUnits`` spec."""
+    return units[key]
+
+
+def _resolve_units_spec(
+    cellpy_units: Optional[CellpyUnits] = None,
+    to_units: Optional[CellpyUnits] = None,
+) -> CellpyUnits:
+    """Resolve output / cellpy default unit strings."""
+    return cellpy_units or to_units or get_cellpy_units()
+
+
+def _as_quantity(value: QuantityValue, default_unit: str, *, name: str = "value"):
+    """Coerce a numeric value or pint quantity string to a ``Quantity``.
+
+    Bare numbers use ``default_unit``; strings are parsed by pint and must
+    include units (unitless numeric strings raise ``ValueError``).
+    """
+    if isinstance(value, str):
+        try:
+            quantity = Q(value)
+        except Exception as exc:
+            raise ValueError(
+                f"Could not parse {name} as a quantity: {value!r}"
+            ) from exc
+        if quantity.dimensionless:
+            raise ValueError(
+                f"{name} {value!r} has no units; use a quantity string "
+                f'(e.g. "3.579 mAh/g") or pass a number with an explicit unit'
+            )
+        return quantity
+    if isinstance(value, numbers.Real):
+        return Q(float(value), default_unit)
+    raise TypeError(
+        f"{name} must be a number or quantity string, got {type(value).__name__}"
+    )
+
+
+def _coerce_scale(
+    scale: QuantityValue,
+    *,
+    default_unit: str,
+    unit_override: Optional[str],
+    explicit: bool,
+    name: str,
+):
+    """Build a pint ``Quantity`` for a geometry scale (mass, area, volume)."""
+    if not explicit:
+        return Q(scale, default_unit)
+    return _as_quantity(scale, unit_override or default_unit, name=name)
+
+
 def get_converter_to_specific(
     data: Any = None,
-    value: float = None,
+    value: Optional[QuantityValue] = None,
     from_units: CellpyUnits = None,
     to_units: CellpyUnits = None,
     mode: str = "gravimetric",
     *,
     cell_meta: Optional[CellMeta] = None,
-    mass: Optional[float] = None,
-    active_electrode_area: Optional[float] = None,
-    volume: Optional[float] = None,
+    mass: Optional[QuantityValue] = None,
+    active_electrode_area: Optional[QuantityValue] = None,
+    volume: Optional[QuantityValue] = None,
+    mass_unit: Optional[str] = None,
+    area_unit: Optional[str] = None,
+    volume_unit: Optional[str] = None,
+    cellpy_units: Optional[CellpyUnits] = None,
 ) -> float:
     """Convert from absolute units to specific (areal or gravimetric).
 
@@ -121,15 +182,28 @@ def get_converter_to_specific(
 
     Args:
         data: Optional data instance (cellpy's richer object may supply attrs).
-        value: Explicit scale value for the mode (mass, area, or volume).
+        value: Explicit scale value for the mode (mass, area, or volume). A bare
+            number uses the matching cellpy unit (``mg``, ``cm**2``, or
+            ``cm**3`` by default); a string is parsed as a pint quantity
+            (e.g. ``"2 mg"``).
         from_units: Raw/input charge units; defaults to ``data.raw_units`` or
             ``CellpyUnits()`` when unset.
         to_units: Output units; defaults to cellpy units.
         mode: ``gravimetric``, ``areal``, ``volumetric``, or ``absolute``.
         cell_meta: Optional cell metadata (``mass``, ``active_electrode_area``).
-        mass: Explicit active-material mass (gravimetric mode).
+        mass: Explicit active-material mass (gravimetric mode); same typing as
+            ``value``.
         active_electrode_area: Explicit electrode area (areal mode).
         volume: Explicit electrode volume (volumetric mode).
+        mass_unit: Unit string for bare numeric ``mass`` / gravimetric ``value``
+            (default from ``cellpy_units`` or ``CellpyUnits().mass``).
+        area_unit: Unit string for bare numeric areal scale inputs (default
+            ``CellpyUnits().area``).
+        volume_unit: Unit string for bare numeric volumetric scale inputs
+            (default ``CellpyUnits().volume``).
+        cellpy_units: Bulk override for default mass/area/volume unit strings
+            when coercing explicit inputs; also used as ``to_units`` when that
+            is unset.
 
     Returns:
         Conversion factor (float).
@@ -140,10 +214,12 @@ def get_converter_to_specific(
     # TODO @jepe: implement handling of edge-cases
     # TODO @jepe: fix all the instrument readers (replace floats in raw_units with strings)
 
-    new_units = to_units or get_cellpy_units()
+    units_spec = _resolve_units_spec(cellpy_units, to_units)
+    new_units = units_spec
     old_units = _resolve_raw_units(from_units, data)
 
     if mode == "gravimetric":
+        scale_explicit = value is not None or mass is not None
         scale = (
             value
             if value is not None
@@ -156,10 +232,17 @@ def get_converter_to_specific(
             )
         )
         scale = _require_attr(scale, "mass", context="gravimetric mode")
-        value = Q(scale, new_units["mass"])
+        value_q = _coerce_scale(
+            scale,
+            default_unit=new_units["mass"],
+            unit_override=mass_unit,
+            explicit=scale_explicit,
+            name="mass",
+        )
         to_unit_specific = Q(1.0, new_units["specific_gravimetric"])
 
     elif mode == "areal":
+        scale_explicit = value is not None or active_electrode_area is not None
         scale = (
             value
             if value is not None
@@ -172,10 +255,17 @@ def get_converter_to_specific(
             )
         )
         scale = _require_attr(scale, "active_electrode_area", context="areal mode")
-        value = Q(scale, new_units["area"])
+        value_q = _coerce_scale(
+            scale,
+            default_unit=new_units["area"],
+            unit_override=area_unit,
+            explicit=scale_explicit,
+            name="active_electrode_area",
+        )
         to_unit_specific = Q(1.0, new_units["specific_areal"])
 
     elif mode == "volumetric":
+        scale_explicit = value is not None or volume is not None
         scale = (
             value
             if value is not None
@@ -188,11 +278,17 @@ def get_converter_to_specific(
             )
         )
         scale = _require_attr(scale, "volume", context="volumetric mode")
-        value = Q(scale, new_units["volume"])
+        value_q = _coerce_scale(
+            scale,
+            default_unit=new_units["volume"],
+            unit_override=volume_unit,
+            explicit=scale_explicit,
+            name="volume",
+        )
         to_unit_specific = Q(1.0, new_units["specific_volumetric"])
 
     elif mode == "absolute":
-        value = Q(1.0, None)
+        value_q = Q(1.0, None)
         to_unit_specific = Q(1.0, None)
 
     else:
@@ -207,33 +303,45 @@ def get_converter_to_specific(
 
     to_unit = to_unit_cap / to_unit_specific
 
-    conversion_factor = (from_unit / to_unit / value).to_reduced_units()
+    conversion_factor = (from_unit / to_unit / value_q).to_reduced_units()
     logger.debug(f"conversion factor: {conversion_factor}")
     return conversion_factor.m
 
 
 def nominal_capacity_as_absolute(
     data: Any = None,
-    value: Optional[float] = None,
-    specific: Optional[float] = None,
+    value: Optional[QuantityValue] = None,
+    specific: Optional[QuantityValue] = None,
     nom_cap_specifics: Optional[str] = None,
     convert_charge_units: bool = False,
     *,
     cell_meta: Optional[CellMeta] = None,
     raw_units: Optional[CellpyUnits] = None,
+    nom_cap_unit: Optional[str] = None,
+    specific_unit: Optional[str] = None,
+    cellpy_units: Optional[CellpyUnits] = None,
 ) -> float:
     """Get the nominal capacity as absolute value.
 
     Args:
         data: Optional data instance (cellpy's richer object may supply attrs).
-        value: Nominal capacity in specific units (e.g. mAh/g).
+        value: Nominal capacity in specific units (e.g. mAh/g when gravimetric).
+            A bare number uses ``CellpyUnits().nominal_capacity`` (default
+            ``mAh/g``); a string is parsed as a pint quantity.
         specific: Scale factor (mass, area, …) matching ``nom_cap_specifics``.
+            Bare numbers use the matching cellpy unit (``mg`` or ``cm**2`` by
+            default).
         nom_cap_specifics: How ``value`` is specified (gravimetric, areal, …).
         convert_charge_units: Whether to convert between raw and cellpy charge units.
         cell_meta: Optional cell metadata supplying ``nom_cap``, ``nom_cap_specifics``,
             ``mass``, and ``active_electrode_area``.
         raw_units: Raw charge units for ``convert_charge_units``; defaults to
             ``data.raw_units`` or ``CellpyUnits()`` when unset.
+        nom_cap_unit: Unit string for a bare numeric ``value`` (overrides
+            ``cellpy_units['nominal_capacity']``).
+        specific_unit: Unit string for a bare numeric ``specific`` scale.
+        cellpy_units: Bulk override for default unit strings when coercing
+            explicit ``value`` / ``specific`` inputs.
 
     Returns:
         Absolute nominal capacity in Ah.
@@ -243,7 +351,9 @@ def nominal_capacity_as_absolute(
         NotImplementedError: For volumetric mode.
     """
 
-    cellpy_units = get_cellpy_units()
+    units_spec = _resolve_units_spec(cellpy_units)
+    value_passed = value is not None
+    specific_passed = specific is not None
 
     if nom_cap_specifics is None:
         nom_cap_specifics = _resolve_optional_attr(
@@ -291,18 +401,36 @@ def nominal_capacity_as_absolute(
             "or use a data object with .nom_cap"
         )
 
-    value = Q(value, cellpy_units["nominal_capacity"])
+    value_q = _coerce_scale(
+        value,
+        default_unit=units_spec["nominal_capacity"],
+        unit_override=nom_cap_unit,
+        explicit=value_passed,
+        name="nom_cap",
+    )
 
     if nom_cap_specifics == "gravimetric":
         specific = _require_attr(specific, "mass", context="gravimetric nom_cap")
-        specific = Q(specific, cellpy_units["mass"])
+        specific_q = _coerce_scale(
+            specific,
+            default_unit=units_spec["mass"],
+            unit_override=specific_unit,
+            explicit=specific_passed,
+            name="mass",
+        )
     elif nom_cap_specifics == "areal":
         specific = _require_attr(
             specific, "active_electrode_area", context="areal nom_cap"
         )
-        specific = Q(specific, cellpy_units["area"])
+        specific_q = _coerce_scale(
+            specific,
+            default_unit=units_spec["area"],
+            unit_override=specific_unit,
+            explicit=specific_passed,
+            name="active_electrode_area",
+        )
     elif nom_cap_specifics == "absolute":
-        specific = 1
+        specific_q = 1
 
     # TODO: implement volumetric
     elif nom_cap_specifics == "volumetric":
@@ -310,42 +438,50 @@ def nominal_capacity_as_absolute(
 
     if convert_charge_units:
         resolved_raw_units = _resolve_raw_units(raw_units, data)
-        conversion_factor_charge = Q(1, cellpy_units["charge"]) / Q(
+        conversion_factor_charge = Q(1, units_spec["charge"]) / Q(
             1, resolved_raw_units["charge"]
         )
     else:
         conversion_factor_charge = 1.0
 
     absolute_value = (
-        (value * conversion_factor_charge * specific).to_reduced_units().to("Ah")
+        (value_q * conversion_factor_charge * specific_q).to_reduced_units().to("Ah")
     )
 
     return absolute_value.m
 
 
 def calculate_nom_cap_abs_from_specific(
-    nom_cap: float,
-    specific: float,
+    nom_cap: QuantityValue,
+    specific: QuantityValue,
     *,
     specific_type: str = "gravimetric",
+    nom_cap_unit: Optional[str] = None,
+    specific_unit: Optional[str] = None,
+    cellpy_units: Optional[CellpyUnits] = None,
     convert_charge_units: bool = False,
     raw_units: Optional[CellpyUnits] = None,
 ) -> float:
     """Convert a specific nominal capacity to an absolute value (e.g. Ah).
 
     Convenience wrapper for the common standalone case where ``nom_cap`` and
-    geometry are known as plain floats. Gravimetric inputs delegate to
-    ``nominal_capacity_as_absolute``; areal and absolute use the matching
-    cellpy unit strings directly.
+    geometry are known as plain floats or pint quantity strings. Gravimetric
+    inputs delegate to ``nominal_capacity_as_absolute``; areal and absolute use
+    the matching cellpy unit strings directly.
 
     Args:
-        nom_cap: Nominal capacity in specific units (e.g. mAh/g when
-            ``specific_type`` is ``"gravimetric"``).
+        nom_cap: Nominal capacity in specific units. A bare number uses the
+            default for ``specific_type`` (``mAh/g`` gravimetric,
+            ``mAh/cm**2`` areal, ``mAh`` absolute); a string is parsed by pint
+            (e.g. ``"3.579 Ah/g"``).
         specific: Matching scale factor — active-material mass for gravimetric,
             electrode area for areal (ignored when ``specific_type`` is
-            ``"absolute"``).
+            ``"absolute"``). Defaults: ``mg`` (gravimetric), ``cm**2`` (areal).
         specific_type: How ``nom_cap`` is specified: ``"gravimetric"``,
             ``"areal"``, or ``"absolute"``.
+        nom_cap_unit: Unit string for a bare numeric ``nom_cap``.
+        specific_unit: Unit string for a bare numeric ``specific``.
+        cellpy_units: Bulk override for default unit strings.
         convert_charge_units: When ``True``, convert from raw charge units to
             cellpy output charge units before returning (gravimetric only).
         raw_units: Raw charge units for ``convert_charge_units``; defaults to
@@ -354,6 +490,8 @@ def calculate_nom_cap_abs_from_specific(
     Returns:
         Absolute nominal capacity (float, in Ah).
     """
+    units_spec = _resolve_units_spec(cellpy_units)
+
     if specific_type == "gravimetric":
         return nominal_capacity_as_absolute(
             value=nom_cap,
@@ -361,16 +499,26 @@ def calculate_nom_cap_abs_from_specific(
             nom_cap_specifics="gravimetric",
             convert_charge_units=convert_charge_units,
             raw_units=raw_units,
+            nom_cap_unit=nom_cap_unit,
+            specific_unit=specific_unit,
+            cellpy_units=units_spec,
         )
 
-    cellpy_units = get_cellpy_units()
-
     if specific_type == "areal":
-        cap = Q(nom_cap, f"{cellpy_units['charge']}/{cellpy_units['area']}")
-        area_q = Q(specific, cellpy_units["area"])
+        cap_unit = nom_cap_unit or (f"{units_spec['charge']}/{units_spec['area']}")
+        cap = _as_quantity(nom_cap, cap_unit, name="nom_cap")
+        area_q = _as_quantity(
+            specific,
+            specific_unit or units_spec["area"],
+            name="active_electrode_area",
+        )
         absolute = cap * area_q
     elif specific_type == "absolute":
-        absolute = Q(nom_cap, cellpy_units["charge"])
+        absolute = _as_quantity(
+            nom_cap,
+            nom_cap_unit or units_spec["charge"],
+            name="nom_cap",
+        )
     else:
         raise ValueError(
             f"unsupported specific_type {specific_type!r}; "
@@ -380,7 +528,7 @@ def calculate_nom_cap_abs_from_specific(
     if convert_charge_units:
         resolved_raw = raw_units or CellpyUnits()
         absolute = absolute * (
-            Q(1, cellpy_units["charge"]) / Q(1, resolved_raw["charge"])
+            Q(1, units_spec["charge"]) / Q(1, resolved_raw["charge"])
         )
 
     return absolute.to_reduced_units().to("Ah").m
@@ -413,10 +561,13 @@ def calculate_current_conversion_factor(
 
 def calculate_specific_conversion_factors(
     *,
-    mass: Optional[float] = None,
-    area: Optional[float] = None,
+    mass: Optional[QuantityValue] = None,
+    area: Optional[QuantityValue] = None,
     from_units: Optional[CellpyUnits] = None,
     to_units: Optional[CellpyUnits] = None,
+    mass_unit: Optional[str] = None,
+    area_unit: Optional[str] = None,
+    cellpy_units: Optional[CellpyUnits] = None,
 ) -> dict[str, float]:
     """Build a ``specific_conversion_factors`` mapping for ``add_scaled_summary_columns``.
 
@@ -425,16 +576,21 @@ def calculate_specific_conversion_factors(
     ``1.0`` when raw and output charge units match).
 
     Args:
-        mass: Active-material mass for the gravimetric factor (cellpy mass unit,
-            default mg).
-        area: Electrode area for the areal factor (cellpy area unit, default cm²).
+        mass: Active-material mass for the gravimetric factor. A bare number
+            uses the cellpy mass unit (default ``mg``); a string is parsed by
+            pint (e.g. ``"2 mg"``).
+        area: Electrode area for the areal factor (default unit ``cm**2``).
         from_units: Raw/input charge units; defaults to ``CellpyUnits()``.
         to_units: Output units; defaults to ``CellpyUnits()``.
+        mass_unit: Unit string for a bare numeric ``mass``.
+        area_unit: Unit string for a bare numeric ``area``.
+        cellpy_units: Bulk override for default mass/area unit strings.
 
     Returns:
         Mapping ``mode -> factor`` with keys among ``gravimetric``, ``areal``,
         and ``absolute``.
     """
+    units_spec = _resolve_units_spec(cellpy_units, to_units)
     factors: dict[str, float] = {}
     if mass is not None:
         factors["gravimetric"] = get_converter_to_specific(
@@ -442,6 +598,8 @@ def calculate_specific_conversion_factors(
             from_units=from_units,
             to_units=to_units,
             mode="gravimetric",
+            mass_unit=mass_unit,
+            cellpy_units=units_spec,
         )
     if area is not None:
         factors["areal"] = get_converter_to_specific(
@@ -449,21 +607,27 @@ def calculate_specific_conversion_factors(
             from_units=from_units,
             to_units=to_units,
             mode="areal",
+            area_unit=area_unit,
+            cellpy_units=units_spec,
         )
     factors["absolute"] = get_converter_to_specific(
         from_units=from_units,
         to_units=to_units,
         mode="absolute",
+        cellpy_units=units_spec,
     )
     return factors
 
 
 def calculate_specific_converters(
     *,
-    mass: Optional[float] = None,
-    area: Optional[float] = None,
+    mass: Optional[QuantityValue] = None,
+    area: Optional[QuantityValue] = None,
     from_units: Optional[CellpyUnits] = None,
     to_units: Optional[CellpyUnits] = None,
+    mass_unit: Optional[str] = None,
+    area_unit: Optional[str] = None,
+    cellpy_units: Optional[CellpyUnits] = None,
 ) -> dict[str, float]:
     """Deprecated alias for ``calculate_specific_conversion_factors``."""
     warnings.warn(
@@ -477,4 +641,7 @@ def calculate_specific_converters(
         area=area,
         from_units=from_units,
         to_units=to_units,
+        mass_unit=mass_unit,
+        area_unit=area_unit,
+        cellpy_units=cellpy_units,
     )

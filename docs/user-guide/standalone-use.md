@@ -53,20 +53,41 @@ skip the checks (e.g. in a hot loop after the shape is known-good).
 
 ### Unit conversion
 
-If you have `pint` installed, you can use `cellpy-core` to help calculate the
-conversion factors.
+If you have `pint` installed, you can use `cellpycore.units` to help calculate the
+conversion factors. Bare numeric inputs use the default **cellpy units** from
+``CellpyUnits()`` (see table below). You can override units per parameter, pass
+pint quantity strings, or supply a bulk ``cellpy_units=`` spec.
+
+| Helper | Parameter | Default unit | Output |
+| --- | --- | --- | --- |
+| `calculate_nom_cap_abs_from_specific` | `nom_cap` (gravimetric) | `mAh/g` | `Ah` |
+| | `specific` (gravimetric) | `mg` | |
+| | `nom_cap` (areal) | `mAh/cm**2` | `Ah` |
+| | `specific` (areal) | `cm**2` | |
+| `calculate_specific_conversion_factors` | `mass` | `mg` | dimensionless factor |
+| | `area` | `cm**2` | |
+| `calculate_current_conversion_factor` | `raw_current_unit` | *(required)* | dimensionless |
 
 ```python
 from cellpycore import units
 
-# Absolute nominal capacity
-my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific(nom_cap_gravimetric, mass)
-# or
+# Implicit cellpy defaults (mAh/g, mg)
+my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific(3.579, 1.334)
+
+# Explicit unit kwargs when values are plain floats
+my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific(
+    3.579, 1.334, nom_cap_unit="Ah/g", specific_unit="mg"
+)
+
+# Pint quantity strings
+my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific("3.579 Ah/g", "1.334 mg")
+
+# Areal nominal capacity
 my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific(
     nom_cap_areal, area, specific_type="areal"
 )
 
-# Current conversion factor
+# Current conversion factor (raw current unit is always explicit)
 my_current_conversion_factor = units.calculate_current_conversion_factor("mA")
 
 # Specific conversion factors
@@ -75,6 +96,11 @@ my_specific_conversion_factors = units.calculate_specific_conversion_factors(
 )
 # {"gravimetric": f_g, "areal": f_a, "absolute": 1.0} when charge units match
 ```
+
+Cell metadata loaded through ``nominal_capacity_as_absolute(data=...)`` or
+``get_converter_to_specific(data=...)`` is still treated as plain floats in
+cellpy units; quantity strings and unit kwargs apply when you pass values
+explicitly.
 
 
 ### Dtypes
