@@ -407,6 +407,9 @@ with [Zensical](https://zensical.org) (config in `zensical.toml`; hosted on
 Read the Docs via `.readthedocs.yaml`). Preview locally with
 `uv run --group docs zensical serve`.
 
+The [API reference](../api/index.md) is generated from Google-style docstrings
+via the mkdocstrings plugin (`::: cellpycore` directives in `docs/api/`).
+
 - **All public APIs** must be documented
 - **Examples** should be provided for complex functions
 - **Keep documentation** up-to-date with code changes

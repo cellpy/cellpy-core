@@ -12,6 +12,10 @@ Material-for-MkDocs successor) and hosted on Read the Docs.
   `zensical build --clean` → copy `site/` to `$READTHEDOCS_OUTPUT/html/`).
   The RTD build needs **only** zensical — no project deps.
 - Local preview: `uv run --group docs zensical serve`.
+- **API reference:** autodoc from Google-style docstrings via the
+  [mkdocstrings](https://mkdocstrings.github.io) plugin (`docs/api/`, configured
+  in `zensical.toml`). RTD installs `zensical` + `mkdocstrings-python`; source is
+  parsed from `src/` via Griffe (no runtime project deps required on RTD).
 - Structure: `docs/{index,getting-started,changelog}.md`, `user-guide/`,
   `examples/`, `specifications/` (was `data_format_specifications/`),
   `development/`. `changelog.md` and `development/roadmap.md` are thin
