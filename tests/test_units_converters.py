@@ -169,3 +169,50 @@ def test_calculate_specific_converters_deprecated_alias():
     with pytest.deprecated_call():
         result = units.calculate_specific_converters(mass=2.0)
     assert result["gravimetric"] == pytest.approx(500.0)
+
+
+# --- explicit units and quantity strings (issue #112) ------------------------
+
+
+def test_calculate_nom_cap_abs_from_specific_ah_g_quantity_strings():
+    expected = units.calculate_nom_cap_abs_from_specific(
+        3.579, 1.334, nom_cap_unit="Ah/g", specific_unit="mg"
+    )
+    assert units.calculate_nom_cap_abs_from_specific(
+        "3.579 Ah/g", "1.334 mg"
+    ) == pytest.approx(expected)
+    assert expected == pytest.approx(0.004774386)
+
+
+def test_nominal_capacity_as_absolute_quantity_strings():
+    assert units.nominal_capacity_as_absolute(
+        value="1000 mAh/g", specific="0.5 mg", nom_cap_specifics="gravimetric"
+    ) == pytest.approx(0.0005)
+
+
+def test_get_converter_to_specific_mass_quantity_string():
+    assert units.get_converter_to_specific(
+        mass="2 mg", mode="gravimetric"
+    ) == pytest.approx(500.0)
+
+
+def test_get_converter_to_specific_mass_in_grams():
+    assert units.get_converter_to_specific(
+        mass=2.0, mass_unit="g", mode="gravimetric"
+    ) == pytest.approx(0.5)
+
+
+def test_calculate_specific_conversion_factors_mass_quantity_string():
+    result = units.calculate_specific_conversion_factors(mass="2 mg", area="2 cm**2")
+    assert result == {
+        "gravimetric": pytest.approx(500.0),
+        "areal": pytest.approx(0.5),
+        "absolute": pytest.approx(1.0),
+    }
+
+
+def test_as_quantity_rejects_unitless_string():
+    from cellpycore.units.converters import _as_quantity
+
+    with pytest.raises(ValueError, match="no units"):
+        _as_quantity("3.579", "mAh/g", name="nom_cap")

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Unit conversion helpers accept pint quantity strings (e.g. ``"3.579 Ah/g"``),
+  per-parameter unit overrides, and bulk ``cellpy_units=`` specs; document
+  default input units in the standalone guide. (#112)
+
 ## [0.1.5] - 2026-07-07
 
 - Add `RawCols.dtype_map()` (authoritative column -> polars dtype map) and the
