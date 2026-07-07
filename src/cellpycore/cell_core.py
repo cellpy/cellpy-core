@@ -558,8 +558,8 @@ class CellpyCellCore:
                 using ``self.cellpy_units`` as a fallback (legacy / standalone).
             cell_meta: Optional ``CellMeta`` supplying geometry for the units
                 fallback when ``specific_converters`` is omitted. Bare ``Data``
-                without ``specific_converters`` or ``cell_meta`` raises
-                ``ValueError`` (not ``AttributeError``).
+                without ``specific_converters`` and without geometry
+                (via ``cell_meta`` or attrs on ``data``) raises ``ValueError``.
 
         Returns:
             The data with the specific summary columns added.
@@ -615,6 +615,10 @@ class CellpyCellCore:
         """
         if specific_converters is not None and mode in specific_converters:
             return specific_converters[mode]
+
+        logger.debug(
+            "Specific converter not provided, using units helper to compute it"
+        )
 
         from cellpycore import units
 

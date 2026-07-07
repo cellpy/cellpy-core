@@ -50,6 +50,32 @@ a polars `DataFrame` carrying the load-bearing `RawCols` columns with sane
 dtypes and reports every problem in a single error. Pass `validate=False` to
 skip the checks (e.g. in a hot loop after the shape is known-good).
 
+
+### Unit conversion
+
+If you have `pint` installed, you can use `cellpy-core` to help calculate the
+conversion factors.
+
+```python
+from cellpycore.cell_core import units
+
+# Absolute nominal capacity
+my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific(nom_cap_gravimetric, mass)
+# or
+my_nom_cap_abs = units.calculate_nom_cap_abs_from_specific(nom_cap_areal, area, specific_type="areal")
+
+# Current conversion factor
+my_current_conversion_factor = units.calculate_current_conversion_factor("mA")
+
+# Specific converters
+data = units.specific_converters(
+    specific_converters={"gravimetric": f_g, "areal": f_a, "absolute": f_abs},
+)
+
+```
+
+
+
 ### Dtypes
 
 The authoritative column -> polars dtype map lives on the schema:
