@@ -24,7 +24,7 @@
 
 ## Remaining work
 
-- None. Post-merge: run `/iflow-cleanup`.
+- None. Released as **0.1.5**. Post-merge: run `/iflow-cleanup`.
 
 ## Housekeeping
 
