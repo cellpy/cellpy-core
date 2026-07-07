@@ -122,3 +122,50 @@ def test_nominal_capacity_as_absolute_convert_charge_units():
         nom_cap_specifics="gravimetric",
         convert_charge_units=True,
     ) == pytest.approx(6e-6)
+
+
+# --- standalone convenience helpers -------------------------------------------
+
+
+def test_calculate_nom_cap_abs_from_specific_gravimetric():
+    assert units.calculate_nom_cap_abs_from_specific(3000.0, 2.0) == pytest.approx(
+        0.006
+    )
+
+
+def test_calculate_nom_cap_abs_from_specific_areal():
+    # 100 mAh/cm**2 * 2 cm**2 -> 200 mAh = 0.2 Ah
+    assert units.calculate_nom_cap_abs_from_specific(
+        100.0, 2.0, specific_type="areal"
+    ) == pytest.approx(0.2)
+
+
+def test_calculate_current_conversion_factor_mA_to_A():
+    assert units.calculate_current_conversion_factor("mA") == pytest.approx(0.001)
+
+
+def test_calculate_current_conversion_factor_identity():
+    assert units.calculate_current_conversion_factor("A") == pytest.approx(1.0)
+
+
+def test_calculate_specific_conversion_factors_default_units():
+    result = units.calculate_specific_conversion_factors(mass=2.0, area=2.0)
+    assert result == {
+        "gravimetric": pytest.approx(500.0),
+        "areal": pytest.approx(0.5),
+        "absolute": pytest.approx(1.0),
+    }
+
+
+def test_calculate_specific_conversion_factors_mass_only():
+    result = units.calculate_specific_conversion_factors(mass=2.0)
+    assert result == {
+        "gravimetric": pytest.approx(500.0),
+        "absolute": pytest.approx(1.0),
+    }
+
+
+def test_calculate_specific_converters_deprecated_alias():
+    with pytest.deprecated_call():
+        result = units.calculate_specific_converters(mass=2.0)
+    assert result["gravimetric"] == pytest.approx(500.0)

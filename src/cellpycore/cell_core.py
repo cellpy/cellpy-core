@@ -253,7 +253,7 @@ class CellpyCellCore:
                 data,
                 nom_cap_abs=1.0,
                 normalization_cycles=None,
-                specific_converters={"gravimetric": f_g, "areal": f_a},
+                specific_conversion_factors={"gravimetric": f_g, "areal": f_a},
             )
 
         Subclassing for custom helpers::
@@ -541,8 +541,10 @@ class CellpyCellCore:
         normalization_cycles: Union[Sequence, int, None],
         step_txt: Optional[str] = None,
         specifics: Optional[List[str]] = None,
-        specific_converters: Optional[dict] = None,
+        specific_conversion_factors: Optional[dict] = None,
         cell_meta: Optional[CellMeta] = None,
+        *,
+        specific_converters: Optional[dict] = None,
     ) -> Data:
         """Add specific summary columns to the summary.
 
@@ -552,14 +554,18 @@ class CellpyCellCore:
             normalization_cycles: The number of cycles to normalize the data by.
             step_txt: The step text to use (charge or discharge capacity, will pick 'first' based on cycle mode if not provided)
             specifics: The specifics to add.
-            specific_converters: Mapping of ``mode -> conversion factor`` supplied
-                by value by the caller (so this method needs no unit handling). If
-                not provided, the factors are computed lazily via the units helper
-                using ``self.cellpy_units`` as a fallback (legacy / standalone).
+            specific_conversion_factors: Mapping of ``mode -> conversion factor``
+                supplied by value by the caller (so this method needs no unit
+                handling). If not provided, the factors are computed lazily via
+                the units helper using ``self.cellpy_units`` as a fallback
+                (legacy / standalone).
             cell_meta: Optional ``CellMeta`` supplying geometry for the units
-                fallback when ``specific_converters`` is omitted. Bare ``Data``
-                without ``specific_converters`` and without geometry
-                (via ``cell_meta`` or attrs on ``data``) raises ``ValueError``.
+                fallback when ``specific_conversion_factors`` is omitted. Bare
+                ``Data`` without ``specific_conversion_factors`` and without
+                geometry (via ``cell_meta`` or attrs on ``data``) raises
+                ``ValueError``.
+            specific_converters: Deprecated alias for
+                ``specific_conversion_factors``.
 
         Returns:
             The data with the specific summary columns added.
@@ -567,6 +573,9 @@ class CellpyCellCore:
         from cellpycore import summarizers
 
         schema = self.schema
+        factors = summarizers._resolve_specific_conversion_factors(
+            specific_conversion_factors, specific_converters
+        )
 
         if specifics is None:
             specifics = ["gravimetric", "areal", "absolute"]
@@ -589,20 +598,20 @@ class CellpyCellCore:
 
         specific_columns = schema.cycle.specific_columns
         for mode in specifics:
-            converter = self._resolve_specific_converter(
-                data, mode, specific_converters, cell_meta=cell_meta
+            factor = self._resolve_specific_conversion_factor(
+                data, mode, factors, cell_meta=cell_meta
             )
             data = summarizers.generate_specific_summary_columns(
-                data, mode, specific_columns, converter
+                data, mode, specific_columns, factor
             )
 
         return data
 
-    def _resolve_specific_converter(
+    def _resolve_specific_conversion_factor(
         self,
         data: Data,
         mode: str,
-        specific_converters: Optional[dict],
+        specific_conversion_factors: Optional[dict],
         *,
         cell_meta: Optional[CellMeta] = None,
     ) -> float:
@@ -613,11 +622,14 @@ class CellpyCellCore:
         this is the only place the summary path may touch pint, and only when the
         caller did not supply the factor.
         """
-        if specific_converters is not None and mode in specific_converters:
-            return specific_converters[mode]
+        if (
+            specific_conversion_factors is not None
+            and mode in specific_conversion_factors
+        ):
+            return specific_conversion_factors[mode]
 
         logger.debug(
-            "Specific converter not provided, using units helper to compute it"
+            "Specific conversion factor not provided, using units helper to compute it"
         )
 
         from cellpycore import units
@@ -1023,8 +1035,10 @@ class OldCellpyCellCore(CellpyCellCore):
         normalization_cycles: Union[Sequence, int, None],
         step_txt: Optional[str] = None,
         specifics: Optional[List[str]] = None,
-        specific_converters: Optional[dict] = None,
+        specific_conversion_factors: Optional[dict] = None,
         cell_meta: Optional[CellMeta] = None,
+        *,
+        specific_converters: Optional[dict] = None,
     ) -> Data:
         """Legacy-bridge ``add_scaled_summary_columns`` (pandas<->polars seam).
 
@@ -1039,6 +1053,9 @@ class OldCellpyCellCore(CellpyCellCore):
         from cellpycore.config import default_schema
 
         native_schema = default_schema()
+        factors = summarizers._resolve_specific_conversion_factors(
+            specific_conversion_factors, specific_converters
+        )
         if specifics is None:
             specifics = ["gravimetric", "areal", "absolute"]
 
@@ -1059,11 +1076,11 @@ class OldCellpyCellCore(CellpyCellCore):
         )
         specific_columns = native_schema.cycle.specific_columns
         for mode in specifics:
-            converter = self._resolve_specific_converter(
-                data, mode, specific_converters, cell_meta=cell_meta
+            factor = self._resolve_specific_conversion_factor(
+                data, mode, factors, cell_meta=cell_meta
             )
             summarizers.generate_specific_summary_columns(
-                nd, mode, specific_columns, converter
+                nd, mode, specific_columns, factor
             )
 
         # native -> legacy, incl. the generated ``{col}_{mode}`` specific columns.

@@ -228,7 +228,7 @@ def test_scaled_summary_columns_variant(processed):
         processed,
         nom_cap_abs=1.0,
         normalization_cycles=None,
-        specific_converters=converters,
+        specific_conversion_factors=converters,
     )
 
     for mode in converters:

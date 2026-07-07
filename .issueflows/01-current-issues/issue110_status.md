@@ -14,6 +14,13 @@
   `HISTORY.md` `[Unreleased]` bullet.
 - Verified: `uv run --group docs zensical build --clean` green (Griffe warnings
   on pre-existing missing annotations only).
+- Unit-conversion convenience helpers in `cellpycore.units`:
+  `calculate_nom_cap_abs_from_specific`, `calculate_current_conversion_factor`,
+  `calculate_specific_conversion_factors` (+ docs in `standalone-use.md`).
+- Renamed `specific_converters` → `specific_conversion_factors` on
+  `add_scaled_summary_columns` and the units helper; deprecated aliases with
+  `DeprecationWarning` (shared `summarizers._resolve_specific_conversion_factors`).
+  Internal resolver renamed to `_resolve_specific_conversion_factor`.
 
 ## Remaining work
 

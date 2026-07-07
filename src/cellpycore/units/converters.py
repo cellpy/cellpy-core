@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import warnings
 from typing import Any, Optional, TypeVar
 
 from cellpycore.metadata.models import CellMeta
@@ -320,3 +321,160 @@ def nominal_capacity_as_absolute(
     )
 
     return absolute_value.m
+
+
+def calculate_nom_cap_abs_from_specific(
+    nom_cap: float,
+    specific: float,
+    *,
+    specific_type: str = "gravimetric",
+    convert_charge_units: bool = False,
+    raw_units: Optional[CellpyUnits] = None,
+) -> float:
+    """Convert a specific nominal capacity to an absolute value (e.g. Ah).
+
+    Convenience wrapper for the common standalone case where ``nom_cap`` and
+    geometry are known as plain floats. Gravimetric inputs delegate to
+    ``nominal_capacity_as_absolute``; areal and absolute use the matching
+    cellpy unit strings directly.
+
+    Args:
+        nom_cap: Nominal capacity in specific units (e.g. mAh/g when
+            ``specific_type`` is ``"gravimetric"``).
+        specific: Matching scale factor — active-material mass for gravimetric,
+            electrode area for areal (ignored when ``specific_type`` is
+            ``"absolute"``).
+        specific_type: How ``nom_cap`` is specified: ``"gravimetric"``,
+            ``"areal"``, or ``"absolute"``.
+        convert_charge_units: When ``True``, convert from raw charge units to
+            cellpy output charge units before returning (gravimetric only).
+        raw_units: Raw charge units for ``convert_charge_units``; defaults to
+            ``CellpyUnits()`` when unset.
+
+    Returns:
+        Absolute nominal capacity (float, in Ah).
+    """
+    if specific_type == "gravimetric":
+        return nominal_capacity_as_absolute(
+            value=nom_cap,
+            specific=specific,
+            nom_cap_specifics="gravimetric",
+            convert_charge_units=convert_charge_units,
+            raw_units=raw_units,
+        )
+
+    cellpy_units = get_cellpy_units()
+
+    if specific_type == "areal":
+        cap = Q(nom_cap, f"{cellpy_units['charge']}/{cellpy_units['area']}")
+        area_q = Q(specific, cellpy_units["area"])
+        absolute = cap * area_q
+    elif specific_type == "absolute":
+        absolute = Q(nom_cap, cellpy_units["charge"])
+    else:
+        raise ValueError(
+            f"unsupported specific_type {specific_type!r}; "
+            "expected 'gravimetric', 'areal', or 'absolute'"
+        )
+
+    if convert_charge_units:
+        resolved_raw = raw_units or CellpyUnits()
+        absolute = absolute * (
+            Q(1, cellpy_units["charge"]) / Q(1, resolved_raw["charge"])
+        )
+
+    return absolute.to_reduced_units().to("Ah").m
+
+
+def calculate_current_conversion_factor(
+    raw_current_unit: str,
+    *,
+    to_units: Optional[CellpyUnits] = None,
+) -> float:
+    """Compute the factor that converts raw current units to cellpy output units.
+
+    The returned float is suitable for ``current_conversion_factor`` in
+    ``make_core_summary`` / ``c_rates_to_summary``: multiply raw-current C-rate
+    contributions by this factor so they use the output current unit (default
+    ``CellpyUnits().current``, typically ``"A"``).
+
+    Args:
+        raw_current_unit: Pint-compatible unit string for the raw current column
+            (e.g. ``"mA"``).
+        to_units: Output unit spec; defaults to ``CellpyUnits()``.
+
+    Returns:
+        Dimensionless conversion factor (raw → output current).
+    """
+    output_units = to_units or get_cellpy_units()
+    factor = Q(1.0, raw_current_unit) / Q(1.0, output_units["current"])
+    return factor.to_reduced_units().m
+
+
+def calculate_specific_conversion_factors(
+    *,
+    mass: Optional[float] = None,
+    area: Optional[float] = None,
+    from_units: Optional[CellpyUnits] = None,
+    to_units: Optional[CellpyUnits] = None,
+) -> dict[str, float]:
+    """Build a ``specific_conversion_factors`` mapping for ``add_scaled_summary_columns``.
+
+    Computes gravimetric and/or areal factors via ``get_converter_to_specific``
+    and always includes ``"absolute"`` (charge-unit conversion only, typically
+    ``1.0`` when raw and output charge units match).
+
+    Args:
+        mass: Active-material mass for the gravimetric factor (cellpy mass unit,
+            default mg).
+        area: Electrode area for the areal factor (cellpy area unit, default cm²).
+        from_units: Raw/input charge units; defaults to ``CellpyUnits()``.
+        to_units: Output units; defaults to ``CellpyUnits()``.
+
+    Returns:
+        Mapping ``mode -> factor`` with keys among ``gravimetric``, ``areal``,
+        and ``absolute``.
+    """
+    factors: dict[str, float] = {}
+    if mass is not None:
+        factors["gravimetric"] = get_converter_to_specific(
+            mass=mass,
+            from_units=from_units,
+            to_units=to_units,
+            mode="gravimetric",
+        )
+    if area is not None:
+        factors["areal"] = get_converter_to_specific(
+            active_electrode_area=area,
+            from_units=from_units,
+            to_units=to_units,
+            mode="areal",
+        )
+    factors["absolute"] = get_converter_to_specific(
+        from_units=from_units,
+        to_units=to_units,
+        mode="absolute",
+    )
+    return factors
+
+
+def calculate_specific_converters(
+    *,
+    mass: Optional[float] = None,
+    area: Optional[float] = None,
+    from_units: Optional[CellpyUnits] = None,
+    to_units: Optional[CellpyUnits] = None,
+) -> dict[str, float]:
+    """Deprecated alias for ``calculate_specific_conversion_factors``."""
+    warnings.warn(
+        "`calculate_specific_converters` is deprecated; "
+        "use `calculate_specific_conversion_factors` instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return calculate_specific_conversion_factors(
+        mass=mass,
+        area=area,
+        from_units=from_units,
+        to_units=to_units,
+    )
