@@ -16,7 +16,7 @@ Related issue: local issue 50 (docs-only; this report is the deliverable).
 
 The core is healthy. The polars engine (`summarizers.py`, `extractors.py`) is
 clean, schema-injected, and well-documented. The header mapping
-(`header_mapping.py`) is disciplined: totality-tested, with explicit exception
+(`legacy/mapping.py`) is disciplined: totality-tested, with explicit exception
 sets. The golden/parity test strategy is strong. The metadata scaffolding
 matches the boundary decision in `cellpy-core-migration.md` §4. The weak spots
 concentrate in the **edges**: legacy helpers, packaging, and the public API

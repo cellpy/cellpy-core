@@ -43,10 +43,10 @@ Reconciled against the actual repo state on **2026-06-26**. Status legend: ✅ d
 | STEP-06 Golden fixtures | 🟡 ongoing | `cellpy-core/tests/test_golden.py` in place; extend as more is ported |
 | STEP-07 Build-backend swap | ✅ done | `cellpy` already hatchling+uv; no `setup.py` |
 | STEP-08 Port `make_step_table` | ✅ done | ported + routed; `CellpyLimits` now in the parity test (`cellpy/tests/test_core_settings_parity.py`); no dead step-table engine left in `cellpy` (`make_step_table` is pure delegation) |
-| STEP-09 Harmonize headers | ✅ done | `config.Cols` + spec tests; `header_mapping.py` gives lossless/total `config.Cols` ↔ legacy `Headers*` round-trip (`tests/test_header_mapping.py`) (#34/#35) |
+| STEP-09 Harmonize headers | ✅ done | `config.Cols` + spec tests; `legacy/mapping.py` gives lossless/total `config.Cols` ↔ legacy `Headers*` round-trip (`tests/test_header_mapping.py`) (#34/#35) |
 | STEP-10 Metadata scaffolding | ✅ done | `cellpycore.metadata` (`models.py`/`io.py`); `TestMeta`/`CellMeta`/`TestMetaCollection` + (de)serialize/merge; graceful-degradation guard (`tests/test_metadata.py`) (#37) |
 | STEP-11 Timestamp representation | ✅ done | `epoch_time_utc` + `first/last_epoch_time_utc` are int64-ns UTC; `cellpycore.timestamps` conversion helpers + fixture regenerated (`tests/test_timestamps.py`) (#32, PR #38) |
-| STEP-12 Unit-handling boundary | 🟡 partly done | `CellpyUnits` schema + `units.py` tooling behind the optional `units` extra; factors cross the seam by value; `cellpy` still keeps duplicate converters |
+| STEP-12 Unit-handling boundary | 🟡 partly done | `CellpyUnits` schema in `units/spec.py` (#40/#112) + `units.py` tooling behind the optional `units` extra; factors cross the seam by value; `cellpy` still keeps duplicate converters (delegation pending) |
 
 Per-step `Status:` lines below repeat this for context; this table is the quick reference.
 The forward work beyond these twelve steps (STEP-13+) is enumerated in
@@ -206,7 +206,7 @@ detection thresholds (`CellpyLimits`).
 ## STEP-09 Harmonize column headers
 
 **Status:** ✅ done — `config.Cols` (`RawCols` / `StepCols` / `CycleCols`) and their
-spec-conformance tests exist, and `header_mapping.py` now centralizes a lossless, total
+spec-conformance tests exist, and `legacy/mapping.py` now centralizes a lossless, total
 `config.Cols` ↔ legacy `Headers*` round-trip, covered by `tests/test_header_mapping.py`
 (#34/#35).
 
@@ -266,13 +266,12 @@ Adopt the internal int64-ns timestamp representation.
 
 ## STEP-12 Unit-handling boundary (scaffolding/tooling in core; population & policy upstream)
 
-**Status:** 🟡 partly done — the `CellpyUnits` schema (`cellpycore.legacy`) and the
-pint-based conversion tooling (`cellpycore.units`: `get_converter_to_specific`,
-`nominal_capacity_as_absolute`, `Q`, output-unit defaults) already exist behind the
-optional `units` extra, attached to the `OldCellpyCellCore` bridge, and conversion factors
-already cross the seam **by value**. Remaining: `cellpy` still keeps its own duplicate
-converter functions (not delegated to core), and the schema lives in `legacy.py` rather
-than a dedicated unit-spec module.
+**Status:** 🟡 partly done — the `CellpyUnits` schema lives in `cellpycore.units.spec`
+(#40, #112) and the pint-based conversion tooling (`cellpycore.units`:
+`get_converter_to_specific`, `nominal_capacity_as_absolute`, `Q`, output-unit defaults)
+already exist behind the optional `units` extra, attached to the `OldCellpyCellCore`
+bridge, and conversion factors already cross the seam **by value**. Remaining on the
+**cellpy** side only: duplicate converter functions not yet delegated to core.
 
 **Codebase:** `cellpy-core` (scaffolding/tooling — `legacy.py` + `units.py`); population
 (`raw_units` from loaders) and the decision to delegate are `cellpy`'s opt-in.
@@ -284,8 +283,7 @@ float conversion factors by value, never unit objects). The consumer owns *popul
 policy*: instrument loaders fill `data.raw_units`, and `cellpy` decides output-unit policy.
 The opt-in upstream move is for `cellpy` to delegate its duplicated
 `get_converter_to_specific` / `nominal_capacity_as_absolute` to `cellpycore.units` (as it
-already did for headers and the step engine), and optionally to promote `CellpyUnits` out
-of `legacy.py` into a first-class core unit-spec module.
+already did for headers and the step engine).
 
 **Tests (success criteria):**
 - `CellpyUnits` field parity is already guarded by the STEP-05 contract test (included in
@@ -309,13 +307,13 @@ jepegit/cellpy). Captured under issue #39.
 
 | Item | Issue | Status | Source / anchor |
 |------|-------|--------|-----------------|
-| Finalize STEP-12 (core): promote `CellpyUnits` out of `legacy.py` into a unit-spec module; add converter-parity + pint-optional guard tests | [#40](https://github.com/cellpy/cellpy-core/issues/40) | ⬜ actionable | STEP-12; `cellpy-core-migration.md` §4 |
+| Finalize STEP-12 (core): promote `CellpyUnits` out of `legacy.py` into a unit-spec module; add converter-parity + pint-optional guard tests | [#40](https://github.com/cellpy/cellpy-core/issues/40) | ✅ done | STEP-12; `cellpy-core-migration.md` §4; schema in `units/spec.py` |
 | Per-test metadata: add `test_id` to `StepCols`/`CycleCols` + composite group keys `(test_id, cycle_num, step_num, …)` | [#41](https://github.com/cellpy/cellpy-core/issues/41) | ⬜ actionable | `test-metadata-and-merging.md` |
 | Engine: reset-granularity normalization for step-/test-cumulative raw inputs | [#42](https://github.com/cellpy/cellpy-core/issues/42) | ⬜ future | `step-table-polars-migration.md` |
 | Native schema: add `ref_potential`/`ref_voltage` support | [#43](https://github.com/cellpy/cellpy-core/issues/43) | ⬜ future | `step-table-polars-migration.md` (Phase 1) |
 | Release: tag cellpy-core (and decide PyPI publish) so `cellpy` can pin a release ref | [#44](https://github.com/cellpy/cellpy-core/issues/44) | ⬜ future | `cellpy-core-migration.md` §2/§5 |
 | Cleanup: remove `create_selector`/`summary_selector_exluder` once `cellpy` migrates off them | [#45](https://github.com/cellpy/cellpy-core/issues/45) | ✅ done (2026-07-02: cellpy migrated on branch `core45-drop-create-selector`; both functions + dead `selector` param removed) | `selector-dead-code-deferral.md` |
-| Native exclude-types summary support (`exclude_step_types=` on `make_summary`; replaces the removed selector exclusion feature) | [#54](https://github.com/cellpy/cellpy-core/issues/54) | ⬜ future | `selector-dead-code-deferral.md` |
+| Native exclude-types summary support (`exclude_step_types=` on `make_summary`; replaces the removed selector exclusion feature) | [#54](https://github.com/cellpy/cellpy-core/issues/54) | ✅ done | `summarizers.py` (`make_core_summary`); `selector-dead-code-deferral.md` |
 
 Not tracked as a discrete issue: **STEP-06** (golden-fixture oracle) is a continuous
 activity — extended per-port against `cellpy`'s published goldens, not a closeable unit.

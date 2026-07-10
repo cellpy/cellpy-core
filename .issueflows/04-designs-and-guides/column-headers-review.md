@@ -113,7 +113,7 @@ specifics `gravimetric`/`areal`/`absolute`; batbase-aligned `CellConfiguration`
 Settled the `config.Cols` <-> legacy `Headers*` story. Decisions:
 
 1. **One source of truth.** The native <-> legacy correspondence now lives in
-   `src/cellpycore/header_mapping.py` (per-family `RAW_PAIRS`, `STEP_BASE_PAIRS`
+   `src/cellpycore/legacy/mapping.py` (per-family `RAW_PAIRS`, `STEP_BASE_PAIRS`
    + `STEP_SCALAR_PAIRS` + `STAT_SUFFIXES`, `CYCLE_PAIRS`). The four rename dicts
    that used to be hand-maintained inside `OldCellpyCellCore` (`cell_core.py`)
    now derive from it; the bridge keeps no literal column maps. Behaviour is
