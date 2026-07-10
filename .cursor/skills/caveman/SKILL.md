@@ -6,6 +6,7 @@ description: >-
   caveman mode, token-greedy / terse answers, or says "be brief" / "stop
   wasting tokens". Stays active across the session once on; off via "stop
   caveman" / "normal mode".
+issue-flow-version: 0.4.2a4
 ---
 
 # Be token greedy - as a caveman
@@ -31,7 +32,7 @@ English only. Caveman applies to English output; do not garble other languages.
 
 ## Intensity
 
-Single level: **full**. Drop articles, fragments OK, short synonyms. Classic caveman. No tool-call narration, no decorative tables/emoji, no long raw error-log dumps unless asked. Standard acronyms OK; no invented abbreviations.
+Single level: **full**. Classic caveman — every rule above applies at full strength; there is no milder setting.
 
 Example — "Why React component re-render?"
 - "New object ref each render. Inline object prop = new ref = re-render. Wrap in `useMemo`."
