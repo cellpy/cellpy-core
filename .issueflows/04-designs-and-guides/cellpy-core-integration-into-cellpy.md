@@ -41,8 +41,9 @@ Companion GitHub issue lives on the **`cellpy`** repo (jepegit/cellpy) — see
      and values (verified field-by-field against `cellpy/parameters/internal_settings.py`).
    - `CellpyUnits` — **identical** (incl. `resistance="ohm"`; the `"Ohms"` in the
      docstring is a shared cosmetic artifact, not a value divergence).
-5. **`make_step_table` is NOT ported to core yet** (both `slim` and `cellpy-core` carry
-   `# TODO: implement make step table`). The step half still lives in `cellreader.py`.
+5. **`make_step_table` is ported and delegated (STEP-08 ✅).** `cellpycore.summarizers`
+   implements the step engine; `cellpy.make_step_table` is pure orchestration/delegation
+   across the seam. `CellpyLimits` is covered by the header/unit parity contract test.
 
 ## Decisions taken
 
@@ -66,10 +67,9 @@ package):
 1. Add `cellpycore` as a git/editable dependency.
 2. On `CellpyCell`: construct `self.core = OldCellpyCellCore(...)`.
 3. Move `Data` ownership: `data` property reads/writes `self.core._data`.
-4. Route `make_summary` (and master's newer `add_to_summary` / cycle-selection methods)
-   through `self.core`.
-5. Leave `make_step_table` in `cellreader.py` for now.
-6. Port `tests/test_slim.py` (from 334) as the seam's acceptance test; keep the full
+4. Route `make_summary` and `make_step_table` (plus master's newer `add_to_summary` /
+   cycle-selection methods) through `self.core`.
+5. Port `tests/test_slim.py` (from 334) as the seam's acceptance test; keep the full
    suite green.
 
 ## Regularly run the essential parity smoke tests (cellpy repo)
@@ -105,14 +105,12 @@ release/PR; `-m essential` is the fast inner-loop check.
 ## Follow-ups (after the first seam PR)
 
 - **Contract tests** asserting `cellpycore.legacy` headers/units equal
-  `cellpy.parameters.internal_settings` field-by-field, so the duplicated copies cannot
-  silently drift → jepegit/cellpy#378.
-- **Port `make_step_table`** into `cellpy-core` (the remaining half of the core),
-  **bringing `CellpyLimits` with it** (step-type detection thresholds, not yet copied
-  into core) → cellpy/cellpy-core#12.
-- Settle the column-header harmonization (`config.Cols` ↔ legacy `Headers*`) → existing
-  cellpy/cellpy-core#4 (SPEED-30, header enum structure); see also
-  `column-headers-review.md`.
+  `cellpy.parameters.internal_settings` field-by-field → ✅ done (STEP-05;
+  `cellpy/tests/test_core_settings_parity.py`).
+- **Port `make_step_table`** (+ `CellpyLimits`) into `cellpy-core` → ✅ done (STEP-08;
+  cellpy/cellpy-core#12).
+- Settle the column-header harmonization (`config.Cols` ↔ legacy `Headers*`) → ✅ done
+  (STEP-09; see `column-headers-review.md`).
 
 ## Recommended sequencing
 
@@ -120,8 +118,8 @@ release/PR; `-m essential` is the fast inner-loop check.
 2. Resolve the **Python floor** (small, independent).
 3. Land the **Data/processing seam** wired to `OldCellpyCellCore` + git dependency.
 4. Add **contract tests**.
-5. **Build-backend** swap (independent, whenever convenient).
-6. Port **`make_step_table`** (+ `CellpyLimits`) into core.
+5. **Build-backend** swap (independent, whenever convenient) — ✅ done (STEP-07).
+6. Port **`make_step_table`** (+ `CellpyLimits`) into core — ✅ done (STEP-08).
 
 ## Tracking
 
