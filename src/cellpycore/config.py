@@ -693,6 +693,38 @@ class RawCols(Cols):
         }
 
 
+class CurveCols(Cols):
+    """Column-header definitions for extracted capacity-curve tables.
+
+    Output schema of ``cellpycore.curves.get_cap_curve`` (and the single-branch
+    charge/discharge curve extractors, which emit the ``potential`` /
+    ``capacity`` pair). Authoritative spec:
+    ``docs/specifications/curve-table.md`` (issue #118).
+
+    ``cycle_num`` is present when the curve is labeled per cycle
+    (``label_cycle_number=True``); ``direction`` (−1 for the cycle's first
+    branch, +1 for the last) when ``categorical_column=True``.
+    """
+
+    cycle_num: str = "cycle_num"
+    potential: str = "potential"
+    capacity: str = "capacity"
+    direction: str = "direction"
+
+
+class OcvCurveCols(Cols):
+    """Column-header definitions for extracted OCV-relaxation curve tables.
+
+    Output schema of ``cellpycore.curves.get_ocv_curve``. Authoritative spec:
+    ``docs/specifications/curve-table.md`` (issue #118).
+    """
+
+    cycle_num: str = "cycle_num"
+    step_num: str = "step_num"
+    step_time: str = "step_time"
+    potential: str = "potential"
+
+
 def default_schema() -> Schema:
     """Return a Schema using the native cellpy-core column definitions.
 

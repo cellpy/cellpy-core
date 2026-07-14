@@ -75,4 +75,11 @@ the schema:
 ```bash
 uv run python dev/make_harmonized_raw.py
 ```
-
+
+## curve_goldens/
+
+Curve-extraction parity oracles for `cellpycore.curves` (issue #118), vendored
+verbatim from cellpy's Stage-0 snapshots
+(`cellpy/tests/data/goldens/curve_*/curve.parquet`, jepegit/cellpy#433; same
+golden cell, mass = 1.0 mg, gravimetric). Regenerate on the cellpy side and
+re-vendor — never edit by hand. Consumed by `tests/test_curves.py`.

@@ -241,3 +241,20 @@ def test_raw_dtype_map_resolves_renamed_columns():
     dtypes = _RenamedRaw().dtype_map()
     assert dtypes["flag"] == pl.Boolean
     assert "mask" not in dtypes
+
+
+# --- curve-table.md (issue #118) ----------------------------------------------
+CURVE_EXPECTED = ["cycle_num", "potential", "capacity", "direction"]
+OCV_CURVE_EXPECTED = ["cycle_num", "step_num", "step_time", "potential"]
+
+
+def test_curve_cols_match_spec():
+    from cellpycore.config import CurveCols
+
+    assert CurveCols.ordered_names() == CURVE_EXPECTED
+
+
+def test_ocv_curve_cols_match_spec():
+    from cellpycore.config import OcvCurveCols
+
+    assert OcvCurveCols.ordered_names() == OCV_CURVE_EXPECTED
