@@ -75,6 +75,9 @@ class CellMeta:
         tot_mass: Total material mass.
         nom_cap: Nominal capacity.
         nom_cap_specifics: How ``nom_cap`` is specified (e.g. gravimetric).
+        volume: Cell / electrode volume (cellpy units convention, ``cm**3``);
+            needed by the volumetric specific-capacity mode (decision recorded
+            2026-07-14, issue #117 / metadata plan Step 1).
         active_electrode_area: Active-electrode area.
         active_electrode_thickness: Active-electrode thickness.
         active_electrode_loading: Active-electrode loading (e.g. mAh/cm2).
@@ -97,6 +100,7 @@ class CellMeta:
     tot_mass: Optional[float] = None
     nom_cap: Optional[float] = None
     nom_cap_specifics: Optional[str] = None
+    volume: Optional[float] = None
     active_electrode_area: Optional[float] = None
     active_electrode_thickness: Optional[float] = None
     active_electrode_loading: Optional[float] = None
@@ -143,6 +147,12 @@ class TestMeta:
         creator: Who produced / imported the test.
         channel: Tester channel id.
         tester_id: Tester / server identity.
+        tester_server_software_version: Tester server software version
+            (test-dependent provenance; G9 decision, issue #117).
+        tester_client_software_version: Tester client software version
+            (test-dependent provenance; G9 decision, issue #117).
+        tester_calibration_date: Tester calibration date at test time
+            (test-dependent provenance; G9 decision, issue #117).
         voltage_lim_low: Lower voltage limit used for the test.
         voltage_lim_high: Upper voltage limit used for the test.
         start_datetime: Test start time (ISO 8601 string).
@@ -171,6 +181,9 @@ class TestMeta:
     creator: Optional[str] = None
     channel: Optional[str] = None
     tester_id: Optional[str] = None
+    tester_server_software_version: Optional[str] = None
+    tester_client_software_version: Optional[str] = None
+    tester_calibration_date: Optional[str] = None
     voltage_lim_low: Optional[float] = None
     voltage_lim_high: Optional[float] = None
     start_datetime: Optional[str] = None
