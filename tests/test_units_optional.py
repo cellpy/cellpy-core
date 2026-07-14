@@ -84,6 +84,15 @@ def test_unit_helpers_raise_clear_error_without_pint(pint_absent):
     with pytest.raises(ModuleNotFoundError, match="units"):
         units.get_converter_to_specific(_DummyData(), mode="absolute")
 
+    with pytest.raises(ModuleNotFoundError, match="units"):
+        units.convert_value(1.0, "mass")
+
+    with pytest.raises(ModuleNotFoundError, match="units"):
+        units.calculate_scaler("mA", "A")
+
+    with pytest.raises(ModuleNotFoundError, match="units"):
+        units.validate_units({"charge": "mAh"})
+
 
 class _DummyData:
     """Carries the attributes the converter would read before hitting pint."""
