@@ -559,6 +559,138 @@ def calculate_current_conversion_factor(
     return factor.to_reduced_units().m
 
 
+# Per-property aliases for spec labels whose bare string means something else
+# (or nothing) to pint. The spec keeps the legacy label; conversion/validation
+# uses the pint-parsable form. Decision recorded on issue #115:
+# temperature "C" is Celsius (never coulomb), frequency "hz" is hertz.
+_PINT_LABEL_ALIASES: dict[str, dict[str, str]] = {
+    "temperature": {"C": "degC"},
+    "frequency": {"hz": "Hz"},
+}
+
+
+def _pint_unit_label(physical_property: str, unit: str) -> str:
+    """Return the pint-parsable label for a unit string on the spec."""
+    return _PINT_LABEL_ALIASES.get(physical_property, {}).get(unit, unit)
+
+
+def convert_value(
+    value: Union[QuantityValue, tuple],
+    physical_property: str,
+    from_units: Optional[CellpyUnits] = None,
+    to_units: Optional[CellpyUnits] = None,
+) -> float:
+    """Convert ``value`` between unit specs for one physical property.
+
+    Generalized port of legacy ``CellpyCell.to_cellpy_unit`` (unit plan §3):
+    the default direction is raw units → cellpy units, both falling back to
+    ``CellpyUnits()`` when unset.
+
+    Args:
+        value: A bare number (interpreted in ``from_units[physical_property]``),
+            a pint quantity string (e.g. ``"25 mV"``), or a ``(value, unit)``
+            tuple (e.g. ``(25, "mV")``).
+        physical_property: Key on the ``CellpyUnits`` spec (e.g. ``"voltage"``).
+        from_units: Input unit spec; defaults to ``CellpyUnits()``.
+        to_units: Output unit spec; defaults to ``CellpyUnits()``.
+
+    Returns:
+        The value expressed in ``to_units[physical_property]`` (float).
+
+    Raises:
+        KeyError: When ``physical_property`` is not a ``CellpyUnits`` field.
+        ValueError: When a quantity string carries no units.
+        TypeError: When ``value`` is neither number, string, nor tuple.
+    """
+    source = from_units or CellpyUnits()
+    target = to_units or CellpyUnits()
+    if physical_property not in source.keys():
+        raise KeyError(
+            f"unknown physical_property {physical_property!r}; expected one of "
+            f"{sorted(CellpyUnits().keys())}"
+        )
+    default_unit = _pint_unit_label(physical_property, source[physical_property])
+    target_unit = _pint_unit_label(physical_property, target[physical_property])
+    if isinstance(value, tuple):
+        quantity = Q(*value)
+    else:
+        quantity = _as_quantity(value, default_unit, name=physical_property)
+    return quantity.to(target_unit).m
+
+
+def calculate_scaler(from_unit: str, to_unit: str) -> float:
+    """Return the multiplicative factor that converts ``from_unit`` → ``to_unit``.
+
+    Port of legacy ``CellpyCell.unit_scaler_from_raw`` reduced to its essence
+    (``Q(1, a).to(b).m``); cellpy wraps it as
+    ``calculate_scaler(raw_units[prop], unit)``.
+
+    Note: only valid for multiplicative units — offset units (``degC``) raise
+    ``pint.errors.OffsetUnitCalculusError`` by design; use ``convert_value``
+    for temperatures.
+    """
+    return Q(1.0, from_unit).to(to_unit).m
+
+
+def validate_units(units: Any, *, strict: bool = True) -> CellpyUnits:
+    """Validate a unit spec: every label must be a pint-parsable unit string.
+
+    The loader-boundary validator (unit plan Phase 3, loader plan §2.2):
+    instrument configurations declare ``raw_units`` and this turns them into a
+    validated ``CellpyUnits`` built on top of the defaults.
+
+    Args:
+        units: A ``CellpyUnits`` instance or a plain mapping of
+            ``physical_property -> unit label``.
+        strict: When ``True`` (default) an unparsable label raises
+            ``ValueError``; when ``False`` it downgrades to a warning
+            (the ``local_instrument`` escape hatch).
+
+    Returns:
+        A ``CellpyUnits`` with the validated labels applied over the defaults.
+        Keys unknown to ``CellpyUnits`` are warned about, label-checked, and
+        left out of the returned spec.
+
+    Raises:
+        TypeError: When a label is not a string (e.g. a legacy v7 float scale
+            factor).
+        ValueError: When a label does not parse as a pint unit (strict mode).
+
+    Notes:
+        ``temperature="C"`` is accepted and means Celsius (validated as
+        ``degC``, never coulomb); ``frequency="hz"`` is accepted as hertz.
+        The original labels are preserved on the returned spec.
+    """
+    registry = _get_unit_registry()
+    known = set(CellpyUnits().keys())
+    spec = CellpyUnits()
+    items = units.items() if hasattr(units, "items") else dict(units).items()
+    for key, label in items:
+        if not isinstance(label, str):
+            raise TypeError(
+                f"unit label for {key!r} must be a string, got "
+                f"{type(label).__name__} ({label!r}); float scale factors are a "
+                "legacy v7 artifact - declare real unit strings instead"
+            )
+        try:
+            registry.Unit(_pint_unit_label(key, label))
+        except Exception as exc:
+            message = f"unit label for {key!r} does not parse: {label!r} ({exc})"
+            if strict:
+                raise ValueError(message) from exc
+            warnings.warn(message, stacklevel=2)
+            continue
+        if key in known:
+            spec[key] = label
+        else:
+            warnings.warn(
+                f"unknown unit key {key!r} (validated but kept out of the "
+                "CellpyUnits spec)",
+                stacklevel=2,
+            )
+    return spec
+
+
 def calculate_specific_conversion_factors(
     *,
     mass: Optional[QuantityValue] = None,

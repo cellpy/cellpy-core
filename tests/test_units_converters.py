@@ -216,3 +216,101 @@ def test_as_quantity_rejects_unitless_string():
 
     with pytest.raises(ValueError, match="no units"):
         _as_quantity("3.579", "mAh/g", name="nom_cap")
+
+
+# --- convert_value (issue #115, Stage 1.13) --------------------------------------
+
+
+def test_convert_value_bare_number_default_specs_is_identity():
+    assert units.convert_value(2.0, "mass") == pytest.approx(2.0)
+
+
+def test_convert_value_between_specs():
+    grams = CellpyUnits(mass="g")
+    assert units.convert_value(2.0, "mass", from_units=grams) == pytest.approx(2000.0)
+    assert units.convert_value(2000.0, "mass", to_units=grams) == pytest.approx(2.0)
+
+
+def test_convert_value_quantity_string():
+    assert units.convert_value("0.5 Ah", "charge") == pytest.approx(500.0)
+
+
+def test_convert_value_tuple():
+    assert units.convert_value((0.5, "Ah"), "charge") == pytest.approx(500.0)
+
+
+def test_convert_value_temperature_c_means_celsius():
+    kelvin = CellpyUnits(temperature="K")
+    assert units.convert_value(25.0, "temperature", to_units=kelvin) == pytest.approx(
+        298.15
+    )
+
+
+def test_convert_value_unknown_property_raises_keyerror():
+    with pytest.raises(KeyError, match="physical_property"):
+        units.convert_value(1.0, "swagger")
+
+
+def test_convert_value_unitless_string_raises():
+    with pytest.raises(ValueError, match="no units"):
+        units.convert_value("5", "mass")
+
+
+def test_convert_value_bad_type_raises():
+    with pytest.raises(TypeError):
+        units.convert_value(object(), "mass")
+
+
+# --- calculate_scaler -------------------------------------------------------------
+
+
+def test_calculate_scaler_ma_to_a():
+    assert units.calculate_scaler("mA", "A") == pytest.approx(1e-3)
+
+
+def test_calculate_scaler_identity():
+    assert units.calculate_scaler("V", "V") == pytest.approx(1.0)
+
+
+def test_calculate_scaler_from_raw_spec_matches_legacy_semantics():
+    raw = CellpyUnits()
+    assert units.calculate_scaler(raw["charge"], "Ah") == pytest.approx(1e-3)
+
+
+# --- validate_units ---------------------------------------------------------------
+
+
+def test_validate_units_default_spec_is_valid():
+    spec = units.validate_units(CellpyUnits())
+    assert isinstance(spec, CellpyUnits)
+    assert spec["temperature"] == "C"
+    assert spec["frequency"] == "hz"
+
+
+def test_validate_units_mapping_layers_over_defaults():
+    spec = units.validate_units({"charge": "Ah", "mass": "g"})
+    assert spec["charge"] == "Ah"
+    assert spec["mass"] == "g"
+    assert spec["current"] == CellpyUnits().current
+
+
+def test_validate_units_bad_label_raises():
+    with pytest.raises(ValueError, match="does not parse"):
+        units.validate_units({"charge": "not-a-unit"})
+
+
+def test_validate_units_bad_label_warns_when_not_strict():
+    with pytest.warns(UserWarning, match="does not parse"):
+        spec = units.validate_units({"charge": "not-a-unit"}, strict=False)
+    assert spec["charge"] == CellpyUnits().charge
+
+
+def test_validate_units_float_label_raises_typeerror():
+    with pytest.raises(TypeError, match="v7"):
+        units.validate_units({"charge": 1000.0})
+
+
+def test_validate_units_unknown_key_warns_and_is_dropped():
+    with pytest.warns(UserWarning, match="unknown unit key"):
+        spec = units.validate_units({"charge": "mAh", "swagger": "V"})
+    assert "swagger" not in spec.keys()
