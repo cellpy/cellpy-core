@@ -1084,11 +1084,9 @@ class OldCellpyCellCore(CellpyCellCore):
             )
 
         # native -> legacy, incl. the generated ``{col}_{mode}`` specific columns.
-        rename = self._native_to_legacy_summary_rename()
-        for col in specific_columns:
-            legacy_col = rename.get(col, col)
-            for mode in specifics:
-                rename[f"{col}_{mode}"] = f"{legacy_col}_{mode}"
+        rename = mapping.expand_specific_columns(
+            self._native_to_legacy_summary_rename(), specific_columns, specifics
+        )
         result = nd.summary.to_pandas().rename(columns=rename)
         result.index = list(range(len(result)))
         data.summary = result

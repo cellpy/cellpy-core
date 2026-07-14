@@ -167,3 +167,105 @@ def test_bridge_uses_header_mapping():
     assert core._legacy_to_native_step_rename() == mapping.legacy_to_native_step()
     assert core._native_to_legacy_summary_rename() == mapping.native_to_legacy_summary()
     assert core._legacy_to_native_summary_rename() == mapping.legacy_to_native_summary()
+
+
+# --- attribute-level mapping + postfix expansion (issue #116) -----------------
+
+import pytest  # noqa: E402
+
+_LEGACY_ATTR_CLASSES = {
+    "raw": HeadersNormal,
+    "step": HeadersStepTable,
+    "cycle": HeadersSummary,
+}
+
+
+def _legacy_attr_names(headers_cls) -> set:
+    return {f.name for f in dataclasses.fields(headers_cls)}
+
+
+def test_legacy_attr_totality():
+    """Every legacy attribute is either mapped or documented unmapped."""
+    for frame, headers_cls in _LEGACY_ATTR_CLASSES.items():
+        mapped = set(mapping.LEGACY_ATTR_TO_SCHEMA[frame])
+        unmapped = set(mapping.LEGACY_ATTR_UNMAPPED[frame])
+        assert not (mapped & unmapped), f"{frame}: overlap {mapped & unmapped}"
+        assert mapped | unmapped == _legacy_attr_names(headers_cls), (
+            f"{frame}: attribute set drifted"
+        )
+
+
+def test_legacy_attr_targets_exist_on_native_classes():
+    raw_fields = set(config.RawCols.__annotations__)
+    cycle_fields = set(config.CycleCols.__annotations__)
+    step_bases = {native for native, _ in mapping.STEP_BASE_PAIRS} | {
+        native for native, _ in mapping.STEP_SCALAR_PAIRS
+    }
+    for attr, target in mapping.LEGACY_ATTR_TO_SCHEMA["raw"].items():
+        assert target in raw_fields, f"raw.{attr} -> {target} not on RawCols"
+    for attr, target in mapping.LEGACY_ATTR_TO_SCHEMA["cycle"].items():
+        assert target in cycle_fields, f"cycle.{attr} -> {target} not on CycleCols"
+    for attr, target in mapping.LEGACY_ATTR_TO_SCHEMA["step"].items():
+        assert target in step_bases, f"step.{attr} -> {target} not a step signal"
+
+
+def test_legacy_attr_matches_value_mapping():
+    """The attribute table agrees with the value-based pair tables."""
+    raw_value_map = mapping.legacy_to_native_raw()
+    hn = HeadersNormal()
+    for attr, target in mapping.LEGACY_ATTR_TO_SCHEMA["raw"].items():
+        assert raw_value_map[getattr(hn, attr)] == target, attr
+
+    summary_value_map = mapping.legacy_to_native_summary()
+    hs = HeadersSummary()
+    for attr, target in mapping.LEGACY_ATTR_TO_SCHEMA["cycle"].items():
+        assert summary_value_map[getattr(hs, attr)] == target, attr
+
+    step_base = {legacy: native for native, legacy in mapping.STEP_BASE_PAIRS}
+    step_scalar = {legacy: native for native, legacy in mapping.STEP_SCALAR_PAIRS}
+    ht = HeadersStepTable()
+    for attr, target in mapping.LEGACY_ATTR_TO_SCHEMA["step"].items():
+        legacy_value = getattr(ht, attr)
+        resolved = step_base.get(legacy_value, step_scalar.get(legacy_value))
+        assert resolved == target, attr
+
+
+def test_duplicate_value_attrs_map_to_same_target():
+    for frame, pairs in mapping.DUPLICATE_VALUE_ATTRS.items():
+        table = mapping.LEGACY_ATTR_TO_SCHEMA[frame]
+        for first, second in pairs:
+            assert table[first] == table[second], (first, second)
+
+
+def test_legacy_attr_to_native_resolves_and_raises():
+    assert mapping.legacy_attr_to_native("raw", "voltage_txt") == "potential"
+    assert mapping.legacy_attr_to_native("step", "voltage") == "potential"
+    assert (
+        mapping.legacy_attr_to_native("cycle", "end_voltage_charge")
+        == "potential_end_charge"
+    )
+    with pytest.raises(KeyError, match="legacy-only"):
+        mapping.legacy_attr_to_native("raw", "power_txt")
+    with pytest.raises(KeyError, match="unknown legacy attribute"):
+        mapping.legacy_attr_to_native("raw", "nope")
+    with pytest.raises(KeyError, match="unknown frame"):
+        mapping.legacy_attr_to_native("bogus", "voltage_txt")
+
+
+def test_expand_specific_columns_matches_bridge_inline_behavior():
+    base = mapping.native_to_legacy_summary()
+    out = mapping.expand_specific_columns(
+        base,
+        ["test_cumulated_charge_capacity", "unmapped_col"],
+        ["gravimetric", "areal"],
+    )
+    # mapped column: legacy name carries the postfix
+    assert (
+        out["test_cumulated_charge_capacity_gravimetric"]
+        == "cumulated_charge_capacity_gravimetric"
+    )
+    # unmapped column: falls back to the native name
+    assert out["unmapped_col_areal"] == "unmapped_col_areal"
+    # base entries are preserved and the input is not mutated
+    assert out["cycle_num"] == "cycle_index"
+    assert "test_cumulated_charge_capacity_gravimetric" not in base
