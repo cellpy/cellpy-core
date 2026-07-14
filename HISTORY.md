@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Sync development guide with architecture-plan and current cellpycore layout. (#121)
 - Sync stale statuses in integration design docs (STEP-12, #54, header mapping path,
   make_step_table). (#114)
 - Unit conversion helpers accept pint quantity strings (e.g. ``"3.579 Ah/g"``),
