@@ -300,6 +300,208 @@ NATIVE_ONLY_CYCLE = frozenset(
 
 
 # -----------------------------------------------------------------------------
+#   Attribute-level mapping (issue #116, Stage 1.14).
+#
+#   The value-based tables above serve DataFrame renames; the deprecation shim
+#   and ``translate.py`` also need to resolve **legacy attribute names**
+#   (``headers_normal.voltage_txt``, ``hdr_steps.cycle``, ...) onto the native
+#   schema. Keys below are the legacy dataclass *attribute* names; values are:
+#
+#   - "raw" / "cycle": the native ``RawCols`` / ``CycleCols`` field name.
+#   - "step": the native **base-signal** name (statistic columns are formed by
+#     appending ``STAT_SUFFIXES`` variants, exactly as in
+#     :func:`native_to_legacy_step`); scalar step attributes resolve to their
+#     ``StepCols`` field directly.
+#
+#   Totality discipline: every attribute of the legacy dataclass is either a
+#   key here or listed in ``LEGACY_ATTR_UNMAPPED`` (its column value has no
+#   native counterpart — same population as the ``LEGACY_ONLY_*`` value sets).
+# -----------------------------------------------------------------------------
+LEGACY_ATTR_TO_SCHEMA = {
+    "raw": {
+        # HeadersNormal attribute -> RawCols field
+        "charge_capacity_txt": "cumulative_charge_capacity",
+        "current_txt": "current",
+        "cycle_index_txt": "cycle_num",
+        "data_point_txt": "datapoint_num",
+        "discharge_capacity_txt": "cumulative_discharge_capacity",
+        "internal_resistance_txt": "internal_resistance",
+        "step_index_txt": "step_num",
+        "step_time_txt": "step_time",
+        "test_time_txt": "test_time",
+        "voltage_txt": "potential",
+    },
+    "step": {
+        # HeadersStepTable attribute -> StepCols base signal or scalar field
+        "charge": "charge_capacity",
+        "current": "current",
+        "cycle": "cycle_num",
+        "discharge": "discharge_capacity",
+        "internal_resistance": "internal_resistance",
+        "point": "datapoint_num",
+        "rate_avr": "c_rate",
+        "step": "step_num",
+        "step_time": "step_time",
+        "sub_step": "sub_step_num",
+        "sub_type": "sub_step_type",
+        "test_time": "test_time",
+        "type": "step_type",
+        "voltage": "potential",
+    },
+    "cycle": {
+        # HeadersSummary attribute -> CycleCols field
+        "charge_c_rate": "charge_c_rate",
+        "charge_capacity": "charge_capacity",
+        "charge_capacity_loss": "charge_capacity_loss",
+        # Duplicate-value pair: ``charge_capacity_raw`` shares its column value
+        # with ``charge_capacity`` (both "charge_capacity"); the shim maps both
+        # here and owns the disambiguation warning (native-headers plan D6).
+        "charge_capacity_raw": "charge_capacity",
+        "coulombic_difference": "coulombic_difference",
+        "coulombic_efficiency": "coulombic_efficiency",
+        "cumulated_charge_capacity": "test_cumulated_charge_capacity",
+        "cumulated_charge_capacity_loss": "test_cumulated_charge_capacity_loss",
+        "cumulated_coulombic_difference": "test_cumulated_coulombic_difference",
+        "cumulated_discharge_capacity": "test_cumulated_discharge_capacity",
+        "cumulated_discharge_capacity_loss": "test_cumulated_discharge_capacity_loss",
+        "cycle_index": "cycle_num",
+        "data_point": "datapoint_num_last",
+        "discharge_c_rate": "discharge_c_rate",
+        "discharge_capacity": "discharge_capacity",
+        "discharge_capacity_loss": "discharge_capacity_loss",
+        # Duplicate-value pair partner of ``discharge_capacity`` (see above).
+        "discharge_capacity_raw": "discharge_capacity",
+        "end_voltage_charge": "potential_end_charge",
+        "end_voltage_discharge": "potential_end_discharge",
+        "ir_charge": "ir_charge",
+        "ir_discharge": "ir_discharge",
+        "normalized_cycle_index": "normalized_cycle_index",
+        "temperature_last": "temperature_cell_last",
+        "temperature_mean": "temperature_cell_mean",
+        "test_time": "last_test_time",
+    },
+}
+
+# Legacy attributes whose column values have no native counterpart (they mirror
+# the ``LEGACY_ONLY_*`` value sets, keyed by attribute name instead of value).
+LEGACY_ATTR_UNMAPPED = {
+    "raw": frozenset(
+        {
+            "aci_phase_angle_txt",
+            "ref_aci_phase_angle_txt",
+            "ac_impedance_txt",
+            "ref_ac_impedance_txt",
+            "charge_energy_txt",
+            "datetime_txt",
+            "discharge_energy_txt",
+            "power_txt",
+            "is_fc_data_txt",
+            "sub_step_index_txt",
+            "sub_step_time_txt",
+            "test_id_txt",
+            "ref_voltage_txt",
+            "dv_dt_txt",
+            "frequency_txt",
+            "amplitude_txt",
+            "channel_id_txt",
+            "data_flag_txt",
+            "test_name_txt",
+        }
+    ),
+    "step": frozenset({"test", "ustep", "info", "internal_resistance_change"}),
+    "cycle": frozenset(
+        {
+            "datetime",
+            "test_name",
+            "data_flag",
+            "channel_id",
+            "cumulated_coulombic_efficiency",
+            "normalized_charge_capacity",
+            "normalized_discharge_capacity",
+            "shifted_charge_capacity",
+            "shifted_discharge_capacity",
+            "ocv_first_min",
+            "ocv_second_min",
+            "ocv_first_max",
+            "ocv_second_max",
+            "cumulated_ric_disconnect",
+            "cumulated_ric_sei",
+            "cumulated_ric",
+            "low_level",
+            "high_level",
+            "pre_aux",
+        }
+    ),
+}
+
+# The legacy attribute pairs that share one column value (native-headers plan
+# D6): the accessor shim maps both sides and warns about the ambiguity.
+DUPLICATE_VALUE_ATTRS = {
+    "cycle": (
+        ("charge_capacity", "charge_capacity_raw"),
+        ("discharge_capacity", "discharge_capacity_raw"),
+    ),
+}
+
+
+def legacy_attr_to_native(frame: str, attr: str) -> str:
+    """Resolve a legacy header *attribute* name to its native name.
+
+    Args:
+        frame: ``"raw"``, ``"step"``, or ``"cycle"`` (the Schema frame).
+        attr: The legacy dataclass attribute (e.g. ``"voltage_txt"``).
+
+    Returns:
+        The native field name (``"raw"``/``"cycle"``) or base-signal name
+        (``"step"`` — combine with :data:`STAT_SUFFIXES` for statistic columns).
+
+    Raises:
+        KeyError: When the frame is unknown, or the attribute is unmapped
+            (legacy-only) or entirely unknown.
+    """
+    try:
+        table = LEGACY_ATTR_TO_SCHEMA[frame]
+    except KeyError:
+        raise KeyError(
+            f"unknown frame {frame!r}; expected one of {sorted(LEGACY_ATTR_TO_SCHEMA)}"
+        ) from None
+    if attr in table:
+        return table[attr]
+    if attr in LEGACY_ATTR_UNMAPPED[frame]:
+        raise KeyError(
+            f"legacy attribute {attr!r} ({frame}) has no native counterpart "
+            "(legacy-only column)"
+        )
+    raise KeyError(f"unknown legacy attribute {attr!r} for frame {frame!r}")
+
+
+def expand_specific_columns(rename: dict, specific_columns, modes) -> dict:
+    """Extend a native → legacy rename dict with ``{col}_{mode}`` variants.
+
+    The ``{col}_{gravimetric|areal|absolute}`` postfix expansion previously
+    inlined in ``OldCellpyCellCore.add_scaled_summary_columns`` — lifted here
+    (issue #116) so the bridge and the cellpy-file importer share one
+    implementation.
+
+    Args:
+        rename: Base native → legacy rename mapping (not mutated).
+        specific_columns: Native column names that carry specific variants.
+        modes: Postfix modes (e.g. ``["gravimetric", "areal", "absolute"]``).
+
+    Returns:
+        dict: A new mapping = ``rename`` plus ``{col}_{mode} ->
+        {legacy_col}_{mode}`` for every combination (``legacy_col`` falls back
+        to ``col`` when unmapped).
+    """
+    expanded = dict(rename)
+    for col in specific_columns:
+        legacy_col = rename.get(col, col)
+        for mode in modes:
+            expanded[f"{col}_{mode}"] = f"{legacy_col}_{mode}"
+    return expanded
+
+
+# -----------------------------------------------------------------------------
 #   Derivation helpers (the bridge builds its rename dicts from these).
 # -----------------------------------------------------------------------------
 def legacy_to_native_raw(columns=None) -> dict:
