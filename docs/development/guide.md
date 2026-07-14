@@ -1,21 +1,62 @@
 # Development Guide
 
-This document outlines the development practices, standards, and workflows for the cellpy-core library.
+This document outlines the development practices, standards, and workflows for the
+cellpy-core library.
 
 ## Table of Contents
 
-1. [Code Documentation](#code-documentation)
-2. [Branching and Merging Strategy](#branching-and-merging-strategy)
-3. [Code Structure and Principles](#code-structure-and-principles)
-4. [Development Workflow](#development-workflow)
-5. [Testing Guidelines](#testing-guidelines)
-6. [Code Quality Standards](#code-quality-standards)
+1. [cellpy-core in the cellpy 2 architecture](#cellpy-core-in-the-cellpy-2-architecture)
+2. [Code Documentation](#code-documentation)
+3. [Branching and Merging Strategy](#branching-and-merging-strategy)
+4. [Code Structure and Principles](#code-structure-and-principles)
+5. [Development Workflow](#development-workflow)
+6. [Testing Guidelines](#testing-guidelines)
+7. [Code Quality Standards](#code-quality-standards)
+8. [Related documentation](#related-documentation)
+
+## cellpy-core in the cellpy 2 architecture
+
+Cellpy 2 is a **layered, two-package system**. `cellpycore` is the small, pure,
+polars-based **compute engine** — it owns shapes and tools (schemas, step/summary
+engines, metadata models, unit converters, the legacy mapping). The `cellpy`
+application package owns content and policy (configuration, instrument loaders,
+metadata population, persistence, plotting, batch).
+
+Everything crossing the seam is **plain values** — never config objects, pint
+quantities, or file handles. Translation between the v1 dialect and the native
+schema happens once at I/O boundaries in cellpy, not per engine call.
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ APP LAYER (cellpy) — loaders, config, persistence, plotting │
+├────────────────── seam: plain values only ──────────────────┤
+│ ENGINE (cellpycore) — polars frames, native schema          │
+│   Data · make_step_table · make_summary · metadata tooling  │
+│   OldCellpyCellCore + legacy/ — bridge for v1.x maintenance │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**cellpy-core non-goals:** instrument loaders, file I/O (beyond test fixtures),
+runtime configuration, plotting, and populated cell metadata on the hot path.
+The engine degrades gracefully when metadata is absent.
+
+Authoritative architecture plans live in the sibling
+[`architecture-plan`](https://github.com/cellpy/architecture-plan) repository
+(check out next to this repo in a
+[cellpy-workspace](https://github.com/cellpy/architecture-plan#sibling-repositories)
+layout). Start with
+[`cellpy2-architecture-plan.md`](https://github.com/cellpy/architecture-plan/blob/main/cellpy2-architecture-plan.md).
+Cross-repo integration rules for contributors are in
+[cellpy-core-migration.md](https://github.com/cellpy/cellpy-core/blob/main/.issueflows/04-designs-and-guides/cellpy-core-migration.md)
+(also under `.issueflows/04-designs-and-guides/` in this repo).
 
 ## Code Documentation
 
 ### Docstring Format
 
-We use the **Google docstring format** for all Python code documentation. This format provides clear, readable documentation that works well with most documentation generators.
+We use the **Google docstring format** for all Python code documentation. This format
+provides clear, readable documentation that works well with most documentation
+generators.
 
 #### Basic Structure
 
@@ -100,326 +141,298 @@ Example:
 
 ### Branch Structure
 
-We follow the **GitHub Flow** methodology loosely with the following branch structure:
+We follow **GitHub Flow** on `main`:
 
-- **`main`**: The primary branch containing production-ready code
-- **`nn-add-something*`**: Branch that addresses a particular issue 
+- **`main`**: production-ready code; protected, squash-merged PRs only
+- **`<N>-<short-slug>`**: issue work branches (e.g. `121-arch-docs-sync`)
 
-Optionally, we can label branches using the following allowed labels (might be changed in the future)
-- **`feature/*`**: Feature development branches
-- **`bugfix/*`**: Bug fix branches
-- **`hotfix/*`**: Critical production fixes
-- **`release/*`**: Release preparation branches
+Issue tracking and the `/iflow-*` Agent Skills live under `.issueflows/` — see
+[Cursor issue workflow](issue-workflow.md) for the full lifecycle (`/iflow-pick` →
+`/iflow-plan` → `/iflow-start` → `/iflow-close`).
 
 ### Branch Naming Convention
 
-- **Features**: `feature/description-of-feature`
-  - Example: `feature/add-polars-support`
-- **Bug fixes**: `bugfix/description-of-bug`
-  - Example: `bugfix/fix-memory-leak-in-summarizers`
-- **Hotfixes**: `hotfix/description-of-issue`
-  - Example: `hotfix/fix-critical-data-corruption`
-- **Releases**: `release/version-number`
-  - Example: `release/v0.2.0`
+- **Issues**: `<github-issue-number>-<short-slug>`
+  - Example: `70-step-cols-contract`
+- Avoid long-lived `feature/*` or `bugfix/*` prefixes unless a release branch
+  explicitly needs them.
 
 ### Workflow Process
 
-1. **Create a new branch** from `main` for your work
-2. **Make your changes** with clear, atomic commits
-3. **Push your branch** to the remote repository
-4. **Create a Pull Request** (PR) targeting the `main` branch
-5. **Request code review** from team members
-6. **Address feedback** and make necessary changes
-7. **Merge the PR** once approved and all checks pass
+1. **Pick or create an issue** on GitHub (or resume parked work via `/iflow-pick`)
+2. **Branch from `main`**: `git switch -c <N>-<short-slug>`
+3. **Make changes** with clear commits; keep PRs focused
+4. **Push** and open a PR targeting `main`
+5. **Request review**; address feedback
+6. **Squash-merge** once CI is green
 
 ### Commit Message Standards
-Use clear, descriptive commit messages.
-Better to commit often (with slightly non-perfect commit messages), than perfect commit messages pr. month.
 
-If you want to impress your fellow developers, you can opt for the
-fancy commit message standard:
+Use clear, descriptive commit messages. Commit often — imperfect messages beat
+monthly perfect ones.
 
-#### Fancy Commmit Messages
-
-Use clear, descriptive commit messages following this format:
+For Conventional Commits:
 
 ```
 type(scope): brief description
 
 Longer description if needed, explaining what and why.
-Can span multiple lines.
 
 Fixes #issue-number
 ```
 
-**Types:**
-- `feat`: New features
-- `fix`: Bug fixes
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
-- `refactor`: Code refactoring
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 **Examples:**
+
 ```
-feat(selectors): add support for custom step type filtering
-fix(summarizers): resolve memory leak in large dataset processing
-docs(api): update function documentation with examples
+feat(summarizers): add incremental summary refresh path
+fix(config): correct RawCols dtype map for epoch_time_utc
+docs(guide): sync development guide with architecture-plan
 ```
 
 ## Code Structure and Principles
 
-This should be considered as Work-In-Progress and design decissions will be updated as the project matures. For now, use them as a first guide, but feel free to suggest changes.
+Design evolves with the project; treat this section as the current guide and open
+an issue when something drifts.
 
-### Project Architecture
-
-The cellpy-core library follows a modular architecture with clear separation of concerns:
+### Project layout
 
 ```
 src/cellpycore/
-├── __init__.py          # Package initialization and public API
-├── cell_core.py         # Main CellpyCellCore class
-├── selectors.py         # Data selection and filtering functions
-├── summarizers.py       # Data summarization and analysis functions
-├── units.py            # Unit conversion and handling
-└── config.py           # Configuration and constants
+├── __init__.py          # Curated public API re-exports
+├── cell_core.py         # Data, CellpyCellCore, OldCellpyCellCore
+├── config.py            # Schema, RawCols, StepCols, CycleCols
+├── summarizers.py       # make_step_table, make_summary, add_step_c_rate
+├── extractors.py        # Step/cycle extraction helpers
+├── merge.py             # merge_data, update_data
+├── timestamps.py        # Timestamp normalization helpers
+├── exceptions.py        # CellpyError hierarchy root
+├── metadata/            # Test/cell metadata models + io scaffolding
+├── units/               # Unit spec + converters (optional [units] extra)
+├── legacy/              # Bridge-only: headers, mapping, selectors
+└── testing/             # mock_data for tests and examples
 ```
+
+The **public API** is the names re-exported from `cellpycore.__init__` (`Data`,
+`make_step_table`, `make_summary`, schema types, etc.). Subpackages such as
+`metadata`, `units`, and `legacy` are importable but not guaranteed stable at the
+top level unless listed in `__all__`.
+
+**Native path:** `Data.from_raw_frame` → `make_step_table` → (optional)
+`add_step_c_rate` → `make_summary`. Order matters — the summary reads
+`data.steps`.
+
+**Legacy bridge:** `OldCellpyCellCore` and `legacy/` serve cellpy v1.x
+maintenance (pandas frames, old header names). Slim standalone consumers should
+use `CellpyCellCore` / `Data` with the native schema — see
+[Standalone use](../user-guide/standalone-use.md).
 
 ### Design Principles
 
-#### 1. **Immutability by Design**
-- **Selectors and summarizers should NOT modify input data objects**
-- Functions should return new data or computed results
-- This ensures data integrity and enables safe parallel processing
+#### 1. Schema injection
+
+Column names for raw / cycle / step **group keys** and summary aliases come from
+an injected `config.Schema`. Do not hardcode header strings in engine hot paths.
+Per-step stat column stems (`<signal>_<stat>`) are a **fixed engine contract**
+(not schema-injected); see `StepCols` and issue #70.
+
+#### 2. Polars-native engine
+
+The hot path is polars. Pandas appears only in the legacy bridge and parquet
+fixtures. Pass plain unit conversion factors by value — no pint quantities on the
+engine seam.
+
+#### 3. Immutable-by-convention frames
+
+Engine helpers should not mutate input polars frames in place. `Data` slots
+(`raw`, `steps`, `summary`) are updated by orchestration functions; underlying
+frame columns are not silently aliased mid-pipeline.
 
 ```python
-# ✅ Good: Non-modifying selector
-def filter_by_step_type(data: DataFrame, step_type: str) -> DataFrame:
-    """Filter data by step type without modifying original data."""
-    return data.filter(pl.col("step_type") == step_type)
-
-# ❌ Bad: Modifying selector
-def filter_by_step_type(data: DataFrame, step_type: str) -> None:
-    """This modifies the input data - avoid this pattern."""
-    data.drop_in_place(pl.col("step_type") != step_type)
+# Good: return a filtered view / new frame
+def filter_by_step_type(steps: pl.DataFrame, step_type: str) -> pl.DataFrame:
+    return steps.filter(pl.col("step_type") == step_type)
 ```
 
-#### 2. **Functional Programming Approach**
-- Prefer pure functions that don't have side effects
-- Use composition over inheritance where possible
-- Make functions stateless and predictable
+#### 4. Functional core
 
-#### 3. **Type Safety**
-- Use type hints for all function signatures
-- Leverage TypeVar for generic types
-- Use Union types for multiple possible return types
+Prefer pure functions in `extractors` and `summarizers` where practical. Side
+effects (file reads, env lookups) belong in cellpy, not here.
 
-```python
-from typing import TypeVar, Union, Optional
+#### 5. Metadata graceful degradation
 
-DataFrame = TypeVar("DataFrame")  # Generic DataFrame type
+Core ships metadata **scaffolding** (`cellpycore.metadata`) but never requires
+populated metadata on `Data`. Attaching real metadata is opt-in upstream (cellpy).
 
-def process_data(data: DataFrame) -> Union[DataFrame, None]:
-    """Process data with proper type hints."""
-    pass
-```
+#### 6. Parity by tests
 
-#### 4. **Modular Design**
-- Each module has a single, well-defined responsibility
-- Modules should be loosely coupled
-- Clear interfaces between modules
+Legacy behavior is guarded by contract tests and golden parquet fixtures in
+`tests/data/`, not by manual vigilance. Extend fixtures when porting more surface
+from cellpy.
 
-#### 5. **Configuration Management**
-- Centralize configuration in `config.py`
-- Use constants for magic numbers and strings
-- Make configuration easily discoverable and modifiable
+### Module responsibilities
 
-### Module Responsibilities
+| Module | Responsibility |
+|--------|----------------|
+| `cell_core.py` | `Data` container; `CellpyCellCore` orchestration; `OldCellpyCellCore` legacy bridge; `validate_raw_frame` / `cast_raw_frame` |
+| `config.py` | `Schema`, `RawCols`, `StepCols`, `CycleCols`, `default_schema()` |
+| `summarizers.py` | Step table and per-cycle summary engines; optional `add_step_c_rate` |
+| `extractors.py` | Low-level step/cycle boundary and classification helpers |
+| `merge.py` | Merge and incremental update of `Data` objects |
+| `metadata/` | `TestMeta` / `CellMeta` models and serialization helpers |
+| `units/` | `CellpyUnits` spec and converters (`pip install cellpycore[units]`) |
+| `legacy/` | v1 header tables, `mapping.py`, bridge-only `selectors.py` |
+| `testing/` | `mock_data` generators for unit tests and docs examples |
 
-#### `cell_core.py`
-- **Main CellpyCellCore class** - the primary interface
-- **Data object management** - handles the core data structure
-- **Orchestration** - coordinates between selectors and summarizers
+### Code organization patterns
 
-#### `selectors.py`
-- **Data filtering and selection** functions
-- **Step type identification** and classification
-- **Data validation** and quality checks
-- **Non-modifying operations** only
+#### Error handling
 
-#### `summarizers.py`
-- **Statistical analysis** and summarization
-- **Step table generation** and processing
-- **Core summary calculations**
-- **Non-modifying operations** only
-
-#### `config.py`
-- **Constants and configuration** values
-- **Header definitions** for data structures
-- **Default settings** and parameters
-
-#### `units.py`
-
-Might not be included in `core`, but as an additonal package.
-
-- **Unit conversion** utilities
-- **Unit validation** and standardization
-- **Measurement system** handling
-
-
-### Code Organization Patterns
-
-#### 1. **Function Organization**
-```python
-# Group related functions together
-# Use clear, descriptive names
-# Keep functions focused on single responsibility (within reason)
-
-```
-
-#### 2. **Error Handling**
 ```python
 import logging
 
+from cellpycore.exceptions import CellpyError
+
 logger = logging.getLogger(__name__)
 
-def process_data(data: DataFrame) -> DataFrame:
-    """Process data with proper error handling."""
+def process_data(data: Data) -> None:
+    """Process data with explicit error handling."""
     try:
-        # Processing logic
-        return result
-    except ValueError as e:
-        logger.error(f"Value error in data processing: {e}")
+        make_step_table(data)
+    except CellpyError:
         raise
     except Exception as e:
-        logger.error(f"Unexpected error in data processing: {e}")
+        logger.error("Unexpected error in data processing: %s", e)
         raise
 ```
 
-#### 3. **Constants and Configuration**
-```python
-# Define constants at module level
-MY_MAGIC_NUMBER = 42
-
-# Use configuration objects for complex settings (could be enums)
-class Config:
-    """Configuration settings for the module."""
-    DEFAULT_METHOD = "explode"
-    CAPACITY_MODIFIERS = ["reset"]
-
-# Use the core configuration solution for main configurations.
-
-from .config import Headers
-
-```
+Raise `CellpyError` subclasses for domain failures; avoid bare `Exception` at
+public boundaries.
 
 ## Development Workflow
 
 ### Setting Up Development Environment
 
-1. **Clone the repository**
-2. **Install dependencies**: `uv sync --group dev`
-3. **Install pre-commit hooks** (one-time, after step 2):
+1. **Clone the repository** (and optionally sibling `architecture-plan` / `cellpy`
+   for cross-repo work)
+2. **Install dependencies**: `uv sync --all-extras --dev`
+3. **Install pre-commit hooks** (one-time):
 
    ```bash
    uv run pre-commit install
    ```
 
-   Hooks run `ruff check --fix` and `ruff format` on staged Python files before
-   each commit (see `.pre-commit-config.yaml`).
+   Hooks run `ruff check --fix` and `ruff format` on staged Python files
+   (`.pre-commit-config.yaml`).
 
-4. **Run tests** to ensure everything works
+4. **Run tests** to confirm the environment:
 
-It is recommended to use the `uv` project management solution for
-adding new dependencies: `uv add something`
+   ```bash
+   uv run pytest
+   ```
 
-More details can be found at [Astral's uv documentation](https://docs.astral.sh/uv/).
+Use `uv add <package>` for new dependencies. See
+[Astral's uv documentation](https://docs.astral.sh/uv/).
 
 ### Development Process
 
-1. **Create a feature (issue) branch** from `main`
-2. **Write tests "first"** (TDD approach recommended, but use common sense)
-3. **Implement the feature** following coding standards
-4. **Update documentation** as needed
-5. **Run all tests** and ensure they pass
-6. **Run linting** and fix any issues
-7. **Create a Pull Request**
+1. **Create an issue branch** from `main` (`<N>-<short-slug>`)
+2. **Write tests first** when behavior is non-obvious (TDD where it helps)
+3. **Implement** following this guide and `.issueflows/04-designs-and-guides/`
+4. **Update docs** when public API or architecture boundaries change
+5. **Run** `uv run pytest`, `uv run ruff check`, `uv run ruff format --check`
+6. **Open a PR** referencing the issue
 
 ### Code Review Process
 
-- **All code must be reviewed** before merging
-- **At least one approval** required for merging
-- **Address all review comments** before merging
-- **Keep PRs focused** and reasonably sized
+- All changes reviewed before merge
+- Address review comments before merge
+- Keep PRs focused and reasonably sized
 
 ## Testing Guidelines
 
-We are currently using `pytest` as test runner. We have not decided
-if we would like implement sandboxed local testing (e.g. with `nox`),
-and it might never happen since for example `github actions` also
-can check sandboxed tests.
+`pytest` is the test runner. CI runs on GitHub Actions (see
+`.github/workflows/simpletest.yml`).
 
-### Test Structure
+### Test structure
 
-- **Unit tests** for individual functions
-- **Integration tests** for module interactions
-- **End-to-end tests** for complete workflows
+- **Unit tests** — individual functions and edge cases
+- **Integration tests** — module interactions and the `Data` pipeline
+- **End-to-end / golden tests** — parity against vendored parquet in `tests/data/`
+  (skipped when fixtures are absent)
 
-### Test Naming
+Benchmarks are marked `@pytest.mark.benchmark` and deselected by default; opt in
+with `uv run pytest -m benchmark`.
+
+### Test naming
 
 ```python
-def test_function_name_with_valid_input_returns_expected_result():
-    """Test that function_name returns expected result with valid input."""
+def test_make_step_table_with_valid_raw_returns_expected_step_count():
+    """Step table row count matches golden fixture."""
     pass
 
-def test_function_name_with_invalid_input_raises_exception():
-    """Test that function_name raises appropriate exception with invalid input."""
+def test_validate_raw_frame_missing_column_raises():
+    """Missing RawCols column raises CellpyError."""
     pass
 ```
 
-### Test Coverage
+### Test coverage
 
-- **Aim for >90% code coverage**
-- **Test edge cases** and error conditions
-- **Test with different data types** (Pandas, Polars)
+- Aim for high coverage on engine paths
+- Test edge cases and error conditions
+- Legacy bridge tests assert header/unit parity with cellpy; native-path tests
+  use polars frames and `default_schema()`
 
 ## Code Quality Standards
 
-### Linting and Formatting
+### Linting and formatting
 
-- **Use Ruff** for linting and formatting
-- **Follow PEP 8** style guidelines
-- **Use type hints** throughout the codebase
-- **Keep line length** under 88 characters
+- **Ruff** for lint and format (`uv run ruff check`, `uv run ruff format --check`)
+- Type hints on public APIs
+- Line length 88 (ruff default)
 
-### Performance Considerations
+### Performance
 
-- **Profile code** for performance bottlenecks
-- **Use appropriate data structures** for the task
-- **Consider memory usage** for large datasets
-- **Optimize critical paths** in the code
+- Profile hot paths on large fixtures when changing summarizers
+- Prefer polars expressions over Python loops on big frames
+- Benchmark suite available for regression checks
 
-### Documentation Requirements
+### Documentation requirements
 
-Documentation is written in markdown, lives in the docs folder, and is built
-with [Zensical](https://zensical.org) (config in `zensical.toml`; hosted on
-Read the Docs via `.readthedocs.yaml`). Preview locally with
-`uv run --group docs zensical serve`.
+Docs live in `docs/`, built with
+[Zensical](https://zensical.org) (`zensical.toml`; Read the Docs via
+`.readthedocs.yaml`). Preview:
+
+```bash
+uv run --group docs zensical serve
+```
 
 The [API reference](../api/index.md) is generated from Google-style docstrings
-via the mkdocstrings plugin (`::: cellpycore` directives in `docs/api/`).
+via mkdocstrings (`::: cellpycore` in `docs/api/`).
 
-- **All public APIs** must be documented
-- **Examples** should be provided for complex functions
-- **Keep documentation** up-to-date with code changes
-- **Use clear, concise language**
+- Document all public APIs
+- Keep docs aligned with code and architecture-plan when boundaries move
+- Use clear, concise language
 
 ### Additional tooling
 
-- **AI**: a `.cursor` folder exists where general rules and project specific rules can be put
-- **Aliases**: a `.aliases` file exists where general linux aliases can be put and sourced (`source .aliases`)
+- **`.cursor/`** — Agent Skills (`/iflow-*`) and project rules for AI-assisted
+  development
+- **`.aliases`** — optional shell aliases (`source .aliases`)
+
+## Related documentation
+
+| Topic | Location |
+|-------|----------|
+| User-facing overview | [docs/index.md](../index.md) |
+| Standalone consumer guide | [user-guide/standalone-use.md](../user-guide/standalone-use.md) |
+| Input format spec | [specifications/harmonized-raw.md](../specifications/harmonized-raw.md) |
+| Issue workflow (Agent Skills) | [development/issue-workflow.md](issue-workflow.md) |
+| Agent project brief | `.issueflows/04-designs-and-guides/this-project.md` |
+| Cross-repo migration | `.issueflows/04-designs-and-guides/cellpy-core-migration.md` |
+| Cellpy 2 architecture plans | [github.com/cellpy/architecture-plan](https://github.com/cellpy/architecture-plan) |
 
 ---
 
-This development guide should be followed by all contributors to ensure consistency and quality across the cellpy-core library. For questions or suggestions about these guidelines, please open an issue or discuss in a Pull Request.
+For questions about these guidelines, open an issue or discuss in a pull request.

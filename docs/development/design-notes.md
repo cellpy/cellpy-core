@@ -1,5 +1,10 @@
 # Definition of Cellpy Core Functionality
 
+> **Note:** Early SPEED draft — partially superseded. For current architecture,
+> module layout, and contributor workflow see
+> [Development guide](guide.md) and the
+> [architecture-plan](https://github.com/cellpy/architecture-plan) repository.
+
 ## Cellpy Core Functionality
 - Receive data object (Cellpy Core Input)
     - Harmonized_Raw (see below)
