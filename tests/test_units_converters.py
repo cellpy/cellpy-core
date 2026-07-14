@@ -314,3 +314,11 @@ def test_validate_units_unknown_key_warns_and_is_dropped():
     with pytest.warns(UserWarning, match="unknown unit key"):
         spec = units.validate_units({"charge": "mAh", "swagger": "V"})
     assert "swagger" not in spec.keys()
+
+
+def test_get_converter_to_specific_volumetric_via_cell_meta():
+    """CellMeta.volume (issue #117) now feeds the volumetric mode."""
+    meta = CellMeta(volume=2.0)
+    assert units.get_converter_to_specific(
+        mode="volumetric", cell_meta=meta
+    ) == pytest.approx(0.5)

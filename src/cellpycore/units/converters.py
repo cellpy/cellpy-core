@@ -271,7 +271,7 @@ def get_converter_to_specific(
             if value is not None
             else _resolve_optional_attr(
                 explicit=volume,
-                cell_meta=None,
+                cell_meta=cell_meta,
                 meta_attr="volume",
                 data=data,
                 data_attr="volume",
