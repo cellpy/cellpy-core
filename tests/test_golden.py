@@ -171,6 +171,59 @@ def test_step_time_delta_never_negative():
     assert negative.empty, f"negative {delta_col} values: {negative.to_list()}"
 
 
+def test_bridge_summary_respects_cycle_mode():
+    """OldCellpyCellCore.make_core_summary honors ``cycle_mode="anode"`` (issue #129).
+
+    The legacy bridge must pass ``test_mode`` into ``make_summary``; without it the
+    bridge always ran the NORMAL convention, so an anode half-cell silently got
+    the wrong-direction ``coulombic_efficiency`` / ``coulombic_difference``.
+
+    Assert the anode-mode summary is the reciprocal (CE, in %) / negation
+    (coulombic_difference) of the normal-mode summary on the same real data.
+    """
+    import numpy as np
+
+    def _summary(cycle_mode):
+        core = OldCellpyCellCore(initialize=False)
+        data = Data()
+        data.raw = pd.read_parquet(CYCLER_CC_RAW)
+        core.data = data
+        if cycle_mode is not None:
+            core.cycle_mode = cycle_mode
+        core.make_core_step_table(data, nom_cap=1.0)
+        core.make_core_summary(data, find_ir=False, find_end_voltage=False)
+        return data.summary.reset_index(drop=True)
+
+    normal = _summary(None)
+    anode = _summary("anode")
+
+    ce_n = normal["coulombic_efficiency"]
+    ce_a = anode["coulombic_efficiency"]
+    cd_n = normal["coulombic_difference"]
+    cd_a = anode["coulombic_difference"]
+
+    # The bridge must actually respond to cycle_mode (guards against the #129
+    # regression where anode == normal because test_mode was never passed).
+    assert not np.allclose(
+        ce_a.to_numpy(dtype=float), ce_n.to_numpy(dtype=float), equal_nan=True
+    )
+
+    ce_mask = ce_n.notna() & (ce_n != 0)
+    # CE% inverts: normal = 100*dc/cc, anode = 100*cc/dc = 10000/normal.
+    assert np.allclose(
+        ce_a[ce_mask].to_numpy(dtype=float),
+        10000.0 / ce_n[ce_mask].to_numpy(dtype=float),
+        rtol=1e-6,
+    )
+    cd_mask = cd_n.notna() & cd_a.notna()
+    assert np.allclose(
+        cd_a[cd_mask].to_numpy(dtype=float),
+        -cd_n[cd_mask].to_numpy(dtype=float),
+        rtol=1e-6,
+        atol=1e-9,
+    )
+
+
 @pytest.mark.skipif(not CYCLER_SMALL_RAW.is_file(), reason="small fixture missing")
 def test_cycler_small_step_table_runs_on_real_data():
     """Smoke test: a tiny real raw frame flows through the engine.

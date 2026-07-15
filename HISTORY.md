@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Fix `OldCellpyCellCore.make_core_summary` to pass `test_mode` into
+  `make_summary`, so the legacy bridge honors `cycle_mode="anode"` like the native
+  path. Without it the bridge always ran NORMAL, silently giving anode half-cells
+  the wrong-direction `coulombic_efficiency` / `coulombic_difference`. This is the
+  end-to-end closure of the Stage-1 §3.1/§3.2 deltas (with #127). (#129)
 - Add a regression guard asserting `step_time_delta` is never negative on the
   golden step table, locking in the 1.0.3 step-misclassification fix (obs doc
   §2.1). (#132)
