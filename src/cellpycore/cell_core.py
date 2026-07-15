@@ -1013,10 +1013,16 @@ class OldCellpyCellCore(CellpyCellCore):
         nd = Data()
         nd.raw = native_raw
         nd.steps = native_steps
+        # Honor cycle_mode on the bridge exactly as the native path does (issue
+        # #129): without this the bridge summary always ran NORMAL, so anode
+        # half-cells silently got the wrong-direction coulombic_efficiency /
+        # coulombic_difference.
+        test_mode = _cycle_mode_to_test_mode(self.cycle_mode)
         summarizers.make_summary(
             nd,
             native_schema,
             final_data_points=final_data_points,
+            test_mode=test_mode,
             exclude_step_types=exclude_step_types,
         )
 
