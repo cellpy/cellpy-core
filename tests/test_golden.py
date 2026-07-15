@@ -153,6 +153,24 @@ def test_cycler_cc_step_types_match_cellpy_reference():
     )
 
 
+def test_step_time_delta_never_negative():
+    """Regression guard for the 1.0.3 misclassification bug (obs doc §2.1).
+
+    In cellpy 1.0.3, cycle 9 / step 21 got an empty type and a *negative*
+    ``step_time_delta`` (-0.00046 s) because its first/last/delta aggregates were
+    taken from wrongly-ordered rows. The polars engine orders correctly, so a
+    step's duration can never be negative. Assert that invariant on real data so
+    the bug class cannot silently return.
+    """
+    steps = _step_table(CYCLER_CC_RAW)
+
+    delta_col = "step_time_delta"
+    assert delta_col in steps.columns
+    deltas = steps[delta_col].dropna()
+    negative = deltas[deltas < 0]
+    assert negative.empty, f"negative {delta_col} values: {negative.to_list()}"
+
+
 @pytest.mark.skipif(not CYCLER_SMALL_RAW.is_file(), reason="small fixture missing")
 def test_cycler_small_step_table_runs_on_real_data():
     """Smoke test: a tiny real raw frame flows through the engine.
