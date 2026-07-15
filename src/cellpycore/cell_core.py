@@ -13,18 +13,49 @@ DataFrame = TypeVar("DataFrame")
 logger = logging.getLogger(__name__)
 
 
+# cycle_mode spellings that select the inverted (anode half-cell) convention:
+# cellpy's legacy ``"anode"``, this package's ``TestMode`` value ``"inverted"``,
+# and batbase's short code ``"i"`` (see ``config.TestMode`` docstring).
+_INVERTED_CYCLE_MODES = frozenset({"anode", "inverted", "i"})
+# Recognized spellings that select the NORMAL convention. Anything outside either
+# set (and not ``None``/empty) is unknown -> NORMAL *with a warning*.
+_NORMAL_CYCLE_MODES = frozenset(
+    {"normal", "n", "cathode", "full_cell", "fullcell", "full cell", "standard"}
+)
+
+
 def _cycle_mode_to_test_mode(cycle_mode: Optional[str]) -> config.TestMode:
-    """Map legacy ``cycle_mode`` string to ``TestMode``.
+    """Map a legacy ``cycle_mode`` string to a :class:`config.TestMode`.
+
+    The inverted (anode half-cell) convention is selected by any of ``"anode"``
+    (cellpy), ``"inverted"`` (this package's ``TestMode`` value) or ``"i"``
+    (batbase short code), matched case-insensitively and whitespace-tolerantly.
+    ``None`` and the recognized normal-convention spellings map to
+    ``TestMode.NORMAL``.
+
+    An *unrecognized* non-empty value also maps to ``NORMAL`` but logs a warning,
+    so a mistyped or unmapped mode fails loudly instead of silently flipping the
+    ``coulombic_efficiency`` / ``coulombic_difference`` sign conventions.
 
     Args:
-        cycle_mode: Legacy mode string (``"anode"`` selects inverted convention).
-            ``None`` and all other values map to ``TestMode.NORMAL``.
+        cycle_mode: Legacy mode string, or ``None``.
 
     Returns:
         The corresponding ``TestMode`` for summary sign conventions.
     """
-    if cycle_mode == "anode":
+    if cycle_mode is None:
+        return config.TestMode.NORMAL
+    key = cycle_mode.strip().lower()
+    if key in _INVERTED_CYCLE_MODES:
         return config.TestMode.INVERTED
+    if key == "" or key in _NORMAL_CYCLE_MODES:
+        return config.TestMode.NORMAL
+    logger.warning(
+        "Unrecognized cycle_mode %r; defaulting to NORMAL convention. Use "
+        "'anode'/'inverted' for anode half-cells, or one of "
+        "'normal'/'cathode'/'full_cell'/'standard' for the ordinary case.",
+        cycle_mode,
+    )
     return config.TestMode.NORMAL
 
 
