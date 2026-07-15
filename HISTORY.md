@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-15
+
 - Fix `OldCellpyCellCore.make_core_summary` to pass `test_mode` into
   `make_summary`, so the legacy bridge honors `cycle_mode="anode"` like the native
   path. Without it the bridge always ran NORMAL, silently giving anode half-cells
@@ -18,6 +20,9 @@ All notable changes to this project will be documented in this file.
   on an unrecognized `cycle_mode`. Fixes the silent NORMAL fallback that inverted
   `coulombic_efficiency` and sign-flipped `coulombic_difference` for anode
   half-cells. (#127)
+
+## [0.2.0] - 2026-07-15
+
 - Sync development guide with architecture-plan and current cellpycore layout. (#121)
 - Sync stale statuses in integration design docs (STEP-12, #54, header mapping path,
   make_step_table). (#114)
