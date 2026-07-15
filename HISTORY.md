@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Add a regression guard asserting `step_time_delta` is never negative on the
+  golden step table, locking in the 1.0.3 step-misclassification fix (obs doc
+  §2.1). (#132)
 - Harden `_cycle_mode_to_test_mode`: recognize all inverted-convention spellings
   (`"anode"`, `"inverted"`, `"i"`) case- and whitespace-insensitively, accept the
   known normal spellings, and warn (instead of silently falling back to NORMAL)
