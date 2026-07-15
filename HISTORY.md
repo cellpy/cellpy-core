@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Harden `_cycle_mode_to_test_mode`: recognize all inverted-convention spellings
+  (`"anode"`, `"inverted"`, `"i"`) case- and whitespace-insensitively, accept the
+  known normal spellings, and warn (instead of silently falling back to NORMAL)
+  on an unrecognized `cycle_mode`. Fixes the silent NORMAL fallback that inverted
+  `coulombic_efficiency` and sign-flipped `coulombic_difference` for anode
+  half-cells. (#127)
 - Sync development guide with architecture-plan and current cellpycore layout. (#121)
 - Sync stale statuses in integration design docs (STEP-12, #54, header mapping path,
   make_step_table). (#114)

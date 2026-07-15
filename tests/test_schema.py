@@ -548,6 +548,51 @@ def test_cycle_mode_anode_via_cellpy_cell_core():
         assert cd[i] == pytest.approx(dc[i] - cc[i])
 
 
+# --- issue #127: robust cycle_mode -> TestMode translation --------------------
+@pytest.mark.parametrize(
+    "cycle_mode",
+    ["anode", "inverted", "i", "ANODE", "  anode  ", "Inverted"],
+)
+def test_cycle_mode_to_test_mode_inverted_spellings(cycle_mode):
+    """All recognized anode spellings select INVERTED, case/whitespace-tolerant."""
+    from cellpycore.cell_core import _cycle_mode_to_test_mode
+
+    assert _cycle_mode_to_test_mode(cycle_mode) == config.TestMode.INVERTED
+
+
+@pytest.mark.parametrize(
+    "cycle_mode",
+    [
+        None,
+        "",
+        "normal",
+        "n",
+        "cathode",
+        "full_cell",
+        "fullcell",
+        "standard",
+        "STANDARD",
+    ],
+)
+def test_cycle_mode_to_test_mode_normal_spellings(cycle_mode, caplog):
+    """None and recognized normal spellings select NORMAL without warning."""
+    from cellpycore.cell_core import _cycle_mode_to_test_mode
+
+    with caplog.at_level("WARNING"):
+        assert _cycle_mode_to_test_mode(cycle_mode) == config.TestMode.NORMAL
+    assert caplog.records == []
+
+
+def test_cycle_mode_to_test_mode_unknown_warns(caplog):
+    """An unrecognized non-empty value defaults to NORMAL but logs a warning."""
+    from cellpycore.cell_core import _cycle_mode_to_test_mode
+
+    with caplog.at_level("WARNING"):
+        result = _cycle_mode_to_test_mode("anodee")
+    assert result == config.TestMode.NORMAL
+    assert any("Unrecognized cycle_mode" in r.message for r in caplog.records)
+
+
 def test_initialized_and_uninitialized_core_share_cycle_mode_default():
     """initialize=True vs False must not diverge on default polarity."""
     assert CellpyCellCore(initialize=False).cycle_mode is None
