@@ -783,7 +783,9 @@ class OldCellpyCellCore(CellpyCellCore):
         # ``ustep`` is only present when the engine ran with ``usteps=True`` (the
         # native frame names it literally "ustep" == ``leg.ustep``); it is filtered
         # out below when absent, so this is a no-op for the default step table.
-        order = [leg.cycle, leg.step, leg.sub_step, leg.ustep]
+        # ``test_id`` is carried when the native engine stamped it (campaign /
+        # multi-test; issue #136).
+        order = [leg.test_id, leg.cycle, leg.step, leg.sub_step, leg.ustep]
         bases = [
             leg.point,
             leg.test_time,
@@ -934,6 +936,7 @@ class OldCellpyCellCore(CellpyCellCore):
             leg.test_time,
             leg.datetime,
             leg.cycle_index,
+            leg.test_id,
             leg.charge_capacity,
             leg.discharge_capacity,
             leg.coulombic_efficiency,
@@ -963,10 +966,27 @@ class OldCellpyCellCore(CellpyCellCore):
         ``cumulated_coulombic_efficiency``, ``shifted_*`` and ``cumulated_ric*`` are
         legacy cruft with no native ``CycleCols`` equivalent (unlike the C-rates /
         IR, which issue #21 moved onto the native schema). They are computed here in
-        pandas, after the native->legacy rename.
+        pandas, after the native->legacy rename. When ``test_id`` is present,
+        cumsums are windowed per test so multi-test objects do not leak across
+        tests (issue #136).
         """
         leg = self.cycle_cols
         s = data.summary
+        tid = getattr(leg, "test_id", "test_id")
+        if tid in s.columns:
+            import pandas as pd
+
+            parts = [
+                self._legacy_summary_cruft_block(g.copy(), leg)
+                for _, g in s.groupby(tid, sort=False)
+            ]
+            data.summary = pd.concat(parts).sort_index() if parts else s
+            return
+        data.summary = self._legacy_summary_cruft_block(s, leg)
+
+    @staticmethod
+    def _legacy_summary_cruft_block(s, leg):
+        """Compute legacy cruft columns on one (already sliced) summary frame."""
         cc = s[leg.charge_capacity]
         dc = s[leg.discharge_capacity]
         s[leg.cumulated_coulombic_efficiency] = s[leg.coulombic_efficiency].cumsum()
@@ -975,7 +995,7 @@ class OldCellpyCellCore(CellpyCellCore):
         s[leg.cumulated_ric] = ((cc.shift(1) - dc) / dc.shift(1)).cumsum()
         s[leg.cumulated_ric_sei] = ((cc - dc.shift(1)) / dc.shift(1)).cumsum()
         s[leg.cumulated_ric_disconnect] = ((dc.shift(1) - dc) / dc.shift(1)).cumsum()
-        data.summary = s
+        return s
 
     def make_core_summary(
         self,

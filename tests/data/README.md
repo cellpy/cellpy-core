@@ -14,7 +14,7 @@ underlying source files in the cellpy repo may still come from a specific tester
 |------|----------------------|-------|------|
 | `cycler_cc_raw.parquet` | `testdata/data/20160805_test001_45_cc_01.res` | 10 261 rows, 18 cols, 18 cycles | Canonical golden oracle |
 | `cycler_cc_steps_expected.parquet` | *(derived)* | 103 steps | Frozen snapshot of the current engine's step table |
-| `cycler_cc_summary_expected.parquet` | *(derived)* | 18 cycles, 27 cols | Frozen snapshot of the current per-cycle summary |
+| `cycler_cc_summary_expected.parquet` | *(derived)* | 18 cycles, 28 cols | Frozen snapshot of the current per-cycle summary (includes ``test_id``, #136) |
 | `cycler_cc_steptypes_cellpy.csv` | `testdata/data/steps.csv` | 103 steps, 4 cols | **Independent** cellpy step-type golden (cross-repo parity, Phase 4) |
 | `cycler_small_raw.parquet` | `testdata/data/20200624_test001_cc_01.h5` | 47 rows, 1 cycle, 3 steps | Tiny fast fixture (no ODBC) |
 | `cycler_cc_harmonized_raw.parquet` | *(derived from `cycler_cc_raw.parquet`)* | 10 261 rows, 28 cols, 18 cycles | Same data in the **harmonized** schema (`RawCols` naming) |

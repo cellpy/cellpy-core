@@ -23,6 +23,27 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
+def _require_native_merge_schema(schema: "Schema") -> None:
+    """Reject legacy header schemas for ``merge_data`` / ``update_data``.
+
+    These helpers look up native attribute names (``datapoint_num``,
+    ``cycle_num``, ``test_id``, …). Passing ``OldCellpyCellCore.schema``
+    (``HeadersNormal`` / ``HeadersStepTable`` / ``HeadersSummary``) raises
+    ``AttributeError`` or silently skips offsets. Require a native
+    ``config.Schema`` instead (issue #136).
+    """
+    raw = schema.raw
+    needed = ("datapoint_num", "cycle_num", "test_id")
+    missing = [name for name in needed if not hasattr(raw, name)]
+    if missing:
+        raise TypeError(
+            "merge_data/update_data require a native config.Schema "
+            f"(schema.raw missing {missing!r}). "
+            "Pass config.default_schema() — legacy Headers* schemas are unsupported."
+        )
+
+
 _CUMULATIVE_SUMMARY_ATTRS = (
     "test_cumulated_charge_capacity",
     "test_cumulated_discharge_capacity",
@@ -55,7 +76,9 @@ def merge_data(
     Args:
         left: First dataset (D1).
         right: Second dataset (D2), appended after ``left``.
-        schema: Column-header schema. Defaults to ``config.default_schema()``.
+        schema: Native column-header schema. Defaults to
+            ``config.default_schema()``. Legacy ``Headers*`` schemas
+            (e.g. ``OldCellpyCellCore.schema``) are not supported.
         renumber_cycles: If True (default), offset right ``cycle_num`` values by
             ``max(left.cycle_num)`` and shift cumulative summary columns. If False,
             cycle numbers are kept as-is (multi-test isolation via ``test_id``).
@@ -67,11 +90,14 @@ def merge_data(
         A new ``Data`` with merged frames. Inputs are not modified.
 
     Raises:
+        TypeError: If ``schema`` is a legacy header schema (missing native
+            attribute names on ``schema.raw``).
         ValueError: If either side lacks ``raw``, or ``test_id`` values collide
             and ``allow_duplicate_test_id`` is False.
     """
     if schema is None:
         schema = config.default_schema()
+    _require_native_merge_schema(schema)
     nhdr, shdr, chdr = schema.raw, schema.step, schema.cycle
 
     left_raw = left.raw
@@ -187,6 +213,7 @@ def update_data(
     nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
     if schema is None:
         schema = config.default_schema()
+    _require_native_merge_schema(schema)
     nhdr, shdr = schema.raw, schema.step
 
     if data.raw is None or data.steps is None or data.summary is None:
