@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-17
+
+- Legacy bridge carries ``test_id`` through step and summary frames (identity
+  mapping) so campaign-merged multi-test objects keep per-test summary
+  windowing without a consumer re-stamp. ``_add_legacy_summary_cruft`` cumsums
+  are windowed per ``test_id`` when present. ``merge_data`` / ``update_data``
+  raise ``TypeError`` on legacy ``Headers*`` schemas (require native
+  ``config.Schema``). Golden step/summary snapshots regenerated. (#136)
+
 ## [0.2.1] - 2026-07-15
 
 - Fix `OldCellpyCellCore.make_core_summary` to pass `test_mode` into

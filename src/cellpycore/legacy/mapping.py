@@ -81,6 +81,7 @@ STEP_BASE_PAIRS = [
 
 # Scalar (non-statistic) step columns; ``(native, legacy)``.
 STEP_SCALAR_PAIRS = [
+    ("test_id", "test_id"),  # identity; carried for campaign / multi-test (#136)
     ("cycle_num", "cycle"),
     ("step_num", "step"),
     ("sub_step_num", "sub_step"),
@@ -112,6 +113,7 @@ CYCLE_PAIRS = [
     ("temperature_cell_mean", "temperature_mean"),
     ("temperature_cell_last", "temperature_last"),
     # Identity pass-throughs (native name already equals the legacy name).
+    ("test_id", "test_id"),  # campaign / multi-test key (#136)
     ("ir_charge", "ir_charge"),
     ("ir_discharge", "ir_discharge"),
     ("charge_c_rate", "charge_c_rate"),
@@ -187,12 +189,12 @@ NATIVE_ONLY_RAW = frozenset(
 LEGACY_ONLY_STEP = frozenset({"test", "ustep", "info", "ir_pct_change"})
 
 # Native StepCols *signals* with no legacy counterpart (power / energy
-# statistics, the boolean ``mask``, and the per-test ``test_id`` key). Compared at
-# base-signal granularity, i.e. after stripping the ``STAT_SUFFIXES`` from
-# statistic columns. ``test_id`` is intentionally not step-bridged (it is dropped
-# from the legacy step table), matching the raw-bridge treatment of ``test_id``.
+# statistics, the boolean ``mask``). Compared at base-signal granularity, i.e.
+# after stripping the ``STAT_SUFFIXES`` from statistic columns. ``test_id`` is
+# bridged as an identity scalar (issue #136) so campaign merges keep per-test
+# grouping through the legacy step table.
 NATIVE_ONLY_STEP = frozenset(
-    {"power", "charge_energy", "discharge_energy", "mask", "test_id", "ref_potential"}
+    {"power", "charge_energy", "discharge_energy", "mask", "ref_potential"}
 )
 
 # Legacy HeadersSummary column values with no native CycleCols counterpart
@@ -223,11 +225,9 @@ LEGACY_ONLY_CYCLE = frozenset(
 )
 
 # Native CycleCols column values with no legacy HeadersSummary counterpart.
-# (``test_id`` is the per-test key; intentionally not summary-bridged, so it is
-# dropped from the legacy summary table like the raw/step ``test_id``.)
+# (``test_id`` is bridged as an identity pass-through — issue #136.)
 NATIVE_ONLY_CYCLE = frozenset(
     {
-        "test_id",
         "mask",
         "datapoint_num_first",
         "first_epoch_time_utc",
@@ -344,6 +344,7 @@ LEGACY_ATTR_TO_SCHEMA = {
         "step_time": "step_time",
         "sub_step": "sub_step_num",
         "sub_type": "sub_step_type",
+        "test_id": "test_id",
         "test_time": "test_time",
         "type": "step_type",
         "voltage": "potential",
@@ -353,6 +354,7 @@ LEGACY_ATTR_TO_SCHEMA = {
         "charge_c_rate": "charge_c_rate",
         "charge_capacity": "charge_capacity",
         "charge_capacity_loss": "charge_capacity_loss",
+        "test_id": "test_id",
         # Duplicate-value pair: ``charge_capacity_raw`` shares its column value
         # with ``charge_capacity`` (both "charge_capacity"); the shim maps both
         # here and owns the disambiguation warning (native-headers plan D6).

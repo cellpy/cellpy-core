@@ -241,3 +241,6 @@ def test_cycler_small_step_table_runs_on_real_data():
     assert len(steps) == 7
     assert schema.step.type in steps.columns
     assert int(steps[schema.step.cycle].max()) == 1
+    # issue #136: multi-test fixtures keep test_id on the legacy step table
+    assert schema.step.test_id in steps.columns
+    assert set(steps[schema.step.test_id].unique()) == {1, 2, 3}

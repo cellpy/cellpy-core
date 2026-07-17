@@ -79,3 +79,13 @@ uv run pre-commit install
   the public API.
 - Per-step stat column names (`<signal>_<stat>`) are a fixed engine contract,
   not schema-injected (issue #70).
+
+## Release & version bump
+
+Static version in ``pyproject.toml`` (``project.version``). Bump with::
+
+    uv version --bump patch|minor|major
+
+Cut a GitHub release from ``main`` after merge (``release`` alias / see
+``release-procedure.md``) so ``release.yml`` publishes ``cellpycore`` to PyPI.
+
