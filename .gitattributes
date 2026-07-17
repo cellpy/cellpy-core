@@ -1,0 +1,14 @@
+# GitHub Linguist: keep language stats focused on library source.
+# Without this, graphify-out/graph.html (~3.8MB) dominates as HTML.
+
+graphify-out/** linguist-generated
+docs/** linguist-documentation
+tests/** linguist-documentation
+.issueflows/** linguist-documentation
+dev/** linguist-documentation
+scripts/** linguist-documentation
+
+# Cross-platform line endings for shell helpers
+.aliases     text eol=lf
+*.sh         text eol=lf
+*.lock       text eol=lf
