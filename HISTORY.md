@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-07-19
+
+- Bridge legacy raw ``charge_energy`` / ``discharge_energy`` to
+  ``cumulative_charge_energy`` / ``cumulative_discharge_energy`` via
+  ``RAW_PAIRS`` and ``LEGACY_ATTR_TO_SCHEMA``, matching the capacity
+  cycle-cumulative convention. (#139)
+
 ## [0.2.2] - 2026-07-17
 
 - Legacy bridge carries ``test_id`` through step and summary frames (identity
