@@ -295,6 +295,9 @@ NATIVE_ONLY_CYCLE = frozenset(
         "cc_charge_time",
         "temperature_cell_max",
         "temperature_cell_min",
+        # Throughput-based ageing metrics (issue #138); no legacy counterpart.
+        "test_cumulated_capacity_throughput",
+        "equivalent_full_cycles",
     }
 )
 

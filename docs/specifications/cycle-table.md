@@ -96,6 +96,8 @@ Date: 2025-09-08
 | temperature_cell_min | float | Degree Celsius (°C) | 25.4 | Minimum cell temperature over the cycle (from aux_temperature_cell). |
 | temperature_cell_last | float | Degree Celsius (°C) | 25.4 | Cell temperature at the end of the cycle (from aux_temperature_cell). |
 | normalized_cycle_index | float | - | 3.14 | Equivalent cycle number (test_cumulated_charge_capacity / nominal capacity) |
+| test_cumulated_capacity_throughput | float | milliAmpere-hours (mAh) | 3.1234 | Cumulated capacity throughput over the test (charge + discharge) |
+| equivalent_full_cycles | float | - | 3.14 | Equivalent full cycles (test_cumulated_capacity_throughput / (2 x nominal capacity)) |
 | charge_c_rate | float | C-rate (1/h) | 0.05 | C-rate of the first charge step in the cycle |
 | discharge_c_rate | float | C-rate (1/h) | 0.05 | C-rate of the first discharge step in the cycle |
 | ir_charge | float | Ohm (Ω) | 0.1234 | Internal resistance for the (first) charge step in the cycle |
