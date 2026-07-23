@@ -621,6 +621,9 @@ class CellpyCellCore:
         data = summarizers.equivalent_cycles_to_summary(
             data, schema, nom_cap_abs, normalization_cycles, step_txt
         )
+        data = summarizers.efc_to_summary(
+            data, schema, nom_cap_abs, normalization_cycles, step_txt
+        )
 
         # Note: the C-rates are added by make_core_summary (using the step-table
         # rates, independent of nom_cap, matching legacy cellpy). Adding them again
@@ -1129,6 +1132,9 @@ class OldCellpyCellCore(CellpyCellCore):
             )
 
         summarizers.equivalent_cycles_to_summary(
+            nd, native_schema, nom_cap_abs, normalization_cycles, step_txt
+        )
+        summarizers.efc_to_summary(
             nd, native_schema, nom_cap_abs, normalization_cycles, step_txt
         )
         specific_columns = native_schema.cycle.specific_columns

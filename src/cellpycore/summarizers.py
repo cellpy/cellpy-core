@@ -1012,15 +1012,16 @@ def throughput_to_raw(
     """Add cumulative capacity throughput and equivalent full cycles to the raw frame.
 
     Polars-native. Integrates the absolute current over test time
-    (``sum(|current| * dt)``, cumulated per test) and derives the equivalent
-    full cycles (EFC) from it (issue #138):
+    (trapezoidal ``sum(|current| * dt)``, cumulated per test) and derives the
+    equivalent full cycles (EFC) from it (issue #138):
 
-    - ``test_cumulated_capacity_throughput = cum_sum(|current| * dt * conversion_factor)``
+    - ``test_cumulated_capacity_throughput = cum_sum(mean(|I|) * dt * conversion_factor)``
     - ``equivalent_full_cycles = test_cumulated_capacity_throughput / (2 * nom_cap_abs)``
 
     Works on continuous time-series data (e.g. BMS / field datasets) without
     any step table, summary, or cycle boundaries. Negative time deltas (file
-    seams, timer resets) contribute zero.
+    seams, timer resets) and missing current values contribute zero; both are
+    logged as warnings rather than passing silently.
 
     Args:
         data (Data): The data object (only ``data.raw`` is used).
@@ -1053,15 +1054,38 @@ def throughput_to_raw(
     # plain single-test / BMS time-series frame without one is fine too.
     per_test = hdr_raw.test_id in raw.columns
 
-    dt = pl.col(hdr_raw.test_time).diff()
-    if per_test:
-        dt = dt.over(hdr_raw.test_id)
-    # clip guards seams / timer resets (negative deltas contribute zero).
-    dt = dt.fill_null(0.0).clip(lower_bound=0.0)
+    def _over(expr: pl.Expr) -> pl.Expr:
+        return expr.over(hdr_raw.test_id) if per_test else expr
 
-    throughput = (pl.col(hdr_raw.current).abs() * dt * conversion_factor).cum_sum()
-    if per_test:
-        throughput = throughput.over(hdr_raw.test_id)
+    current_abs = pl.col(hdr_raw.current).abs()
+    diff_t = _over(pl.col(hdr_raw.test_time).diff())
+
+    # Both failure modes are silent otherwise: a gap in the current trace would
+    # contribute zero, and an unsorted / reset time column would be swallowed by
+    # the clip below. Count them once and say so.
+    n_missing, n_backwards = raw.select(
+        current_abs.is_null().sum().alias("missing"),
+        (diff_t < 0.0).sum().alias("backwards"),
+    ).row(0)
+    if n_missing:
+        logger.warning(
+            f"{n_missing} missing current value(s) counted as zero current in the "
+            "throughput integral"
+        )
+    if n_backwards:
+        logger.warning(
+            f"{n_backwards} negative time delta(s) contributed zero throughput "
+            "(unsorted rows, file seam, or timer reset?)"
+        )
+
+    current_abs = current_abs.fill_null(0.0)
+    dt = diff_t.fill_null(0.0).clip(lower_bound=0.0)
+
+    # Trapezoidal. A right-hand rule (|I_i| * dt) charges the whole preceding
+    # rest to the first sample of a pulse, which matters on the irregularly
+    # sampled field / BMS data this is meant for.
+    mean_current = (current_abs + _over(current_abs.shift(1)).fill_null(0.0)) / 2.0
+    throughput = _over((mean_current * dt * conversion_factor).cum_sum())
     raw = raw.with_columns(
         throughput.alias(hdr_out.test_cumulated_capacity_throughput)
     ).with_columns(

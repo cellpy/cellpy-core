@@ -8,9 +8,10 @@ cumulated capacities.
 import polars as pl
 import pytest
 
-from cellpycore.cell_core import CellpyCellCore, Data
+from cellpycore.cell_core import CellpyCellCore, Data, OldCellpyCellCore
 from cellpycore.config import default_schema
 from cellpycore.summarizers import efc_to_summary, throughput_to_raw
+from cellpycore.testing.mock_data import create_raw_data
 
 NOM_CAP = 300.0
 
@@ -20,14 +21,54 @@ CYC = schema.cycle
 
 
 def _expected_raw_throughput(raw: pl.DataFrame) -> float:
-    """Hand-computed sum(|I| * dt) over the whole frame."""
+    """Hand-computed trapezoidal sum(|I| * dt) over the whole frame."""
     current = raw[RAW.current].to_list()
     test_time = raw[RAW.test_time].to_list()
     total = 0.0
     for i in range(1, len(current)):
         dt = max(test_time[i] - test_time[i - 1], 0.0)
-        total += abs(current[i]) * dt
+        total += (abs(current[i]) + abs(current[i - 1])) / 2.0 * dt
     return total
+
+
+def _data(current, test_time) -> Data:
+    data = Data()
+    data.raw = pl.DataFrame({RAW.current: current, RAW.test_time: test_time})
+    return data
+
+
+def test_throughput_to_raw_analytic():
+    """1 A held for 3600 s is exactly 1 Ah of throughput, i.e. 0.5 EFC at 1 Ah."""
+    data = throughput_to_raw(
+        _data([1.0, 1.0], [0.0, 3600.0]),
+        nom_cap_abs=1.0,
+        conversion_factor=1.0 / 3600.0,  # A*s -> Ah
+    )
+    assert data.raw[CYC.test_cumulated_capacity_throughput][-1] == pytest.approx(1.0)
+    assert data.raw[CYC.equivalent_full_cycles][-1] == pytest.approx(0.5)
+
+
+def test_throughput_to_raw_is_trapezoidal():
+    """A rest followed by a pulse must not charge the rest to the pulse current.
+
+    The interval 0->100 s is at rest; only the 100->200 s ramp counts, and it
+    counts as the mean of its endpoints (0.5 A * 100 s), not the right-hand
+    value (1 A * 100 s).
+    """
+    data = throughput_to_raw(_data([0.0, 0.0, 1.0], [0.0, 100.0, 200.0]))
+    assert data.raw[CYC.test_cumulated_capacity_throughput].to_list() == pytest.approx(
+        [0.0, 0.0, 50.0]
+    )
+
+
+def test_throughput_to_raw_flags_bad_input(caplog):
+    """Missing current and backwards time are counted as zero, but not silently."""
+    data = throughput_to_raw(_data([1.0, None, 1.0, 1.0], [0.0, 1.0, 2.0, 1.5]))
+    assert "missing current" in caplog.text
+    assert "negative time delta" in caplog.text
+    # Monotonic despite the backwards step (that interval contributes nothing).
+    throughput = data.raw[CYC.test_cumulated_capacity_throughput]
+    assert (throughput.diff().fill_null(0.0) >= 0.0).all()
 
 
 def test_throughput_to_raw(mock_data_with_raw: Data):
@@ -41,16 +82,15 @@ def test_throughput_to_raw(mock_data_with_raw: Data):
     assert throughput[0] == 0.0
     assert (throughput.diff().fill_null(0.0) >= 0.0).all()
 
-    # Rest rows (current == 0) add nothing.
-    rest_increment = raw.filter(pl.col(RAW.current) == 0.0)[
-        CYC.test_cumulated_capacity_throughput
-    ]
+    # Rest intervals (zero current at both ends) add nothing. Boundary rows are
+    # excluded on purpose: trapezoidal integration credits the ramp interval
+    # leaving a rest to the mean of its endpoints, which is not zero.
     deltas = throughput.diff().fill_null(0.0)
     rest_deltas = raw.with_columns(deltas.alias("_d")).filter(
-        pl.col(RAW.current) == 0.0
+        (pl.col(RAW.current) == 0.0) & (pl.col(RAW.current).shift(1) == 0.0)
     )["_d"]
     assert (rest_deltas == 0.0).all()
-    assert rest_increment.len() > 0
+    assert rest_deltas.len() > 0
 
     # Final value matches the hand-computed integral, EFC is throughput/(2*nom_cap).
     expected = _expected_raw_throughput(raw)
@@ -90,3 +130,33 @@ def test_efc_to_summary(mock_data_with_raw: Data):
     assert efc.to_list() == pytest.approx((expected / (2.0 * NOM_CAP)).to_list())
     assert (throughput.diff().fill_null(0.0) >= 0.0).all()
     assert (efc > 0.0).all()
+
+
+def test_efc_added_by_scaled_columns_native():
+    """EFC is emitted unconditionally by ``add_scaled_summary_columns`` (no flag)."""
+    core = CellpyCellCore()
+    data = Data()
+    data.raw = create_raw_data()
+    data = core.make_core_step_table(data)
+    data = core.make_core_summary(data)
+    data = core.add_scaled_summary_columns(
+        data, nom_cap_abs=NOM_CAP, normalization_cycles=None, specifics=["absolute"]
+    )
+    assert CYC.test_cumulated_capacity_throughput in data.summary.columns
+    assert CYC.equivalent_full_cycles in data.summary.columns
+
+
+def test_efc_added_by_scaled_columns_legacy_bridge():
+    """The legacy bridge renames to the legacy header names (jepegit, issue #138)."""
+    core = OldCellpyCellCore(initialize=False)
+    data = Data()
+    data.raw = create_raw_data().to_pandas()
+    core.make_core_step_table(data, nom_cap=1.0)
+    core.make_core_summary(data)
+    data = core.add_scaled_summary_columns(
+        data, nom_cap_abs=NOM_CAP, normalization_cycles=None, specifics=["absolute"]
+    )
+    # Legacy names (no ``test_`` prefix on throughput), not the native ones.
+    assert "cumulated_capacity_throughput" in data.summary.columns
+    assert "equivalent_full_cycles" in data.summary.columns
+    assert CYC.test_cumulated_capacity_throughput not in data.summary.columns

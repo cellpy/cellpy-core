@@ -119,6 +119,9 @@ CYCLE_PAIRS = [
     ("charge_c_rate", "charge_c_rate"),
     ("discharge_c_rate", "discharge_c_rate"),
     ("normalized_cycle_index", "normalized_cycle_index"),
+    # Throughput-based ageing metrics (issue #138).
+    ("test_cumulated_capacity_throughput", "cumulated_capacity_throughput"),
+    ("equivalent_full_cycles", "equivalent_full_cycles"),
 ]
 
 # -----------------------------------------------------------------------------
@@ -295,9 +298,6 @@ NATIVE_ONLY_CYCLE = frozenset(
         "cc_charge_time",
         "temperature_cell_max",
         "temperature_cell_min",
-        # Throughput-based ageing metrics (issue #138); no legacy counterpart.
-        "test_cumulated_capacity_throughput",
-        "equivalent_full_cycles",
     }
 )
 
@@ -369,6 +369,8 @@ LEGACY_ATTR_TO_SCHEMA = {
         "cumulated_coulombic_difference": "test_cumulated_coulombic_difference",
         "cumulated_discharge_capacity": "test_cumulated_discharge_capacity",
         "cumulated_discharge_capacity_loss": "test_cumulated_discharge_capacity_loss",
+        "cumulated_capacity_throughput": "test_cumulated_capacity_throughput",
+        "equivalent_full_cycles": "equivalent_full_cycles",
         "cycle_index": "cycle_num",
         "data_point": "datapoint_num_last",
         "discharge_c_rate": "discharge_c_rate",

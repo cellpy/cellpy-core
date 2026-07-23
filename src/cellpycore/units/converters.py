@@ -559,6 +559,34 @@ def calculate_current_conversion_factor(
     return factor.to_reduced_units().m
 
 
+def calculate_throughput_conversion_factor(
+    raw_current_unit: str,
+    raw_time_unit: str,
+    *,
+    to_units: Optional[CellpyUnits] = None,
+) -> float:
+    """Compute the factor converting ``current * time`` to the charge unit.
+
+    The returned float is suitable for ``conversion_factor`` in
+    ``summarizers.throughput_to_raw``: the raw current integral is in
+    ``current_unit * time_unit`` (e.g. A·s) and the nominal capacity it is
+    divided by is a charge (e.g. mAh), so the integral needs scaling first
+    (issue #138).
+
+    Args:
+        raw_current_unit: Pint-compatible unit string for the raw current
+            column (e.g. ``"A"``).
+        raw_time_unit: Pint-compatible unit string for the raw test-time
+            column (e.g. ``"s"``).
+        to_units: Output unit spec; defaults to ``CellpyUnits()``.
+
+    Returns:
+        Dimensionless conversion factor (raw current·time → output charge).
+    """
+    output_units = to_units or get_cellpy_units()
+    return calculate_scaler(f"{raw_current_unit}*{raw_time_unit}", output_units["charge"])
+
+
 # Per-property aliases for spec labels whose bare string means something else
 # (or nothing) to pint. The spec keeps the legacy label; conversion/validation
 # uses the pint-parsable form. Decision recorded on issue #115:

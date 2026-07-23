@@ -148,6 +148,14 @@ def test_calculate_current_conversion_factor_identity():
     assert units.calculate_current_conversion_factor("A") == pytest.approx(1.0)
 
 
+def test_calculate_throughput_conversion_factor_As_to_mAh():
+    # A*s -> mAh: 1 A*s = 1/3600 Ah = 1000/3600 mAh.
+    factor = units.calculate_throughput_conversion_factor(
+        "A", "s", to_units=units.CellpyUnits(charge="mAh")
+    )
+    assert factor == pytest.approx(1000.0 / 3600.0)
+
+
 def test_calculate_specific_conversion_factors_default_units():
     result = units.calculate_specific_conversion_factors(mass=2.0, area=2.0)
     assert result == {
