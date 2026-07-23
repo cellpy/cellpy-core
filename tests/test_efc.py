@@ -71,6 +71,28 @@ def test_throughput_to_raw_flags_bad_input(caplog):
     assert (throughput.diff().fill_null(0.0) >= 0.0).all()
 
 
+def test_throughput_to_raw_windows_per_test():
+    """With a test_id column the integral cumulates per test, not window-in-window.
+
+    (Regression: nesting cum_sum().over() around a shift().over() raised
+    ``window expression not allowed in aggregation``.)
+    """
+    data = Data()
+    data.raw = pl.DataFrame(
+        {
+            RAW.test_id: [0, 0, 0, 1, 1, 1],
+            RAW.current: [1.0, 1.0, -1.0, 2.0, 2.0, -2.0],
+            RAW.test_time: [0.0, 1.0, 2.0, 0.0, 1.0, 2.0],
+        }
+    )
+    out = throughput_to_raw(data).raw
+    thr = out.group_by(RAW.test_id, maintain_order=True).agg(
+        pl.col(CYC.test_cumulated_capacity_throughput).last()
+    )[CYC.test_cumulated_capacity_throughput]
+    # test 0: 1 A over 2 s = 2; test 1: 2 A over 2 s = 4 (each resets at its start).
+    assert thr.to_list() == pytest.approx([2.0, 4.0])
+
+
 def test_throughput_to_raw(mock_data_with_raw: Data):
     data = throughput_to_raw(mock_data_with_raw, nom_cap_abs=NOM_CAP)
     raw = data.raw

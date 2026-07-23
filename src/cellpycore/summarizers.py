@@ -1078,18 +1078,19 @@ def throughput_to_raw(
             "(unsorted rows, file seam, or timer reset?)"
         )
 
-    current_abs = current_abs.fill_null(0.0)
+    prev_current = _over(current_abs.shift(1))
     dt = diff_t.fill_null(0.0).clip(lower_bound=0.0)
 
     # Trapezoidal. A right-hand rule (|I_i| * dt) charges the whole preceding
     # rest to the first sample of a pulse, which matters on the irregularly
-    # sampled field / BMS data this is meant for.
-    mean_current = (current_abs + _over(current_abs.shift(1)).fill_null(0.0)) / 2.0
-    throughput = _over((mean_current * dt * conversion_factor).cum_sum())
-    raw = raw.with_columns(
-        throughput.alias(hdr_out.test_cumulated_capacity_throughput)
+    # sampled field / BMS data this is meant for. 
+    mean_current = (current_abs.fill_null(0.0) + prev_current.fill_null(0.0)) / 2.0
+    increment = mean_current * dt * conversion_factor
+    throughput_col = hdr_out.test_cumulated_capacity_throughput
+    raw = raw.with_columns(increment.alias(throughput_col)).with_columns(
+        _over(pl.col(throughput_col).cum_sum()).alias(throughput_col)
     ).with_columns(
-        (pl.col(hdr_out.test_cumulated_capacity_throughput) / (2.0 * nom_cap_abs)).alias(
+        (pl.col(throughput_col) / (2.0 * nom_cap_abs)).alias(
             hdr_out.equivalent_full_cycles
         )
     )
