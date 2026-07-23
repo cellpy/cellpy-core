@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-07-23
+
+- Add Equivalent Full Cycles (EFC) utilities (#138). `summarizers.throughput_to_raw`
+  integrates `|current|` over test time (trapezoidal, windowed per `test_id`) to add
+  `test_cumulated_capacity_throughput` and `equivalent_full_cycles` to the raw frame —
+  for continuous / BMS / field data without cycle boundaries. `summarizers.efc_to_summary`
+  adds the same two columns to the per-cycle summary from the cumulated charge+discharge
+  capacities. Both use `EFC = throughput / (2 x nominal capacity)`. Missing current values
+  and negative time deltas contribute zero and are logged as warnings.
+- EFC is emitted unconditionally by `add_scaled_summary_columns` (native + legacy bridge),
+  so it reaches default-schema cellpy users; the legacy bridge renames the summary columns
+  to `cumulated_capacity_throughput` / `equivalent_full_cycles`.
+- New spec columns in `docs/specifications/cycle-table.md` (with the
+  `EFC = normalized_cycle_index x (1 + CE) / 2` relationship noted) and the raw
+  derived-columns table in `harmonized-raw.md`.
+- `units.calculate_throughput_conversion_factor(current_unit, time_unit)` computes the
+  current·time → charge factor (e.g. A·s → mAh) the pint way, mirroring
+  `calculate_current_conversion_factor`.
+
 ## [0.2.2] - 2026-07-17
 
 - Legacy bridge carries ``test_id`` through step and summary frames (identity
