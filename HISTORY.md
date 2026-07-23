@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.2.3] - 2026-07-23
+## [0.2.4] - 2026-07-23
 
 - Add Equivalent Full Cycles (EFC) utilities (#138). `summarizers.throughput_to_raw`
   integrates `|current|` over test time (trapezoidal, windowed per `test_id`) to add
