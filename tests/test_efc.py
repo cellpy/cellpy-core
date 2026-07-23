@@ -93,6 +93,39 @@ def test_throughput_to_raw_windows_per_test():
     assert thr.to_list() == pytest.approx([2.0, 4.0])
 
 
+def test_throughput_to_raw_charge_discharge_rest():
+    """Charge and discharge both count (|I|); a steady rest adds exactly nothing.
+
+    One cycle sampled every 60 s: +1 A charge for 3600 s (1 Ah), rest, -1 A
+    discharge for 3600 s (1 Ah), rest. Steady-rest intervals (0 A at both ends)
+    must contribute exactly 0; the only nonzero rest-labelled rows are the step
+    edges, which trapezoidal integration splits.
+    """
+    cur, tt, phase = [1.0], [0.0], ["charge"]
+    t = 0.0
+    for c, dur, name in [(1.0, 3600, "charge"), (0.0, 600, "rest"),
+                         (-1.0, 3600, "discharge"), (0.0, 600, "rest")]:
+        for _ in range(dur // 60):
+            t += 60.0
+            cur.append(c); tt.append(t); phase.append(name)
+    data = Data()
+    data.raw = pl.DataFrame({RAW.current: cur, RAW.test_time: tt, "phase": phase})
+    out = throughput_to_raw(data, nom_cap_abs=1.0, conversion_factor=1.0 / 3600.0).raw
+
+    d_ah = out[CYC.test_cumulated_capacity_throughput].diff().fill_null(0.0)
+    out = out.with_columns(d_ah.alias("_d"))
+    # Steady rest (current 0 at both ends of the interval) adds exactly zero.
+    steady_rest = out.filter(
+        (pl.col(RAW.current) == 0.0) & (pl.col(RAW.current).shift(1) == 0.0)
+    )["_d"]
+    assert steady_rest.sum() == pytest.approx(0.0)
+    assert steady_rest.len() > 0
+    # Charge and discharge phases each integrate to ~1 Ah (their steady interiors).
+    for name in ("charge", "discharge"):
+        got = out.filter(pl.col("phase") == name)["_d"].sum()
+        assert got == pytest.approx(1.0, abs=0.02)
+
+
 def test_throughput_to_raw(mock_data_with_raw: Data):
     data = throughput_to_raw(mock_data_with_raw, nom_cap_abs=NOM_CAP)
     raw = data.raw
