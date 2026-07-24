@@ -164,6 +164,8 @@ CYCLE_EXPECTED = [
     "temperature_cell_min",
     "temperature_cell_last",
     "normalized_cycle_index",
+    "test_cumulated_capacity_throughput",
+    "equivalent_full_cycles",
     "charge_c_rate",
     "discharge_c_rate",
     "ir_charge",

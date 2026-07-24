@@ -444,6 +444,10 @@ class CycleCols(Cols):
     # preserving single-value IR targets (the four ``ir_start/end_*`` columns
     # above remain reserved for the richer future IR model).
     normalized_cycle_index: str = "normalized_cycle_index"
+    # Throughput-based ageing metrics (issue #138). ``throughput_to_raw`` reuses
+    # these same names for the columns it adds to the raw frame.
+    test_cumulated_capacity_throughput: str = "test_cumulated_capacity_throughput"
+    equivalent_full_cycles: str = "equivalent_full_cycles"
     charge_c_rate: str = "charge_c_rate"
     discharge_c_rate: str = "discharge_c_rate"
     ir_charge: str = "ir_charge"

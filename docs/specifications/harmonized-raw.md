@@ -97,6 +97,15 @@ Option for more auxillary columns; naming scheme:
 - aux_pressure_[]
 - aux_resistance_[]
 
+### Derived columns (opt-in)
+Not part of the harmonized-raw contract — added on request by a summarizer, and
+named from `CycleCols` because the same quantity appears on the summary:
+
+| Column | Added by | Description |
+| --- | --- | --- |
+| test_cumulated_capacity_throughput | `summarizers.throughput_to_raw` | Trapezoidal cumulative `∫\|I\|dt`, per `test_id` (issue #138) |
+| equivalent_full_cycles | `summarizers.throughput_to_raw` | `test_cumulated_capacity_throughput / (2 x nominal capacity)` |
+
 ## Test metadata (TestMeta)
 
 Per-test metadata, **one record per test**, keyed by `test_id` (the same `test_id` carried

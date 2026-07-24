@@ -1001,6 +1001,174 @@ def equivalent_cycles_to_summary(
     return data
 
 
+def throughput_to_raw(
+    data: Data,
+    schema: Optional[Schema] = None,
+    nom_cap_abs: float = 1.0,
+    conversion_factor: float = 1.0,
+    *,
+    nom_cap: Optional[float] = None,
+) -> Data:
+    """Add cumulative capacity throughput and equivalent full cycles to the raw frame.
+
+    Polars-native. Integrates the absolute current over test time
+    (trapezoidal ``sum(|current| * dt)``, cumulated per test) and derives the
+    equivalent full cycles (EFC) from it (issue #138):
+
+    - ``test_cumulated_capacity_throughput = cum_sum(mean(|I|) * dt * conversion_factor)``
+    - ``equivalent_full_cycles = test_cumulated_capacity_throughput / (2 * nom_cap_abs)``
+
+    Works on continuous time-series data (e.g. BMS / field datasets) without
+    any step table, summary, or cycle boundaries. Negative time deltas (file
+    seams, timer resets) and missing current values contribute zero; both are
+    logged as warnings rather than passing silently.
+
+    Args:
+        data (Data): The data object (only ``data.raw`` is used).
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+        nom_cap_abs (float): The absolute nominal capacity, in the unit that
+            ``conversion_factor`` converts the throughput into (default: 1.0).
+        conversion_factor (float): Precomputed factor converting
+            ``current_unit * time_unit`` to the capacity unit of ``nom_cap_abs``
+            (by value; default 1.0 = no conversion, e.g. ``1000 / 3600`` for
+            A·s -> mAh).
+        nom_cap (float): Deprecated alias for ``nom_cap_abs``.
+
+    Returns:
+        Data: The data object with the two columns added to ``data.raw``.
+    """
+    nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
+    if schema is None:
+        schema = default_schema()
+    hdr_raw = schema.raw
+    hdr_out = schema.cycle
+
+    # The engine is polars-native; accept a pandas frame for convenience.
+    raw = data.raw
+    was_pandas = not isinstance(raw, pl.DataFrame)
+    if was_pandas:
+        raw = pl.from_pandas(raw)
+
+    # Window per test when the frame carries a test_id (merged objects); a
+    # plain single-test / BMS time-series frame without one is fine too.
+    per_test = hdr_raw.test_id in raw.columns
+
+    def _over(expr: pl.Expr) -> pl.Expr:
+        return expr.over(hdr_raw.test_id) if per_test else expr
+
+    current_abs = pl.col(hdr_raw.current).abs()
+    diff_t = _over(pl.col(hdr_raw.test_time).diff())
+
+    # Both failure modes are silent otherwise: a gap in the current trace would
+    # contribute zero, and an unsorted / reset time column would be swallowed by
+    # the clip below. Count them once and say so.
+    n_missing, n_backwards = raw.select(
+        current_abs.is_null().sum().alias("missing"),
+        (diff_t < 0.0).sum().alias("backwards"),
+    ).row(0)
+    if n_missing:
+        logger.warning(
+            f"{n_missing} missing current value(s) counted as zero current in the "
+            "throughput integral"
+        )
+    if n_backwards:
+        logger.warning(
+            f"{n_backwards} negative time delta(s) contributed zero throughput "
+            "(unsorted rows, file seam, or timer reset?)"
+        )
+
+    prev_current = _over(current_abs.shift(1))
+    dt = diff_t.fill_null(0.0).clip(lower_bound=0.0)
+
+    # Trapezoidal. A right-hand rule (|I_i| * dt) charges the whole preceding
+    # rest to the first sample of a pulse, which matters on the irregularly
+    # sampled field / BMS data this is meant for.
+    mean_current = (current_abs.fill_null(0.0) + prev_current.fill_null(0.0)) / 2.0
+    increment = mean_current * dt * conversion_factor
+    throughput_col = hdr_out.test_cumulated_capacity_throughput
+    raw = (
+        raw.with_columns(increment.alias(throughput_col))
+        .with_columns(_over(pl.col(throughput_col).cum_sum()).alias(throughput_col))
+        .with_columns(
+            (pl.col(throughput_col) / (2.0 * nom_cap_abs)).alias(
+                hdr_out.equivalent_full_cycles
+            )
+        )
+    )
+
+    data.raw = raw.to_pandas() if was_pandas else raw
+    return data
+
+
+def efc_to_summary(
+    data: Data,
+    schema: Optional[Schema] = None,
+    nom_cap_abs: float = 1.0,
+    normalization_cycles: Union[Sequence, int, None] = None,
+    step_txt: Optional[str] = None,
+    *,
+    nom_cap: Optional[float] = None,
+) -> Data:
+    """Add capacity throughput and equivalent full cycles (EFC) to the summary.
+
+    Polars-native (issue #138):
+
+    - ``test_cumulated_capacity_throughput = test_cumulated_charge_capacity +
+      test_cumulated_discharge_capacity``
+    - ``equivalent_full_cycles = test_cumulated_capacity_throughput / (2 * nom_cap_abs)``
+
+    The throughput is capacity-based (same unit as the summary capacities, so
+    ``nom_cap_abs`` must be in that unit); for raw current-integration on
+    time-series data without cycles, see ``throughput_to_raw``.
+
+    Args:
+        data (Data): The data object.
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+        nom_cap_abs (float): The absolute nominal capacity (default: 1.0).
+        normalization_cycles (Union[Sequence, int, None]): The cycles for
+            normalization; when given, ``nom_cap_abs`` is derived from them.
+        step_txt (str): The summary capacity column used to derive
+            ``nom_cap_abs`` from ``normalization_cycles`` (defaults to the
+            native cycle charge-capacity column).
+        nom_cap (float): Deprecated alias for ``nom_cap_abs``.
+
+    Returns:
+        Data: The data object with the two columns added to the summary.
+    """
+    nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
+    if schema is None:
+        schema = default_schema()
+    headers_summary = schema.cycle
+
+    if step_txt is None:
+        step_txt = headers_summary.charge_capacity
+
+    # The engine is polars-native; accept a pandas frame for convenience.
+    summary = data.summary
+    if not isinstance(summary, pl.DataFrame):
+        summary = pl.from_pandas(summary)
+
+    if normalization_cycles is not None:
+        nom_cap_abs = _calculate_nominal_capacity_from_cycles(
+            summary, schema, normalization_cycles, step_txt
+        )
+
+    data.summary = summary.with_columns(
+        (
+            pl.col(headers_summary.test_cumulated_charge_capacity)
+            + pl.col(headers_summary.test_cumulated_discharge_capacity)
+        ).alias(headers_summary.test_cumulated_capacity_throughput)
+    ).with_columns(
+        (
+            pl.col(headers_summary.test_cumulated_capacity_throughput)
+            / (2.0 * nom_cap_abs)
+        ).alias(headers_summary.equivalent_full_cycles)
+    )
+    return data
+
+
 def c_rates_to_summary(
     data: Data,
     schema: Optional[Schema] = None,
