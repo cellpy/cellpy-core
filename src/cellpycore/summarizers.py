@@ -1083,15 +1083,17 @@ def throughput_to_raw(
 
     # Trapezoidal. A right-hand rule (|I_i| * dt) charges the whole preceding
     # rest to the first sample of a pulse, which matters on the irregularly
-    # sampled field / BMS data this is meant for. 
+    # sampled field / BMS data this is meant for.
     mean_current = (current_abs.fill_null(0.0) + prev_current.fill_null(0.0)) / 2.0
     increment = mean_current * dt * conversion_factor
     throughput_col = hdr_out.test_cumulated_capacity_throughput
-    raw = raw.with_columns(increment.alias(throughput_col)).with_columns(
-        _over(pl.col(throughput_col).cum_sum()).alias(throughput_col)
-    ).with_columns(
-        (pl.col(throughput_col) / (2.0 * nom_cap_abs)).alias(
-            hdr_out.equivalent_full_cycles
+    raw = (
+        raw.with_columns(increment.alias(throughput_col))
+        .with_columns(_over(pl.col(throughput_col).cum_sum()).alias(throughput_col))
+        .with_columns(
+            (pl.col(throughput_col) / (2.0 * nom_cap_abs)).alias(
+                hdr_out.equivalent_full_cycles
+            )
         )
     )
 

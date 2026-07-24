@@ -103,11 +103,17 @@ def test_throughput_to_raw_charge_discharge_rest():
     """
     cur, tt, phase = [1.0], [0.0], ["charge"]
     t = 0.0
-    for c, dur, name in [(1.0, 3600, "charge"), (0.0, 600, "rest"),
-                         (-1.0, 3600, "discharge"), (0.0, 600, "rest")]:
+    for c, dur, name in [
+        (1.0, 3600, "charge"),
+        (0.0, 600, "rest"),
+        (-1.0, 3600, "discharge"),
+        (0.0, 600, "rest"),
+    ]:
         for _ in range(dur // 60):
             t += 60.0
-            cur.append(c); tt.append(t); phase.append(name)
+            cur.append(c)
+            tt.append(t)
+            phase.append(name)
     data = Data()
     data.raw = pl.DataFrame({RAW.current: cur, RAW.test_time: tt, "phase": phase})
     out = throughput_to_raw(data, nom_cap_abs=1.0, conversion_factor=1.0 / 3600.0).raw
