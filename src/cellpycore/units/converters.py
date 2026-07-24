@@ -584,7 +584,9 @@ def calculate_throughput_conversion_factor(
         Dimensionless conversion factor (raw current·time → output charge).
     """
     output_units = to_units or get_cellpy_units()
-    return calculate_scaler(f"{raw_current_unit}*{raw_time_unit}", output_units["charge"])
+    return calculate_scaler(
+        f"{raw_current_unit}*{raw_time_unit}", output_units["charge"]
+    )
 
 
 # Per-property aliases for spec labels whose bare string means something else
