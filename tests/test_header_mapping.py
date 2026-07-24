@@ -144,6 +144,8 @@ def test_known_translations():
         "voltage": "potential",
         "charge_capacity": "cumulative_charge_capacity",
         "discharge_capacity": "cumulative_discharge_capacity",
+        "charge_energy": "cumulative_charge_energy",
+        "discharge_energy": "cumulative_discharge_energy",
         "internal_resistance": "internal_resistance",
     }
     step = mapping.native_to_legacy_step()

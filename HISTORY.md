@@ -22,6 +22,12 @@ All notable changes to this project will be documented in this file.
 - `units.calculate_throughput_conversion_factor(current_unit, time_unit)` computes the
   current·time → charge factor (e.g. A·s → mAh) the pint way, mirroring
   `calculate_current_conversion_factor`.
+## [0.2.3] - 2026-07-19
+
+- Bridge legacy raw ``charge_energy`` / ``discharge_energy`` to
+  ``cumulative_charge_energy`` / ``cumulative_discharge_energy`` via
+  ``RAW_PAIRS`` and ``LEGACY_ATTR_TO_SCHEMA``, matching the capacity
+  cycle-cumulative convention. (#139)
 
 ## [0.2.2] - 2026-07-17
 
