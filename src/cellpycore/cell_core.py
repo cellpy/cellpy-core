@@ -1,7 +1,7 @@
 import datetime
 import logging
 import time
-from typing import Callable, Iterable, List, Optional, Sequence, TypeVar, Union
+from typing import Any, Callable, Iterable, List, Optional, Sequence, TypeVar, Union
 
 from cellpycore import config
 from cellpycore.exceptions import NoDataFound
@@ -24,7 +24,31 @@ _NORMAL_CYCLE_MODES = frozenset(
 )
 
 
-def _cycle_mode_to_test_mode(cycle_mode: Optional[str]) -> config.TestMode:
+def _unwrap_meta_scalar(value: Any) -> Any:
+    """Recursively peel 1-element ``list``/``tuple`` wrappers.
+
+    Mirrors cellpy's ``test_meta._unwrap`` for the shapes that show up in
+    cellpy-file meta (often nested once, e.g. ``[['anode']]``). Multi-element
+    sequences are left unchanged.
+    """
+    if isinstance(value, (list, tuple)) and len(value) == 1:
+        return _unwrap_meta_scalar(value[0])
+    return value
+
+
+def _as_cycle_mode_scalar(value: Any) -> Optional[str]:
+    """Normalize ``cycle_mode`` to a scalar string or ``None``.
+
+    Unwraps 1-element list/tuple nesting, then takes the first element of any
+    remaining multi-element sequence (legacy getter behaviour).
+    """
+    value = _unwrap_meta_scalar(value)
+    if isinstance(value, (list, tuple)):
+        return value[0] if value else None
+    return value
+
+
+def _cycle_mode_to_test_mode(cycle_mode: Any) -> config.TestMode:
     """Map a legacy ``cycle_mode`` string to a :class:`config.TestMode`.
 
     The inverted (anode half-cell) convention is selected by any of ``"anode"``
@@ -33,16 +57,19 @@ def _cycle_mode_to_test_mode(cycle_mode: Optional[str]) -> config.TestMode:
     ``None`` and the recognized normal-convention spellings map to
     ``TestMode.NORMAL``.
 
-    An *unrecognized* non-empty value also maps to ``NORMAL`` but logs a warning,
-    so a mistyped or unmapped mode fails loudly instead of silently flipping the
-    ``coulombic_efficiency`` / ``coulombic_difference`` sign conventions.
+    Nested 1-element ``list``/``tuple`` wrappers (cellpy-file meta shape) are
+    unwrapped before matching. An *unrecognized* non-empty value also maps to
+    ``NORMAL`` but logs a warning, so a mistyped or unmapped mode fails loudly
+    instead of silently flipping the ``coulombic_efficiency`` /
+    ``coulombic_difference`` sign conventions.
 
     Args:
-        cycle_mode: Legacy mode string, or ``None``.
+        cycle_mode: Legacy mode string, nested list/tuple wrappers, or ``None``.
 
     Returns:
         The corresponding ``TestMode`` for summary sign conventions.
     """
+    cycle_mode = _as_cycle_mode_scalar(cycle_mode)
     if cycle_mode is None:
         return config.TestMode.NORMAL
     key = cycle_mode.strip().lower()
@@ -370,23 +397,18 @@ class CellpyCellCore:
         # TODO: v2.0 edit this from scalar to list
         try:
             data = self.data
-            m = data.meta_test_dependent.cycle_mode
-            # cellpy saves this as a list (ready for v2.0),
-            # but we want to return a scalar for the moment
-            # Temporary fix to make sure that cycle_mode is a scalar:
-            if isinstance(m, (tuple, list)):
-                return m[0]
-            return m
+            # cellpy-file meta often stores 1-element (sometimes nested) lists;
+            # expose a scalar for the current engine.
+            return _as_cycle_mode_scalar(data.meta_test_dependent.cycle_mode)
         except NoDataFound:
             return self._cycle_mode
 
     @cycle_mode.setter
-    def cycle_mode(self, cycle_mode: str):
-        if isinstance(cycle_mode, (tuple, list)):
-            cycle_mode = [cycle_mode.lower() for cycle_mode in cycle_mode]
-        else:
-            cycle_mode = cycle_mode.lower()
+    def cycle_mode(self, cycle_mode: Any):
         # TODO: v2.0 edit this from scalar to list
+        cycle_mode = _as_cycle_mode_scalar(cycle_mode)
+        if cycle_mode is not None:
+            cycle_mode = cycle_mode.lower()
         logger.debug(f"-> cycle_mode: {cycle_mode}")
         try:
             data = self.data
