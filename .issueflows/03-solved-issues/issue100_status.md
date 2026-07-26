@@ -1,6 +1,6 @@
 # Issue #100 — status
 
-- [ ] Done
+- [x] Done
 
 ## What's done
 
