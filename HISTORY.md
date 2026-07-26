@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Harden `cycle_mode` unwrapping in `OldCellpyCellCore` / `_cycle_mode_to_test_mode`. (#142)
+
 ## [0.2.4] - 2026-07-23
 
 - Add Equivalent Full Cycles (EFC) utilities (#138). `summarizers.throughput_to_raw`

@@ -599,6 +599,57 @@ def test_initialized_and_uninitialized_core_share_cycle_mode_default():
     assert CellpyCellCore(initialize=True).cycle_mode is None
 
 
+# --- issue #142: nested list cycle_mode unwrapping ---------------------------
+@pytest.mark.parametrize(
+    "cycle_mode,expected",
+    [
+        ("anode", config.TestMode.INVERTED),
+        ("full_cell", config.TestMode.NORMAL),
+        (["anode"], config.TestMode.INVERTED),
+        ([["anode"]], config.TestMode.INVERTED),
+        (None, config.TestMode.NORMAL),
+    ],
+)
+def test_cycle_mode_to_test_mode_unwraps_nested_lists(cycle_mode, expected):
+    """List-shaped meta (cellpy-file) must not crash; nested anode -> INVERTED."""
+    from cellpycore.cell_core import _cycle_mode_to_test_mode
+
+    assert _cycle_mode_to_test_mode(cycle_mode) == expected
+
+
+def test_cycle_mode_setter_stores_scalar_not_list():
+    """Setter unwraps nested lists and persists a lowered scalar string."""
+    core = CellpyCellCore()
+    core.data = Data()
+    core.cycle_mode = [["Anode"]]
+    assert core.cycle_mode == "anode"
+    assert core.data.meta_test_dependent.cycle_mode == "anode"
+    assert isinstance(core.data.meta_test_dependent.cycle_mode, str)
+
+
+def test_cycle_mode_getter_unwraps_nested_meta():
+    """Getter peels nested 1-element lists already sitting on meta."""
+    core = CellpyCellCore()
+    core.data = Data()
+    core.data.meta_test_dependent.cycle_mode = [["anode"]]
+    assert core.cycle_mode == "anode"
+
+
+def test_make_summary_tolerates_nested_cycle_mode_meta():
+    """Nested list meta must not raise through make_core_summary (bridge path)."""
+    nhdr = RawCols()
+    data = Data()
+    data.raw = _build_cumulative_raw(nhdr)
+    data.meta_test_dependent.cycle_mode = [["anode"]]
+
+    core = OldCellpyCellCore(initialize=False)
+    core.data = data
+    data = core.make_core_step_table(data, nom_cap=1.0)
+    data = core.make_core_summary(data, find_ir=False, find_end_voltage=False)
+    assert data.summary is not None
+    assert len(data.summary) > 0
+
+
 def test_c_rates_to_summary_native():
     """c_rates_to_summary joins per-cycle first charge/discharge C-rates (native)."""
     nhdr = RawCols()
