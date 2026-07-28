@@ -46,7 +46,7 @@ Reconciled against the actual repo state on **2026-06-26**. Status legend: ✅ d
 | STEP-09 Harmonize headers | ✅ done | `config.Cols` + spec tests; `legacy/mapping.py` gives lossless/total `config.Cols` ↔ legacy `Headers*` round-trip (`tests/test_header_mapping.py`) (#34/#35) |
 | STEP-10 Metadata scaffolding | ✅ done | `cellpycore.metadata` (`models.py`/`io.py`); `TestMeta`/`CellMeta`/`TestMetaCollection` + (de)serialize/merge; graceful-degradation guard (`tests/test_metadata.py`) (#37) |
 | STEP-11 Timestamp representation | ✅ done | `epoch_time_utc` + `first/last_epoch_time_utc` are int64-ns UTC; `cellpycore.timestamps` conversion helpers + fixture regenerated (`tests/test_timestamps.py`) (#32, PR #38) |
-| STEP-12 Unit-handling boundary | 🟡 partly done | `CellpyUnits` schema in `units/spec.py` (#40/#112) + `units.py` tooling behind the optional `units` extra; factors cross the seam by value; `cellpy` still keeps duplicate converters (delegation pending) |
+| STEP-12 Unit-handling boundary | ✅ done | `CellpyUnits` schema in `units/spec.py` (#40/#112) + `units.py` tooling behind the optional `units` extra; factors cross the seam by value; `cellpy` now delegates `get_converter_to_specific` / `nominal_capacity_as_absolute` to `cellpycore.units` (jepegit/cellpy #451) — the duplicate converters are retired |
 
 Per-step `Status:` lines below repeat this for context; this table is the quick reference.
 The forward work beyond these twelve steps (STEP-13+) is enumerated in
@@ -266,12 +266,15 @@ Adopt the internal int64-ns timestamp representation.
 
 ## STEP-12 Unit-handling boundary (scaffolding/tooling in core; population & policy upstream)
 
-**Status:** 🟡 partly done — the `CellpyUnits` schema lives in `cellpycore.units.spec`
+**Status:** ✅ done — the `CellpyUnits` schema lives in `cellpycore.units.spec`
 (#40, #112) and the pint-based conversion tooling (`cellpycore.units`:
 `get_converter_to_specific`, `nominal_capacity_as_absolute`, `Q`, output-unit defaults)
-already exist behind the optional `units` extra, attached to the `OldCellpyCellCore`
-bridge, and conversion factors already cross the seam **by value**. Remaining on the
-**cellpy** side only: duplicate converter functions not yet delegated to core.
+exists behind the optional `units` extra, attached to the `OldCellpyCellCore`
+bridge, and conversion factors cross the seam **by value**. The final cellpy-side move
+has landed: `CellpyCell.get_converter_to_specific` / `nominal_capacity_as_absolute`
+(and `convert_value` / `calculate_scaler`) now delegate to `cellpycore.units`
+(jepegit/cellpy #451, unit plan Phase 2), guarded by converter-parity fixtures on both
+sides — the duplicated converters are retired.
 
 **Codebase:** `cellpy-core` (scaffolding/tooling — `legacy.py` + `units.py`); population
 (`raw_units` from loaders) and the decision to delegate are `cellpy`'s opt-in.
@@ -299,8 +302,9 @@ already did for headers and the step engine).
 
 ## Remaining work (STEP-13+) — finalized 2026-06-28 (issue #39)
 
-The original twelve steps are complete except for the two intentionally-continuous /
-partly-done ones (STEP-06 golden fixtures, STEP-12 unit boundary). Going through the
+The original twelve steps are complete except for the one intentionally-continuous
+one (STEP-06 golden fixtures); STEP-12 (unit boundary) closed once the cellpy-side
+converter delegation landed (jepegit/cellpy #451). Going through the
 roadmap and the companion design docs surfaced the remaining work below. Each item is now
 tracked as its own **cellpy-core** GitHub issue (the cellpy-side delegation work stays on
 jepegit/cellpy). Captured under issue #39.
@@ -339,12 +343,12 @@ flowchart TD
     S08 --> S09["STEP-09 Harmonize headers ✅"]
     S08 --> S10["STEP-10 Metadata scaffolding ✅"]
     S08 --> S11["STEP-11 Timestamp representation ✅"]
-    S03 --> S12["STEP-12 Unit-handling boundary 🟡"]
+    S03 --> S12["STEP-12 Unit-handling boundary ✅"]
     S07["STEP-07 Build-backend swap ✅"] -.independent.-> S08
 
     classDef done fill:#d4edda,stroke:#28a745,color:#155724;
     classDef partly fill:#fff3cd,stroke:#ffc107,color:#856404;
     classDef todo fill:#f8d7da,stroke:#dc3545,color:#721c24;
-    class S01,S02,S03,S04,S05,S07,S08,S09,S10,S11 done;
-    class S06,S12 partly;
+    class S01,S02,S03,S04,S05,S07,S08,S09,S10,S11,S12 done;
+    class S06 partly;
 ```
