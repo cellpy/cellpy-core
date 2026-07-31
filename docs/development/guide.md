@@ -41,11 +41,11 @@ runtime configuration, plotting, and populated cell metadata on the hot path.
 The engine degrades gracefully when metadata is absent.
 
 Authoritative architecture plans live in the sibling
-[`architecture-plan`](https://github.com/cellpy/architecture-plan) repository
+[`cellpy-design-and-development`](https://github.com/cellpy/cellpy-design-and-development) repository
 (check out next to this repo in a
-[cellpy-workspace](https://github.com/cellpy/architecture-plan#sibling-repositories)
+[cellpy-workspace](https://github.com/cellpy/cellpy-design-and-development#sibling-repositories)
 layout). Start with
-[`cellpy2-architecture-plan.md`](https://github.com/cellpy/architecture-plan/blob/main/cellpy2-architecture-plan.md).
+[`cellpy2-architecture-plan.md`](https://github.com/cellpy/cellpy-design-and-development/blob/main/roadmap/cellpy2-architecture-plan.md).
 Cross-repo integration rules for contributors are in
 [cellpy-core-migration.md](https://github.com/cellpy/cellpy-core/blob/main/.issueflows/04-designs-and-guides/cellpy-core-migration.md)
 (also under `.issueflows/04-designs-and-guides/` in this repo).
@@ -188,7 +188,7 @@ Fixes #issue-number
 ```
 feat(summarizers): add incremental summary refresh path
 fix(config): correct RawCols dtype map for epoch_time_utc
-docs(guide): sync development guide with architecture-plan
+docs(guide): sync development guide with cellpy-design-and-development
 ```
 
 ## Code Structure and Principles
@@ -314,7 +314,7 @@ public boundaries.
 
 ### Setting Up Development Environment
 
-1. **Clone the repository** (and optionally sibling `architecture-plan` / `cellpy`
+1. **Clone the repository** (and optionally sibling `cellpy-design-and-development` / `cellpy`
    for cross-repo work)
 2. **Install dependencies**: `uv sync --all-extras --dev`
 3. **Install pre-commit hooks** (one-time):
@@ -412,7 +412,7 @@ The [API reference](../api/index.md) is generated from Google-style docstrings
 via mkdocstrings (`::: cellpycore` in `docs/api/`).
 
 - Document all public APIs
-- Keep docs aligned with code and architecture-plan when boundaries move
+- Keep docs aligned with code and cellpy-design-and-development when boundaries move
 - Use clear, concise language
 
 ### Additional tooling
@@ -431,7 +431,7 @@ via mkdocstrings (`::: cellpycore` in `docs/api/`).
 | Issue workflow (Agent Skills) | [development/issue-workflow.md](issue-workflow.md) |
 | Agent project brief | `.issueflows/04-designs-and-guides/this-project.md` |
 | Cross-repo migration | `.issueflows/04-designs-and-guides/cellpy-core-migration.md` |
-| Cellpy 2 architecture plans | [github.com/cellpy/architecture-plan](https://github.com/cellpy/architecture-plan) |
+| Cellpy 2 architecture plans | [github.com/cellpy/cellpy-design-and-development](https://github.com/cellpy/cellpy-design-and-development) |
 
 ---
 
