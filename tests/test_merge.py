@@ -345,3 +345,66 @@ def test_update_core_data_refresh_derived():
     chdr = schema.cycle
     assert chdr.charge_c_rate in updated.summary.columns
     assert chdr.ir_charge in updated.summary.columns
+
+
+def _derived_base(schema: Schema) -> Data:
+    """Processed data whose summary already carries C-rate and IR columns."""
+    nhdr = RawCols()
+    base = _process_raw(_single_test_raw(nhdr, n_cycles=2), schema)
+    summarizers.c_rates_to_summary(base, schema)
+    summarizers.ir_to_summary(base, schema)
+    return base
+
+
+def _assert_noop(updated: Data, base: Data) -> None:
+    assert updated.raw.equals(base.raw)
+    assert updated.steps.equals(base.steps)
+    assert updated.summary.columns == base.summary.columns
+    assert not any(c.endswith("_right") for c in updated.summary.columns)
+    assert updated.summary.equals(base.summary)
+
+
+def test_update_core_data_empty_new_raw_is_noop():
+    schema = _schema()
+    base = _derived_base(schema)
+    summary_before = base.summary.clone()
+
+    updated = CellpyCellCore(initialize=False).update_core_data(base, base.raw.clear())
+
+    _assert_noop(updated, base)
+    assert base.summary.equals(summary_before)
+
+
+def test_update_core_data_empty_pandas_new_raw_is_noop():
+    schema = _schema()
+    base = _derived_base(schema)
+
+    updated = CellpyCellCore(initialize=False).update_core_data(
+        base, base.raw.to_pandas().iloc[0:0]
+    )
+
+    _assert_noop(updated, base)
+
+
+def test_c_rates_to_summary_idempotent():
+    schema = _schema()
+    base = _process_raw(_single_test_raw(RawCols(), n_cycles=2), schema)
+    summarizers.c_rates_to_summary(base, schema)
+    once = base.summary.clone()
+
+    summarizers.c_rates_to_summary(base, schema)
+
+    assert base.summary.columns == once.columns
+    assert base.summary.equals(once)
+
+
+def test_ir_to_summary_idempotent():
+    schema = _schema()
+    base = _process_raw(_single_test_raw(RawCols(), n_cycles=2), schema)
+    summarizers.ir_to_summary(base, schema)
+    once = base.summary.clone()
+
+    summarizers.ir_to_summary(base, schema)
+
+    assert base.summary.columns == once.columns
+    assert base.summary.equals(once)

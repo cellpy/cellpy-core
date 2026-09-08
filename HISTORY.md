@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 - Harden `cycle_mode` unwrapping in `OldCellpyCellCore` / `_cycle_mode_to_test_mode`. (#142)
+- `update_core_data` treats an empty `new_raw` as a no-op (skips the derived refresh
+  instead of re-joining `*_c_rate` / `ir_*` columns as `*_right` duplicates);
+  `c_rates_to_summary` and `ir_to_summary` are now idempotent. (#147)
 
 ## [0.2.4] - 2026-07-23
 
