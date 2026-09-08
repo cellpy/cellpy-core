@@ -185,7 +185,9 @@ def update_data(
 
     Trims the overlap at ``source_datapoint_num`` (or ``datapoint_num`` when
     absent), refreshes affected step rows via ``make_step_table(from_data_point=…)``,
-    and rebuilds the per-cycle summary on the combined frames.
+    and rebuilds the per-cycle summary on the combined frames. Gap-append that
+    continues the trailing ``(cycle_num, step_num)`` rebuilds that step from
+    ``datapoint_num_first`` (same contract as overlap).
 
     Args:
         data: Processed ``Data`` with ``raw``, ``steps``, and ``summary``.
@@ -250,7 +252,12 @@ def update_data(
 
     if gap_append:
         kept_raw = raw_pl
-        kept_steps = steps_pl
+        kept_steps, from_data_point = _trim_steps_for_overlap(
+            steps_pl,
+            new_pl,
+            shdr,
+            nhdr,
+        )
     else:
         kept_raw = raw_pl.filter(pl.col(partition) < r2_start)
         kept_steps, from_data_point = _trim_steps_for_overlap(
@@ -260,14 +267,16 @@ def update_data(
             nhdr,
         )
 
+    pre_offset_new_min = int(new_pl[nhdr.datapoint_num].min())  # type: ignore[arg-type]
     dp_max_kept = _max_column(kept_raw, nhdr.datapoint_num)
-    new_dp_min = int(new_pl[nhdr.datapoint_num].min())  # type: ignore[arg-type]
-    if new_dp_min <= dp_max_kept:
+    if pre_offset_new_min <= dp_max_kept:
         new_pl = _offset_int_column(new_pl, nhdr.datapoint_num, dp_max_kept)
 
     combined_raw = pl.concat([kept_raw, new_pl], how="vertical")
 
-    if gap_append:
+    # Non-continuation gap-append starts at the first new datapoint. If those
+    # rows were offset to avoid colliding with kept raw, follow the offset.
+    if gap_append and from_data_point == pre_offset_new_min:
         from_data_point = int(new_pl[nhdr.datapoint_num].min())  # type: ignore[arg-type]
 
     slice_data = Data()
@@ -341,13 +350,19 @@ def _trim_steps_for_overlap(
     shdr: config.StepCols,
     nhdr: config.RawCols,
 ) -> tuple[pl.DataFrame, int]:
-    """Drop the overlap step and all later steps; return kept steps and ``from_data_point``."""
+    """Drop the spanning step and later ones; return kept steps and ``from_data_point``.
+
+    The spanning step is the row whose ``[datapoint_num_first, datapoint_num_last]``
+    contains the first incoming datapoint. If that datapoint is past every
+    existing step (gap-append) but the first incoming row continues the last
+    step's ``(cycle_num, step_num)``, drop that trailing step and rebuild from
+    its ``datapoint_num_first``.
+    """
     if overlap_raw.is_empty():
         return steps, int(steps[shdr.datapoint_num_first].min())  # type: ignore[arg-type]
 
-    first_dp = int(
-        overlap_raw.sort(nhdr.datapoint_num)[nhdr.datapoint_num][0]  # type: ignore[index]
-    )
+    incoming = overlap_raw.sort(nhdr.datapoint_num)
+    first_dp = int(incoming[nhdr.datapoint_num][0])  # type: ignore[index]
     steps_sorted = steps.sort(shdr.datapoint_num_first)
     overlap_idx = None
     for idx, row in enumerate(steps_sorted.iter_rows(named=True)):
@@ -361,6 +376,19 @@ def _trim_steps_for_overlap(
     if overlap_idx is None:
         from_data_point = first_dp
         kept = steps_sorted.filter(pl.col(shdr.datapoint_num_last) < first_dp)
+        if (
+            not kept.is_empty()
+            and nhdr.cycle_num in incoming.columns
+            and nhdr.step_num in incoming.columns
+        ):
+            last_step = kept.tail(1).row(0, named=True)
+            first_new = incoming.row(0, named=True)
+            if (
+                last_step[shdr.cycle_num] == first_new[nhdr.cycle_num]
+                and last_step[shdr.step_num] == first_new[nhdr.step_num]
+            ):
+                from_data_point = int(last_step[shdr.datapoint_num_first])
+                kept = kept.head(kept.height - 1)
         return kept, from_data_point
 
     kept = steps_sorted.head(overlap_idx)

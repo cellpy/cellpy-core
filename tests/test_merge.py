@@ -296,6 +296,51 @@ def test_update_gap_append_matches_full_recompute_oracle():
     _summary_oracle_equal(updated.summary, oracle.summary, chdr)
 
 
+def _mid_step_gap_frames(nhdr: RawCols, schema: Schema):
+    """Split ``_single_test_raw`` mid cycle-2 step 1 (datapoints 10-14).
+
+    ``base`` ends at source datapoint 12; ``extension`` starts at 13, so
+    ``update_data`` takes the gap-append path while the tester step continues.
+    """
+    full_raw = _single_test_raw(nhdr, n_cycles=2)
+    oracle = _process_raw(full_raw, schema)
+    base = _process_raw(
+        full_raw.filter(pl.col(nhdr.source_datapoint_num) <= 12), schema
+    )
+    extension = full_raw.filter(pl.col(nhdr.source_datapoint_num) >= 13)
+    return full_raw, oracle, base, extension
+
+
+def test_update_gap_append_mid_step_matches_full_recompute_oracle():
+    nhdr = RawCols()
+    schema = _schema()
+    shdr, chdr = schema.step, schema.cycle
+    _full_raw, oracle, base, extension = _mid_step_gap_frames(nhdr, schema)
+
+    updated = update_data(base, extension, schema=schema)
+
+    assert updated.steps.height == oracle.steps.height
+    _steps_oracle_equal(updated.steps, oracle.steps, shdr)
+    _summary_oracle_equal(updated.summary, oracle.summary, chdr)
+
+
+def test_update_core_data_gap_append_mid_step_c_rate_matches_full():
+    nhdr = RawCols()
+    schema = _schema()
+    chdr = schema.cycle
+    _full_raw, oracle, base, extension = _mid_step_gap_frames(nhdr, schema)
+    summarizers.c_rates_to_summary(oracle, schema)
+
+    updated = CellpyCellCore(initialize=False).update_core_data(base, extension)
+
+    assert updated.summary[chdr.charge_c_rate].to_list() == pytest.approx(
+        oracle.summary[chdr.charge_c_rate].to_list()
+    )
+    assert updated.summary[chdr.discharge_c_rate].to_list() == pytest.approx(
+        oracle.summary[chdr.discharge_c_rate].to_list()
+    )
+
+
 def test_update_full_replace_raises():
     nhdr = RawCols()
     schema = _schema()
