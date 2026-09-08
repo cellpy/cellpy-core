@@ -15,8 +15,10 @@
 - Tests: `test_update_gap_append_mid_step_matches_full_recompute_oracle`,
   `test_update_core_data_gap_append_mid_step_c_rate_matches_full`.
 - `HISTORY.md` `[Unreleased]` bullet.
+- `uv run pytest`: 287 passed, 3 deselected. `ruff check` + `ruff format --check`
+  clean.
 
 ## Remaining work
 
-- `uv run pytest` + ruff.
-
+- `/iflow-close` (patch bump, PR out of draft). Cellpy xfail drop is a
+  follow-up after the next `cellpycore` pin.
