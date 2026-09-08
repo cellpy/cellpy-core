@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - `update_core_data` treats an empty `new_raw` as a no-op (skips the derived refresh
   instead of re-joining `*_c_rate` / `ir_*` columns as `*_right` duplicates);
   `c_rates_to_summary` and `ir_to_summary` are now idempotent. (#147)
+- `update_data` gap-append that continues the trailing `(cycle, step)` now
+  rebuilds that step from `datapoint_num_first` instead of splitting it into
+  two partial rows (summary C-rate matches a full load). (#148)
 
 ## [0.2.4] - 2026-07-23
 
