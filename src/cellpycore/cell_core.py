@@ -552,16 +552,18 @@ class CellpyCellCore:
             **kwargs: Forwarded to ``update_data`` / ``make_step_table``.
 
         Returns:
-            A new updated ``Data`` object. The input is not modified.
+            A new updated ``Data`` object. The input is not modified. An empty
+            ``new_raw`` is a no-op: an unmodified copy is returned and the
+            derived refresh is skipped.
         """
         import polars as pl
 
-        from cellpycore.merge import update_data
+        from cellpycore.merge import _frame_is_empty, update_data
         from cellpycore.summarizers import _resolve_nom_cap_abs
 
         nom_cap_abs = _resolve_nom_cap_abs(nom_cap_abs, nom_cap)
 
-        if not isinstance(new_raw, pl.DataFrame):
+        if new_raw is not None and not isinstance(new_raw, pl.DataFrame):
             new_raw = pl.from_pandas(new_raw)
 
         test_mode = _cycle_mode_to_test_mode(self.cycle_mode)
@@ -573,6 +575,12 @@ class CellpyCellCore:
             test_mode=test_mode,
             **kwargs,
         )
+
+        if new_raw is None or _frame_is_empty(new_raw):
+            # update_data already returned an unmodified copy; the summary still
+            # carries the derived columns, so re-joining them would duplicate
+            # them as ``*_right`` (issue #147).
+            return out
 
         if refresh_derived:
             from cellpycore import summarizers

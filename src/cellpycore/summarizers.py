@@ -1191,6 +1191,8 @@ def c_rates_to_summary(
     and passes it in (default 1.0, i.e. no conversion), so this function does no
     unit handling itself.
 
+    Idempotent: C-rate columns already present in the summary are replaced.
+
     Args:
         data (core.Data): The data object (needs ``summary`` and ``steps``).
         schema: The column-header schema to use. Defaults to the native
@@ -1265,6 +1267,10 @@ def c_rates_to_summary(
     charge = _first_rate("charge", headers_summary.charge_c_rate)
     discharge = _first_rate("discharge", headers_summary.discharge_c_rate)
 
+    # Idempotent: replace existing C-rate columns instead of joining ``*_right``.
+    summary = _drop_existing(
+        summary, headers_summary.charge_c_rate, headers_summary.discharge_c_rate
+    )
     summary = summary.join(charge, left_on=left_on, right_on=right_on, how="left")
     summary = summary.join(discharge, left_on=left_on, right_on=right_on, how="left")
     data.summary = summary
@@ -1284,6 +1290,8 @@ def ir_to_summary(
     of the last datapoint of each cycle's last charge / discharge step (issue
     #23, fixing the legacy off-by-one attribution). Cycles for which the extractor
     yields no value (for example a cycle with no charge step) get ``NaN``.
+
+    Idempotent: IR columns already present in the summary are replaced.
 
     Args:
         data (Data): The data object (needs ``summary``, ``raw`` and ``steps``).
@@ -1322,6 +1330,10 @@ def ir_to_summary(
         and headers_summary.test_id in summary.columns
         else headers_summary.cycle_num
     )
+    # Idempotent: replace existing IR columns instead of joining ``*_right``.
+    summary = _drop_existing(
+        summary, headers_summary.ir_charge, headers_summary.ir_discharge
+    )
     summary = summary.join(per_cycle, on=join_on, how="left")
     # Missing IR (e.g. a cycle without a charge/discharge step) stays NaN rather
     # than the legacy 0.0, so "no measurement" is distinguishable from a real 0.
@@ -1331,6 +1343,12 @@ def ir_to_summary(
     )
     data.summary = summary
     return data
+
+
+def _drop_existing(frame: pl.DataFrame, *columns: str) -> pl.DataFrame:
+    """Drop ``columns`` that are present in ``frame`` (missing ones are ignored)."""
+    present = [c for c in columns if c in frame.columns]
+    return frame.drop(present) if present else frame
 
 
 def _main():
