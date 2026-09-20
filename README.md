@@ -1,3 +1,5 @@
+<img src="cellpy-icon-bw.svg" height="80" alt="cellpy-icon">
+
 # cellpy-core
 
 The core engine of [cellpy](https://github.com/jepegit/cellpy): fast,
