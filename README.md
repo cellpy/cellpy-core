@@ -1,6 +1,4 @@
-<img src="cellpy-icon-bw.svg" height="80" alt="cellpy-icon">
-
-# cellpy-core
+# <img src="cellpy-icon-bw.svg" height="40" alt="cellpy-icon"> cellpy-core
 
 The core engine of [cellpy](https://github.com/jepegit/cellpy): fast,
 thread-safe processing of battery-cycling raw data. Given a raw data frame
