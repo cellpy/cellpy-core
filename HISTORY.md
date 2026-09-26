@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- `CellMeta.uuid`: optional cell-level id (join key for external metadata sources),
+  core-only in the legacy mapping so `apply_test_meta_to_legacy` skips it. (#151)
+
 ## [0.2.6] - 2026-09-08
 
 - `update_core_data` treats an empty `new_raw` as a no-op (skips the derived refresh

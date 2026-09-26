@@ -141,8 +141,9 @@ LEGACY_ONLY = {
 }
 
 # Core fields legacy never had. Migration fills them from context (provenance
-# stamped by the loading framework; ``volume`` is the new volumetric-mode field).
-CORE_ONLY_CELL = frozenset({"volume"})
+# stamped by the loading framework; ``volume`` is the new volumetric-mode field;
+# ``uuid`` is the cell-level join key for external metadata sources, #151).
+CORE_ONLY_CELL = frozenset({"volume", "uuid"})
 CORE_ONLY_TEST = frozenset(
     {
         "uuid",

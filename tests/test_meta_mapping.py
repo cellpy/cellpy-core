@@ -168,3 +168,10 @@ def test_legacy_meta_to_core_accepts_attribute_objects_and_none():
     cell_empty, test_empty = meta_mapping.legacy_meta_to_core(None, None)
     assert cell_empty == CellMeta()
     assert test_empty == TestMeta()
+
+
+def test_cell_uuid_is_core_only():
+    """``CellMeta.uuid`` is never filled from legacy meta (issue #151)."""
+    assert "uuid" in meta_mapping.CORE_ONLY_CELL
+    cell, _ = meta_mapping.legacy_meta_to_core({"mass": 1.0}, {})
+    assert cell.uuid is None
