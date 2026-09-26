@@ -152,6 +152,13 @@ geometry) and `CellpyMetaIndividualTest` (test-dependent: `channel_index`, `crea
 full field set; they can sit in `TestMeta` or a sibling `CellMeta` record (decision
 deferred — see the design note).
 
+The `CellMeta` dataclass additionally carries two core-only fields legacy never had:
+
+| Field | Data type | Unit | Sample data | Comment |
+| --- | --- | --- | --- | --- |
+| uuid | str(36) | - | "0d1f3a7c-…" | stable, globally-unique id for the **physical cell**, independent of any test run (`TestMeta.uuid` identifies the run); minted by the consumer, e.g. to join the cell to a lab-database record (issue #151, jepegit/cellpy#784) |
+| volume | float | cm**3 | 0.12 | cell / electrode volume for the volumetric specific-capacity mode (issue #117) |
+
 ## Follow-ups
 - **step_types**
   - 'charge', 'discharge', 'rest'

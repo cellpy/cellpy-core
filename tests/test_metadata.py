@@ -117,3 +117,16 @@ def test_merge_without_renumber_raises_on_collision():
 def test_persistence_stubs_raise_not_implemented(call):
     with pytest.raises(NotImplementedError):
         call()
+
+
+def test_cell_meta_uuid_round_trips_and_defaults_to_none():
+    """CellMeta.uuid is a consumer-minted cell-level id (issue #151)."""
+    assert CellMeta().uuid is None
+    meta = TestMeta(
+        test_id=0,
+        uuid="test-run-uuid",
+        cell=CellMeta(uuid="0d1f3a7c-cell", mass=1.0),
+    )
+    restored = from_json(TestMeta, to_json(meta))
+    assert restored.cell.uuid == "0d1f3a7c-cell"
+    assert restored.uuid == "test-run-uuid"  # test-run id stays separate

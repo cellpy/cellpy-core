@@ -70,6 +70,11 @@ class CellMeta:
     ``CellMeta()`` is valid scaffolding and carries no obligation to be populated.
 
     Attributes:
+        uuid: Stable, globally-unique id for the physical cell, independent of
+            any one test run (``TestMeta.uuid`` identifies the run). Minted by
+            the consumer — typically to join the cell to a lab-database record
+            (external metadata sources, jepegit/cellpy#784) — never required
+            (issue #151).
         material: Active-material name / identifier.
         mass: Active-material mass.
         tot_mass: Total material mass.
@@ -95,6 +100,7 @@ class CellMeta:
         comment: Free-text comment.
     """
 
+    uuid: Optional[str] = None
     material: Optional[str] = None
     mass: Optional[float] = None
     tot_mass: Optional[float] = None
