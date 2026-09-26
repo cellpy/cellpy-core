@@ -2,7 +2,7 @@
 name: iflow-pick
 description: >-
   Front door: choose the next issue, create the issue branch, and run
-  /iflow-init.
+  /iflow-capture.
 disable-model-invocation: true
 issue-flow-version: 0.4.2a4
 ---
@@ -11,13 +11,15 @@ issue-flow-version: 0.4.2a4
 
 Follow this skill to help the user **choose what to work on next** (parked work first, else ranked open GitHub issues) and get set up to start.
 
-Do **not** use this skill from `/iflow`, `/iflow-start`, or `/iflow-close`. `/iflow-pick` is explicit-only because it creates GitHub issues and branches.
+Do **not** use this skill from `/iflow`, `/iflow-build`, or `/iflow-close`. `/iflow-pick` is explicit-only because it creates GitHub issues and branches.
 
 ## Input
 
 - **(nothing)** — survey candidates and ask which to pick.
 - **`fix`** — create a **new** general-fixes GitHub issue (a fresh one every time) and use it.
-- **a hint** (milestone / label / topic) — bias the candidate ranking.
+- **`label:<L>`** — **hard filter**: shortlist only open issues that carry GitHub label `<L>` (case-insensitive; strip whitespace after the colon). Compatible with `noplan` / `root:` / `repo:`. Empty after filter → stop (“no open issues with label `<L>`”). Never auto-pick even when only one match. For batch processing the same filter, use `/iflow-cycle label:<L>` (or `/iflow-cycle yolo` for the configured yolo trigger).
+- **a hint** (milestone / topic) — soft-bias the candidate ranking when `label:<L>` is **absent**. Free-form text that happens to name a label is **not** a hard filter — use the `label:` token.
+- **`noplan`** — skip the `auto_plan` chain for this run (ask before `/iflow-plan` even when `auto_plan` is true).
 
 
 **Invoke:** type `iflow pick` in chat, or `/iflow-pick` from the slash menu (`iflow-pick` also works).
@@ -55,7 +57,7 @@ Before any `git`, `gh`, or `.issueflows/` path operation in this workflow:
 After resolution, treat the result as `<project_root>` and `<owner/repo>`:
 
 - **Git:** `git -C <project_root> …` (or `issue-flow agent … -C <project_root>` for supported ops).
-- **GitHub:** always `gh … --repo <owner/repo>` — never rely on `gh`'s implicit cwd default.
+- **GitHub:** pass an explicit repo on every `gh` call — never rely on `gh`'s implicit cwd default. For most commands use `--repo <owner/repo>`; **exception:** `gh repo view` takes the repo as a **positional** arg (`gh repo view <owner/repo> …`) and rejects `--repo`.
 - **Paths:** all `.issueflows/…` paths are under `<project_root>`.
 
 When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read it for layout and cross-repo guidance.
@@ -67,34 +69,69 @@ When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read i
 1. **Preflight.** Detect the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`; fall back to `git symbolic-ref --quiet --short refs/remotes/origin/HEAD`, else `main`). Run `git fetch --prune`. Report current branch + clean/dirty tree (`git status --porcelain`).
 2. **`fix` shortcut.** If the user passed `fix`, skip selection and go to step 5 (create a new general-fixes issue), then Phase 2.
 3. **Source candidates** (precedence):
-   - **Parked work first** — list `issue<n>_*` groups in `.issueflows/02-partly-solved-issues/` as the primary candidates (already-started work to finish first).
-   - **Active epic next** — if an epic plan under `.issueflows/05-epics/` has open issues (or the user named one, e.g. `epic 144`), prefer its **current stage's unblocked issues**. Use the fast path `issue-flow agent epic-status <N> --json` when the CLI is on `PATH` — its `next_candidates` are exactly the open, dependency-satisfied issues of the current stage. Surface those at the top of the shortlist so an epic advances stage by stage instead of stalling.
-   - **Else GitHub** — `gh issue list --state open --json number,title,labels,milestone,updatedAt` (add `--repo owner/repo` if ambiguous). Drop issues already captured under `01-current-issues/`, `02-partly-solved-issues/`, or `03-solved-issues/`.
-4. **Rank and present.** Rank by **epic membership** (an active epic's current-stage `next_candidates` first) + **milestone** (nearest/active, honour any hint) + **labels** (match recent work / hint) + **topical similarity** to recently solved issues (skim `.issueflows/03-solved-issues/` and recent branch names). Show a numbered shortlist (~3–7) with number, title, labels, milestone, and (for epic issues) the epic + stage, and **ask the user to confirm** the pick or override. Never pick silently.
+   - **Parse `label:<L>`** when present (case-insensitive label name after the colon). Announce the active filter in the shortlist header.
+   - **Parked work first** — list `issue<n>_*` groups in `.issueflows/02-partly-solved-issues/` as the primary candidates (already-started work to finish first). When `label:<L>` is active, keep only parked issues that carry `<L>` (`gh issue view <n> --json labels` when unclear).
+   - **Active epic next** — if an epic plan under `.issueflows/05-epics/` has open issues (or the user named one, e.g. `epic 144`), prefer its **current stage's unblocked issues**. Use the fast path `issue-flow agent epic-status <N> --json` when the CLI is on `PATH` — its `next_candidates` are exactly the open, dependency-satisfied issues of the current stage. Surface those at the top of the shortlist so an epic advances stage by stage instead of stalling. When `label:<L>` is active, keep only epic candidates that carry `<L>`.
+   - **Else GitHub** — `gh issue list --state open --json number,title,labels,milestone,updatedAt` (add `--repo owner/repo` if ambiguous). When `label:<L>` is active, add `--label <L>` (hard filter). Drop issues already captured under `01-current-issues/`, `02-partly-solved-issues/`, or `03-solved-issues/`. If the filtered set is empty, **stop** with “no open issues with label `<L>`.”
+4. **Rank and present.** Rank by **epic membership** (an active epic's current-stage `next_candidates` first) + **milestone** (nearest/active, honour any hint) + **labels** (match recent work / soft hint when no `label:` filter) + **topical similarity** to recently solved issues (skim `.issueflows/03-solved-issues/` and recent branch names). Show a numbered shortlist (~3–7) with number, title, labels, milestone, and (for epic issues) the epic + stage, and **ask the user to confirm** the pick or override. Never pick silently — even when the filtered shortlist has a single entry.
 5. **Create a `fix` issue (only when requested).** Use `gh issue create` (e.g. `chore: general fixes`), confirm title/body first, capture the new number. A fresh issue is created each time — never reuse an existing open general-fixes issue.
-6. **Over-large issue (note only).** If the chosen issue is too big for one PR, **mention** that breaking it into sub-issues is possible and tracked as a follow-up (Phase B of issue #63). Do **not** auto-create sub-issues here.
+6. **Over-large issue (offer only).** If the chosen issue is too big for one PR, **mention** `/iflow-split` (flat parent/child) or `/iflow-epic` (staged) and ask. Default is proceed with the whole issue. Do **not** create children here.
 
-7. **Label-driven yolo flow.** If the chosen issue carries the **`yolo`** label (case-insensitive), announce it and fold `/iflow-yolo`'s consolidated confirm into the pick confirmation (one prompt: branch + full `init → plan → start → close yolo` chain). On yes, run Phase 2 then follow the `iflow-yolo` skill **instead of** the Phase 3 handoff — its preflight still applies, but do not re-ask its confirm. Configurable via `label_flows` / `yolo_label` under `[issueflow]` in `.issueflows/config.toml` (re-run `issue-flow update` after changing).
+7. **Label-driven ops flow.** If the chosen issue carries the **`ops`** label (case-insensitive), announce it and fold `/iflow-ops` into the pick confirmation (one prompt: optional branch vs stay on default + ops work + `close ops`). On yes, run Phase 2 (ask whether to create `<N>-<slug>` or stay on current/default — default branch is allowed for ops) then follow the `iflow-ops` skill **instead of** Phase 3 / yolo. If the issue also carries **`yolo`**, **ops wins** — announce the conflict. Configurable via `label_flows` / `ops_label` under `[issueflow]` in `.issueflows/config.toml` (re-run `issue-flow update` after changing).
+
+
+8. **Label-driven yolo flow.** If the chosen issue carries the **`yolo`** label (case-insensitive) **and** was not already routed to ops above, announce it and fold `/iflow-yolo`'s consolidated confirm into the pick confirmation (one prompt: branch + full `capture → plan → build → close yolo` chain). On yes, run Phase 2 then follow the `iflow-yolo` skill **instead of** the Phase 3 handoff — its preflight still applies, but do not re-ask its confirm. Configurable via `label_flows` / `yolo_label` under `[issueflow]` in `.issueflows/config.toml` (re-run `issue-flow update` after changing).
 
 
 
 ### Phase 2 — create the branch
 
-1. **Require a clean tree** (`git status --porcelain`). If dirty, **stop** and ask the user to commit/stash.
-2. **Branch off the default** — switch to default, fast-forward, then `git switch -c <N>-<short-slug>` (GitHub numeric convention). Confirm a non-obvious slug.
-3. **Run `/iflow-init`** for the now-known `<N>` by following the `iflow-init` skill. Do not duplicate its fetch/archive logic.
+1. **Working-tree gate** — Prefer `issue-flow agent preflight --json` (fields
+   `clean`, `dirty_paths`, `issueflows_only`); else `git status --porcelain`
+   and treat paths as issueflows-only when every path is under
+   `.issueflows/`.
+   - **Clean** — continue.
+   - **Issueflows-only dirty** (typical after `/iflow-doctor` repair) — one
+     consolidated prompt with **commit housekeeping on the current branch** as
+     the **recommended default** (message pattern:
+     `chore: doctor housekeeping — archive/sweep .issueflows groups`,
+     or a short edit). Alternatives: stash / abort. On commit: stage **only**
+     those paths, commit, **no push**, then continue. Do not branch on top of
+     the dirty tree.
+   - **Mixed / code dirty** — **stop**; list non-`.issueflows/` paths;
+     ask commit / stash / abort. Do **not** auto-offer “commit everything”.
+2. **Issue worktree (default)** — confirm a non-obvious slug (`<N>-<short-slug>`).
+
+**Worktree-first start (default, issue #255 / #303 / #329).** After the dirty-tree gate and slug confirm — unless the user passed `inplace` / `no worktree`, or ops chose stay-on-current/default:
+
+1. Home stays on the **default** branch. `git fetch --prune`. Do **not** `git switch -c` on home.
+2. Run `issue-flow agent default-sync --json -C <home>`. If `action` is `even` or `ff_only`, `git pull --ff-only`. If home is ahead or diverged, **print** the classification and **still continue** — starting work must not wait for home to be ff-able.
+3. `issue-flow agent worktree-add <N> --slug <slug> -C <home> --json` — use the `path` it returns: `../<repo>-<N>` by default, or `<worktrees_dir>/<repo>-<N>` when a common worktrees folder is configured (`location` in the payload says which rule applied; a `location_note` explains a fallback). Starts from fetched `origin/<default>`, not local default HEAD. On error, **stop and ask**; never silently fall back to inplace.
+4. `issue-flow agent open-workspace <path> --json` (print-only). Tell the user the worktree path. Do **not** ask to open a window.
+5. Run `/iflow-capture` (and later plan/build/close) with `-C <worktree-path>`. Continue the session in that folder.
+6. Token `inplace` / `no worktree` keeps legacy `git switch -c <N>-<slug>` on home. Token `worktree` is a no-op when `worktree_first` is already on.
+
+
+   **Ops exception:** when Phase 1 confirmed ops routing, ask whether to create the issue worktree/branch or stay on current/default; default branch is allowed (no worktree).
+3. **Run `/iflow-capture`** for the now-known `<N>` by following the `iflow-capture` skill. Do not duplicate its fetch/archive logic.
 
 ### Phase 3 — hand off
 
-1. **Ask** whether to continue with `/iflow-plan`. Do not auto-run it.
 
-2. **Exception:** when the `yolo`-label routing was confirmed in Phase 1, skip this handoff — the `iflow-yolo` chain (which includes `/iflow-init`) takes over after the branch is created.
+1. **Chain into `/iflow-plan`** (this project has `auto_plan = true`). After Phase 2, follow the `iflow-plan` skill immediately — briefly note that `auto_plan` chained the handoff. Trailing **`noplan`** (or the user declining on confirm) skips the chain once and falls back to asking.
+
+
+2. **Exception (ops):** when the `ops`-label routing was confirmed in Phase 1, skip this handoff — the `iflow-ops` skill takes over after capture.
+
+
+3. **Exception (yolo):** when the `yolo`-label routing was confirmed in Phase 1 (and ops did not win), skip this handoff — the `iflow-yolo` chain (which includes `/iflow-capture`) takes over after the branch is created.
 
 
 ## Constraints
 
-- Off-path: never auto-dispatch from `/iflow`, `/iflow-start`, or `/iflow-close`.
+- Off-path: never auto-dispatch from `/iflow`, `/iflow-build`, or `/iflow-close`.
 - Never create a GitHub issue or branch without explicit confirmation; show what will be created first.
 - Branch off the detected default; never force-push or delete branches from this skill.
-- **Phase B is out of scope**: no automated sub-issue creation or sibling parking under `02-partly-solved-issues/`. Only mention the option.
-- Delegate issue capture to `/iflow-init` rather than re-implementing it.
+- Over-large splits are **offer-only**: never create child issues from this skill. Point at `/iflow-split` (flat) or `/iflow-epic` (staged).
+- Delegate issue capture to `/iflow-capture` rather than re-implementing it.
+- `auto_plan` only skips the post-init pause; pick confirm and label routing stay gated.

@@ -48,7 +48,7 @@ Before any `git`, `gh`, or `.issueflows/` path operation in this workflow:
 After resolution, treat the result as `<project_root>` and `<owner/repo>`:
 
 - **Git:** `git -C <project_root> …` (or `issue-flow agent … -C <project_root>` for supported ops).
-- **GitHub:** always `gh … --repo <owner/repo>` — never rely on `gh`'s implicit cwd default.
+- **GitHub:** pass an explicit repo on every `gh` call — never rely on `gh`'s implicit cwd default. For most commands use `--repo <owner/repo>`; **exception:** `gh repo view` takes the repo as a **positional** arg (`gh repo view <owner/repo> …`) and rejects `--repo`.
 - **Paths:** all `.issueflows/…` paths are under `<project_root>`.
 
 When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read it for layout and cross-repo guidance.
@@ -58,16 +58,25 @@ When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read i
 > **CLI fast path (optional).** If the `issue-flow` CLI is on `PATH`, run
 > `issue-flow status` (add `--local` to skip the GitHub query, `--json` for a
 > machine-readable object) — it produces this whole overview deterministically.
-> The CLI is optional: if it is missing or errors, fall back to the manual
+> **Workspace fan-out:** trailing `workspace` / `all`, or cwd is the workspace
+> root (`issueflow-workspace.toml` present and not a member scaffold) → run
+> `issue-flow workspace status [--local] [--json]` instead of the single-repo
+> command. The CLI is optional: if it is missing or errors, fall back to the manual
 > instructions below. (`issue-flow` is only present when the user installed it,
 > e.g. `uv tool install issue-flow`.)
+
+0. **Workspace scope.** If the user passed `workspace` / `all`, or resolve
+   shows you are at the workspace root (toml present, cwd is not a member),
+   run `issue-flow workspace status` and present each member. Do **not** guess
+   a single repo. Then stop (skip the single-repo steps unless they also named
+   `root:` / `repo:`).
 
 1. **Context / preflight.** Detect the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`; fall back to `git symbolic-ref --quiet --short refs/remotes/origin/HEAD | sed 's|^origin/||'`, else `main`). Report current branch, clean/dirty tree (`git status --porcelain`), and ahead/behind vs `origin/<default>`. If the branch matches `^(\d+)-.+`, treat the leading digits as the focus issue `N`.
 
 2. **Focus issue** (`.issueflows/01-current-issues/`). For the focus group, read its title from `issue<n>_original.md` and classify the lifecycle stage with the `/iflow` first-match logic:
-   - **init** — no `issue<n>_original.md` → `/iflow-init`.
+   - **init** — no `issue<n>_original.md` → `/iflow-capture`.
    - **plan** — original exists, no `issue<n>_plan.md` → `/iflow-plan`.
-   - **start** — plan exists, status missing or `- [x] Done` unchecked → `/iflow-start`.
+   - **build** — plan exists, status missing or `- [x] Done` unchecked → `/iflow-build`.
    - **close** — status contains `- [x] Done` (case-insensitive) → `/iflow-close`.
    Report the stage and suggested next step.
 
@@ -84,6 +93,6 @@ When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read i
 ## Constraints
 
 - **Read-only.** Writes nothing, moves no files, creates no branches/commits/GitHub issues. Only reads `.issueflows/` and runs read-only `git` / `gh` queries.
-- **Off-path.** Never auto-dispatch from `/iflow`, `/iflow-start`, or `/iflow-close`.
+- **Off-path.** Never auto-dispatch from `/iflow`, `/iflow-build`, or `/iflow-close`.
 - **Degrade gracefully.** Missing `gh`, no network, or an empty `.issueflows/` must still yield a useful local report.
 - Present sections in order (Context, Focus, Parked, Solved, Open GitHub, Summary); note any skipped section.

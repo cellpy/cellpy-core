@@ -9,7 +9,7 @@ issue-flow-version: 0.4.2a4
 
 # issue-flow — issue plan (`/iflow-plan`)
 
-Follow this skill to **design the approach** for the focus issue before touching code, and to get the plan confirmed ahead of `/iflow-start`.
+Follow this skill to **design the approach** for the focus issue before touching code, and to get the plan confirmed ahead of `/iflow-build`.
 
 
 **Invoke:** type `iflow plan` in chat, or `/iflow-plan` from the slash menu (`iflow-plan` also works).
@@ -47,10 +47,15 @@ Before any `git`, `gh`, or `.issueflows/` path operation in this workflow:
 After resolution, treat the result as `<project_root>` and `<owner/repo>`:
 
 - **Git:** `git -C <project_root> …` (or `issue-flow agent … -C <project_root>` for supported ops).
-- **GitHub:** always `gh … --repo <owner/repo>` — never rely on `gh`'s implicit cwd default.
+- **GitHub:** pass an explicit repo on every `gh` call — never rely on `gh`'s implicit cwd default. For most commands use `--repo <owner/repo>`; **exception:** `gh repo view` takes the repo as a **positional** arg (`gh repo view <owner/repo> …`) and rejects `--repo`.
 - **Paths:** all `.issueflows/…` paths are under `<project_root>`.
 
 When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read it for layout and cross-repo guidance.
+
+
+## Optional tokens (command input)
+
+- **`nobuild`** — skip the `auto_build` chain for this run (after Accept, ask / tell the user to run `/iflow-build` even when `auto_build` is true).
 
 ## Instructions
 
@@ -60,7 +65,7 @@ When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read i
 > below. (`issue-flow` is only present when the user installed it, e.g.
 > `uv tool install issue-flow`.)
 
-1. **Find the focus issue.** Look in `.issueflows/01-current-issues/` for `issue<N>_original.md`. If it is missing or multiple groups are ambiguous, **stop** and ask. Suggest `/iflow-init` first.
+1. **Find the focus issue.** Look in `.issueflows/01-current-issues/` for `issue<N>_original.md`. If it is missing or multiple groups are ambiguous, **stop** and ask. Suggest `/iflow-capture` first.
 
 2. **Branch status preflight** (non-destructive). Detect the default branch (prefer `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else `git symbolic-ref --quiet --short refs/remotes/origin/HEAD`, else `main`). Run `git fetch --prune`. Report current branch, clean/dirty working tree, and ahead/behind vs `origin/<default>`. If on the default branch, suggest creating an issue branch (`git switch -c <N>-<short-slug>`) but do **not** auto-run it — planning itself does not require a branch switch.
 
@@ -89,15 +94,20 @@ When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read i
 
    Keep it terse but specific. Use markdown links to files when useful.
 
-7. **Scope check.** If the plan is broad (many unrelated files, mixes refactors with feature work, multiple independent deliverables), propose splitting into smaller issues or phased PRs before finalizing the plan.
+7. **Scope check.** If the plan is broad (many unrelated files, mixes refactors with feature work, multiple independent deliverables), propose `/iflow-split` (flat 2–5 children) or `/iflow-epic` (staged) before finalizing. Do not create children from this skill.
 
-8. **Confirm with the user.** Present the plan and **stop**. Accept one of: **Accept** (ready for `/iflow-start`), **Revise** (update `issue<N>_plan.md` in place and re-confirm), or **Abort**.
+8. **Confirm with the user.** Present the plan and **stop**. Accept one of: **Accept** (ready for `/iflow-build`), **Revise** (update `issue<N>_plan.md` in place and re-confirm), or **Abort**.
+
+   On **Accept** (and no trailing **`nobuild`**), follow the `iflow-build` skill immediately — briefly note that `auto_build` chained the handoff. Still write no code *before* Accept. With **`nobuild`**, or when the user only wants to park the accepted plan, tell them to run `/iflow-build` later instead of chaining.
+
 
 9. **Conflict on existing `issue<N>_plan.md`.** Do not overwrite silently. Offer: update in place (after review), keep both (`issue<N>_plan.v2.md`), or leave as is.
 
 ## Constraints
 
-- `/iflow-plan` is **read-only on source code**. The only file it writes is `.issueflows/01-current-issues/issue<N>_plan.md`.
+- `/iflow-plan` is **read-only on source code** until Accept. The only file it writes before Accept is `.issueflows/01-current-issues/issue<N>_plan.md`.
 - Do not move files between `01-` / `02-` / `03-` folders from `/iflow-plan`.
-- Do not run tests or package managers; that belongs to `/iflow-start` and `/iflow-close`.
-- Do not proceed to implementation from this skill. Hand off to `/iflow-start` once the user confirms.
+- Do not run tests or package managers from planning itself; that belongs to `/iflow-build` and `/iflow-close`.
+
+- `auto_build` only skips the post-Accept pause; Accept / Revise / Abort stay gated. Trailing `nobuild` skips the chain once.
+

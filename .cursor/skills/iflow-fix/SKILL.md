@@ -11,9 +11,9 @@ issue-flow-version: 0.4.2a4
 
 Follow this skill for an **ongoing working session** of many small fixes (small bugs, typos, chores, polish) on one branch, landed via one PR — rather than a single well-defined deliverable.
 
-Do **not** use this skill from `/iflow`, `/iflow-start`, or `/iflow-close`. `/iflow-fix` is explicit-only because it creates GitHub issues and branches and drives an open-ended loop. While a session is active, drive it with `/iflow-fix` + `/iflow-close`, not `/iflow`.
+Do **not** use this skill from `/iflow`, `/iflow-build`, or `/iflow-close`. `/iflow-fix` is explicit-only because it creates GitHub issues and branches and drives an open-ended loop. While a session is active, drive it with `/iflow-fix` + `/iflow-close`, not `/iflow`.
 
-It **coexists** with `/iflow-pick fix`: that command is a one-shot setup back into the normal `/iflow-plan` → `/iflow-start` flow, whereas `/iflow-fix` stays and runs the loop until close.
+It **coexists** with `/iflow-pick fix` (one-shot general-fixes setup into `/iflow-plan` → `/iflow-build`) and `/iflow-issue` (one well-specified normal issue). `/iflow-fix` stays and runs the loop until close.
 
 ## Input
 
@@ -57,7 +57,7 @@ Before any `git`, `gh`, or `.issueflows/` path operation in this workflow:
 After resolution, treat the result as `<project_root>` and `<owner/repo>`:
 
 - **Git:** `git -C <project_root> …` (or `issue-flow agent … -C <project_root>` for supported ops).
-- **GitHub:** always `gh … --repo <owner/repo>` — never rely on `gh`'s implicit cwd default.
+- **GitHub:** pass an explicit repo on every `gh` call — never rely on `gh`'s implicit cwd default. For most commands use `--repo <owner/repo>`; **exception:** `gh repo view` takes the repo as a **positional** arg (`gh repo view <owner/repo> …`) and rejects `--repo`.
 - **Paths:** all `.issueflows/…` paths are under `<project_root>`.
 
 When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read it for layout and cross-repo guidance.
@@ -67,10 +67,23 @@ When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read i
 ### Phase 1 — set up the session (once)
 
 1. **Preflight.** Detect the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`; fall back to `git symbolic-ref --quiet --short refs/remotes/origin/HEAD`, else `main`). Run `git fetch --prune`. Report current branch + clean/dirty tree (`git status --porcelain`); if dirty with unrelated changes, ask to commit/stash first.
-2. **Create the GitHub issue (always, with confirmation).** Show the proposed title (e.g. `Iterative fixes: <name>`, or `Iterative small fixes`) and a body noting it is an interactive `/iflow-fix` session whose individual fixes are recorded in the status markdown and landed together via `/iflow-close`. Create it with `gh issue create` (add `--repo owner/repo` if ambiguous). Capture the returned number `N`. A fresh issue is created each time. Set the chat tab title to `Issue <N> <session name>`.
-3. **Create the branch (with confirmation).** Slug from the name (kebab-case; default `iterative-small-fixes`); branch name `<N>-<slug>`. On the default branch → `git switch -c <N>-<slug>`. On a non-default branch → **ask** whether to branch from the current branch or the default. Require a clean tree before switching.
-4. **Capture locally.** Delegate to the `/iflow-init` flow (or the `iflow-init` skill) for `<N>`: write `.issueflows/01-current-issues/issue<N>_original.md` and run its archive sweep. Do not duplicate that logic.
-5. **Seed the status file.** Create `.issueflows/01-current-issues/issue<N>_status.md` with a short header (interactive `/iflow-fix` session), an unchecked `- [ ] Done`, and an empty **`## Iterative fixes log`** section.
+2. **Resolve the session name.** Baked `fix_auto_name = false`: use an explicit invoke name when given; otherwise default to `iterative-small-fixes`. If the invoke text is free-form (not already a slug) and you would invent a better name, **ask once** whether to use your proposed slug or keep the default — then proceed to create confirm. Configurable via `fix_auto_name` under `[issueflow]` in `.issueflows/config.toml` (re-run `issue-flow update` after changing).
+3. **Create the GitHub issue (always, with confirmation).** Show the chosen title (e.g. `Iterative fixes: <name>`, or `Iterative small fixes`) and a body noting it is an interactive `/iflow-fix` session whose individual fixes are recorded in the status markdown and landed together via `/iflow-close`. Create it with `gh issue create` (add `--repo owner/repo` if ambiguous). Capture the returned number `N`. A fresh issue is created each time. Set the chat tab title to `Issue <N> <session name>`.
+4. **Create the worktree (with confirmation).** Slug from the resolved name (kebab-case; default `iterative-small-fixes`); branch name `<N>-<slug>`. Require a clean tree.
+
+**Worktree-first start (default, issue #255 / #303 / #329).** After the dirty-tree gate and slug confirm — unless the user passed `inplace` / `no worktree`, or ops chose stay-on-current/default:
+
+1. Home stays on the **default** branch. `git fetch --prune`. Do **not** `git switch -c` on home.
+2. Run `issue-flow agent default-sync --json -C <home>`. If `action` is `even` or `ff_only`, `git pull --ff-only`. If home is ahead or diverged, **print** the classification and **still continue** — starting work must not wait for home to be ff-able.
+3. `issue-flow agent worktree-add <N> --slug <slug> -C <home> --json` — use the `path` it returns: `../<repo>-<N>` by default, or `<worktrees_dir>/<repo>-<N>` when a common worktrees folder is configured (`location` in the payload says which rule applied; a `location_note` explains a fallback). Starts from fetched `origin/<default>`, not local default HEAD. On error, **stop and ask**; never silently fall back to inplace.
+4. `issue-flow agent open-workspace <path> --json` (print-only). Tell the user the worktree path. Do **not** ask to open a window.
+5. Run `/iflow-capture` (and later plan/build/close) with `-C <worktree-path>`. Continue the session in that folder.
+6. Token `inplace` / `no worktree` keeps legacy `git switch -c <N>-<slug>` on home. Token `worktree` is a no-op when `worktree_first` is already on.
+
+
+   On a non-default home branch → **ask** whether to FF/switch home to default first or use `inplace`.
+5. **Capture locally.** Delegate to the `/iflow-capture` flow (or the `iflow-capture` skill) for `<N>`: write `.issueflows/01-current-issues/issue<N>_original.md` and run its archive sweep. Do not duplicate that logic.
+6. **Seed the status file.** Create `.issueflows/01-current-issues/issue<N>_status.md` with a short header (interactive `/iflow-fix` session), an unchecked `- [ ] Done`, and an empty **`## Iterative fixes log`** section.
 
 ### Phase 2 — the fix loop (repeat)
 
@@ -82,7 +95,7 @@ For each proposed fix:
 4. **Implement** the confirmed fix, focused on that one change.
 5. **Record** it: append a dated bullet to **`## Iterative fixes log`** in `issue<N>_status.md`. Offer proactively; always update when asked.
 
-If a "fix" is really a substantial feature or sprawls across unrelated areas, say so and suggest handling it as its own issue via `/iflow-init` → `/iflow-plan` → `/iflow-start`.
+If a "fix" is really a substantial feature or sprawls across unrelated areas, say so and suggest filing it as its own issue via `/iflow-issue` (then `/iflow-plan` → `/iflow-build`).
 
 ### Phase 3 — finish
 
@@ -90,9 +103,9 @@ Tell the user to run **`/iflow-close`** to land the session (tests, optional bum
 
 ## Constraints
 
-- Off-path: never auto-dispatch from `/iflow`, `/iflow-start`, or `/iflow-close`.
+- Off-path: never auto-dispatch from `/iflow`, `/iflow-build`, or `/iflow-close`.
 - Never create a GitHub issue or branch without explicit confirmation; show what will be created first.
 - GitHub only (`gh`); GitLab is not supported.
 - Branch off the detected default (or the current branch when chosen); never force-push or delete branches from this skill.
 - Keep `- [ ] Done` unchecked during the session; `/iflow-close` flips it.
-- Delegate local capture to `/iflow-init` and finishing to `/iflow-close`; one fix per loop iteration, implemented only on explicit confirmation.
+- Delegate local capture to `/iflow-capture` and finishing to `/iflow-close`; one fix per loop iteration, implemented only on explicit confirmation.

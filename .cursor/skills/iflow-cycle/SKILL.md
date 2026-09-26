@@ -10,17 +10,18 @@ issue-flow-version: 0.4.2a4
 
 # issue-flow — issue cycle (`/iflow-cycle`)
 
-Follow this skill to **process a queue of issues hands-off**, one after another, with a **single up-front confirmation** — the batch equivalent of `/iflow-yolo`. Each issue runs the full yolo chain (`init → plan → start → close yolo`, PR auto-merged, switch back to default); the cycle interrupts you only when input is **strictly necessary**.
+Follow this skill to **process a queue of issues hands-off**, one after another, with a **single up-front confirmation** — the batch equivalent of `/iflow-yolo`. Each issue runs the full yolo chain (`capture → plan → build → close yolo`, PR auto-merged, switch back to default); the cycle interrupts you only when input is **strictly necessary**.
 
 Use only when every queued issue is genuinely yolo-fit (small, low-risk, well-specified, test-guarded). A queue of risky changes belongs in the individual commands.
 
 ## Input — queue spec
 
 - **explicit numbers** — e.g. `12 15 18`.
-- **`label:<L>`** — every open issue carrying label `<L>`.
+- **`yolo`** — alias for **`label:yolo`**: every open issue carrying the configured yolo trigger label (default `"yolo"`). Case-insensitive. This is the one-token path for “auto-process all yolo issues.”
+- **`label:<L>`** — every open issue carrying label `<L>` (use for labels other than the yolo trigger).
 - **`epic <N> [stage <k>]`** — the current stage of epic `<N>` (or stage `<k>`).
 - **`resume`** — pick up an interrupted cycle from its state file (see **Resuming** below).
-- **`onfail:stop`** (default) / **`onfail:skip`** — failure policy (see step 7).
+- **`onfail:stop`** / **`onfail:skip`** — failure policy (see step 7). Default from config **`stop`** (`cycle_onfail` under `[issueflow]`); an explicit token wins for this run.
 - **`max:<n>`** — raise the safety cap (default 10) for this run.
 - **`stay`** — forward `stay` to each close so the working copy stays on each issue branch (rarely wanted in a cycle).
 
@@ -60,21 +61,23 @@ Before any `git`, `gh`, or `.issueflows/` path operation in this workflow:
 After resolution, treat the result as `<project_root>` and `<owner/repo>`:
 
 - **Git:** `git -C <project_root> …` (or `issue-flow agent … -C <project_root>` for supported ops).
-- **GitHub:** always `gh … --repo <owner/repo>` — never rely on `gh`'s implicit cwd default.
+- **GitHub:** pass an explicit repo on every `gh` call — never rely on `gh`'s implicit cwd default. For most commands use `--repo <owner/repo>`; **exception:** `gh repo view` takes the repo as a **positional** arg (`gh repo view <owner/repo> …`) and rejects `--repo`.
 - **Paths:** all `.issueflows/…` paths are under `<project_root>`.
 
 When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read it for layout and cross-repo guidance.
 
 ## Instructions
 
-1. **Resolve the queue.** Run `issue-flow agent queue <spec> --json` (numbers, `--label`, or `--epic`). Use its `queue` (ordered), `blocked`, and `skipped_closed` output as the source of truth — do not re-derive the order by hand. If it reports a dependency `cycle`, **stop** and show it; nothing runs. If the CLI is unavailable, fall back to reading the issues and ordering by `Depends on #N` lines yourself, but prefer the CLI.
+0. **Expand aliases.** If the queue spec is exactly `yolo` (case-insensitive), treat it as `label:yolo` (the baked config value; if `.issueflows/config.toml` has a different `yolo_label` than this skill's bake, prefer the live config). Keep the original token in `cycle_status.md` for humans (`queue: yolo` → resolved `label:yolo`).
+
+1. **Resolve the queue.** Run `issue-flow agent queue --label yolo --json` when the alias applied, else `issue-flow agent queue <spec> --json` (numbers, `--label`, or `--epic`). Use its `queue` (ordered), `blocked`, and `skipped_closed` output as the source of truth — do not re-derive the order by hand. If it reports a dependency `cycle`, **stop** and show it; nothing runs. If the CLI is unavailable, fall back to reading the issues and ordering by `Depends on #N` lines yourself, but prefer the CLI. An empty queue → report “nothing to queue” and stop (no confirm needed).
 
 2. **Cap check.** If the ordered queue is longer than **10** and the input did not pass `max:<n>` raising the limit, **stop** and ask the user to confirm a larger run explicitly. Long unattended runs compound risk.
 
 3. **One consolidated confirm** (the only planned interruption). Present, in normal prose:
    - the **ordered** queue (numbers + titles), and which issues are **skipped** (closed) or **blocked** (open dependency outside the queue) with the reason;
    - that each issue runs the **full yolo chain** and its PR is **auto-merged**;
-   - the failure policy (`onfail:stop`, the default, or `onfail:skip` — see step 7);
+   - the failure policy (`onfail:stop` or `onfail:skip`; default from config is **`stop`** unless overridden by a token — see step 7);
    - the default-branch preflight that must hold before starting (clean tree, tests passing).
    Require an explicit yes; anything else aborts before any work.
 
@@ -87,13 +90,13 @@ When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read i
 
 6. **Strictly-necessary-input rule.** Between issues the cycle runs unattended. **Stop and ask only** when:
    a. tests or lint fail in a way you cannot fix within the current issue's scope;
-   b. a merge is refused or a `git pull --ff-only` will not fast-forward (divergence);
+   b. a merge is refused, or a sync with the default branch will not complete — **but** a refusal whose only conflict is additive `HISTORY.md` bullets is **not** a stop: close's sync step (`issue-flow agent sync-branch`) resolves that and retries the merge once. Stop only when the sync itself exits 1, or the retry is refused again;
    c. the issue spec is ambiguous, contradictory, or turns out **not** small (yolo's scope check aborts);
    d. an action would fall **outside the confirmed queue** (touching an unlisted issue, an unrelated dirty file, a destructive op).
    Anything else — routine implementation choices, passing tests, clean merges — proceeds without asking.
 
-7. **Failure policy** (from the `onfail:` token; default **stop**). When a stop condition (step 6) trips on an issue:
-   - **`onfail:stop`** (default) — **halt the cycle**: finish no further issues, leave the repo on the **default branch, clean** (the in-flight issue's branch stays as-is for the user to inspect), record the stop reason and the not-reached issues in `cycle_status.md`, and report. Do not attempt the rest of the queue.
+7. **Failure policy** (from the `onfail:` token when present; otherwise config **`stop`**). When a stop condition (step 6) trips on an issue:
+   - **`onfail:stop`** — **halt the cycle**: finish no further issues, leave the repo on the **default branch, clean** (the in-flight issue's branch stays as-is for the user to inspect), record the stop reason and the not-reached issues in `cycle_status.md`, and report. Do not attempt the rest of the queue.
    - **`onfail:skip`** — **park and continue**: record the failure against that issue in `cycle_status.md` (`- [~] #<N> — <title> — failed: <reason>`), park its work per `.cursor/skills/iflow-pause/SKILL.md` conventions (status note + move to `02-partly-solved-issues/`), return to a clean default branch, and proceed to the next queued issue. A skip never bypasses a yolo safeguard — it records the trip and moves on.
 
 8. **Finish.** When the queue is exhausted (or halted), finalize `cycle_status.md` (mark it `- [x] Done`) and move it to `.issueflows/03-solved-issues/cycle_status_<YYYY-MM-DD>.md` so it is archived, not re-detected as in-flight.
@@ -115,11 +118,34 @@ By default the cycle is **sequential** — one issue fully lands before the next
 
 - **Only independent issues qualify.** Use `issue-flow agent queue`'s **`independent`** list — issues with *no* dependency relation (either direction) to any other queue member. Everything else runs sequentially.
 - **Harness gate.** If you cannot confirm the harness supports background execution (worktrees + parallel agents/subagents), **refuse `parallel:<n>` and run sequentially** — never pretend to parallelize.
-- **Worktree per issue.** `git worktree add ../<repo>-<N> <N>-<slug>` so each issue has an isolated tree; run the yolo work there.
+- **Worktree per issue.** `issue-flow agent worktree-add <N> --slug <slug> --json` so each issue has an isolated tree (its `path` honours `worktrees_dir`; default `../<repo>-<N>`); run the yolo work there.
+- **Print the worktree path.** After each `worktree add`, run `issue-flow agent open-workspace <worktree-path> --json` (print-only) and show the path. Do not launch a window. Continue with worktree-only parallel — see `.issueflows/04-designs-and-guides/separate-workspaces.md`.
 - **Serialize merges.** Never merge PRs concurrently — the coordinating session merges them one at a time on the default branch, pulling between merges and rebasing/retrying on a non-fast-forward or CI refusal.
-- **Shared files via the coordinator only.** Parallel workers must **not** each edit `HISTORY.md`; each leaves its changelog bullet in its issue status file / PR body, and the coordinator appends them in **merge order** during the serial merge step.
+- **Shared files via the coordinator only.** Parallel workers must **not** each edit `HISTORY.md`; each leaves its changelog bullet in its issue status file / PR body, and the coordinator appends them in **merge order** during the serial merge step — same ordering rule as the changelog resolver (already-landed bullets first, the newest last), so serial and parallel runs produce the same file. If a worker PR does go `DIRTY` on `[Unreleased]`, the coordinator resolves it with `issue-flow agent sync-branch` rather than hand-editing markers.
 
 When in doubt, prefer the sequential run — parallel dispatch trades safety for speed and every one of the rules above must hold.
+
+## All yolo issues + merge conflicts
+
+`/iflow-cycle yolo` (or `label:yolo`) is the supported way to
+**auto-process every open yolo-labelled issue**. No separate batch skill.
+
+**Conflict stance (sequential default):** each issue's yolo close merges its PR
+and returns to a **clean default branch** before the next issue starts, so
+within the cycle shared files (`HISTORY.md`, etc.) stay single-writer.
+Stop-on-fail leaves the tree clean on default.
+
+That single-writer property does **not** protect against the default branch
+moving **externally** — another session or an already-open PR merging while one
+queued issue is in its test/CI window. The collision is almost always the same:
+two additive bullets under `## [Unreleased]`. Close's sync step owns that
+(`issue-flow agent sync-branch`: rebase onto `origin/<default>`, keep both
+bullet sets with the in-flight one last, force-with-lease push, retry the merge
+once), so a changelog-only conflict no longer halts a batch. Everything else
+still trips step 6b. For experimental concurrent work, see
+**Parallel dispatch** above and `.issueflows/04-designs-and-guides/parallel-cycle.md`
+(merges stay serialized there too). Labelling first is optional via
+`/iflow-review yolo` — then run `/iflow-cycle yolo`.
 
 ## Constraints
 

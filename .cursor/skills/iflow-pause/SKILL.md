@@ -47,7 +47,7 @@ Before any `git`, `gh`, or `.issueflows/` path operation in this workflow:
 After resolution, treat the result as `<project_root>` and `<owner/repo>`:
 
 - **Git:** `git -C <project_root> …` (or `issue-flow agent … -C <project_root>` for supported ops).
-- **GitHub:** always `gh … --repo <owner/repo>` — never rely on `gh`'s implicit cwd default.
+- **GitHub:** pass an explicit repo on every `gh` call — never rely on `gh`'s implicit cwd default. For most commands use `--repo <owner/repo>`; **exception:** `gh repo view` takes the repo as a **positional** arg (`gh repo view <owner/repo> …`) and rejects `--repo`.
 - **Paths:** all `.issueflows/…` paths are under `<project_root>`.
 
 When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read it for layout and cross-repo guidance.
@@ -71,7 +71,7 @@ When `.issueflows/04-designs-and-guides/multi-repo-workspaces.md` exists, read i
    - **Switch to default branch** — detect default (prefer `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else `git symbolic-ref --quiet --short refs/remotes/origin/HEAD`, else `main`) and run `git switch <default>`. Only after the WIP commit if the tree is dirty.
    - **Stay put** — leave branch and working tree untouched.
 
-5. **Report.** Summarize the status update, the issue-group moves, working-tree actions taken, and remind the user how to resume (running `/iflow-init <N>` re-opens the archived issue after its archived-issue guard, or they can simply switch back to the issue branch).
+5. **Report.** Summarize the status update, the issue-group moves, working-tree actions taken, and remind the user how to resume (running `/iflow-capture <N>` re-opens the archived issue after its archived-issue guard, or they can simply switch back to the issue branch).
 
 ## Constraints
 
