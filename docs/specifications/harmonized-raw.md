@@ -180,7 +180,10 @@ The `CellMeta` dataclass additionally carries two core-only fields legacy never 
     native datetime with the helpers in `cellpycore.timestamps`.
 - **cycle_num**
   - usually provided by the tester
-  - enough with keeping it, or do we need an updated cycle number?
+  - ~~enough with keeping it, or do we need an updated cycle number?~~ **Resolved (issue #359):**
+    the raw keeps the tester's counter; a corrected counter is an opt-in post-processing
+    step (`summarizers.renumber_cycles`), which also re-accumulates the cycle-cumulative
+    capacity / energy columns to the new boundaries. No extra raw column.
 - **cycle_type**
   - details to be discussed
   - *Reference vocabulary now defined as `cellpycore.config.CycleType` (`Standard`/`GITT`/`ICI`/`Characterization`); may later migrate to test metadata as `test_type` (issue #24).*

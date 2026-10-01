@@ -150,6 +150,39 @@ that when loading real cells. Do not rely on implicit defaults across layers.
   cycles) plus `{column}_{gravimetric,areal,absolute}` variants of the
   capacity-like columns (`CycleCols().specific_columns`).
 
+### Repairing the cycle counter (discharge-first cells)
+
+Commercial / full cells are often started with a lone discharge. Cyclers then
+tend to report a counter that does not match the convention — cycle 1 as
+`discharge-charge-discharge`, or every cycle as `discharge-charge` — so the
+coulombic efficiency and the charge/discharge curves pair the wrong
+half-cycles. `summarizers.renumber_cycles` is the opt-in repair: it renumbers
+`cycle_num` so every cycle opens with a chosen direction and keeps a leading
+run of the other direction as the first cycle on its own.
+
+```python
+from cellpycore import summarizers, config
+
+data = summarizers.make_step_table(data)
+data = summarizers.renumber_cycles(data, opening=config.StepDirection.CHARGE)
+data = summarizers.make_summary(data)   # the stale summary is dropped by renumber_cycles
+```
+
+| cycler counter        | after `opening=CHARGE` |
+|-----------------------|------------------------|
+| `[D] [C D] [C D]`     | unchanged (no-op)      |
+| `[D C D] [C D]`       | `[D] [C D] [C D]`      |
+| `[D C] [D C] [D C]`   | `[D] [C D] [C D] [C]`  |
+
+Use `StepDirection.DISCHARGE` for anode half-cells (`TestMode.INVERTED`). The
+raw cumulative capacity / energy columns are re-accumulated to the new
+boundaries, the step table is rebuilt (pass the same `make_step_table` kwargs,
+e.g. `raw_limits=...`), and rest / IR / OCV steps attach to the cycle they occur
+in. A lone first discharge gives `coulombic_efficiency = inf` for that cycle
+under the normal convention — that is the honest value. Run it once the raw
+data is complete; incremental appends (`update_data`) key on the cycler's own
+counter.
+
 ## The class-free alternative
 
 The engine functions in `cellpycore.summarizers` work directly on a `Data`

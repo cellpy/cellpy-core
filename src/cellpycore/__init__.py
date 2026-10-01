@@ -3,8 +3,8 @@
 The public, stable surface is the curated set of names re-exported here:
 the cell classes (``CellpyCellCore``, its legacy bridge ``OldCellpyCellCore``),
 the ``Data`` container, the engine entry points (``make_step_table``,
-``add_step_c_rate``, ``make_summary``), the column-header schema types, and the package
-exceptions. Everything else (``units``, ``timestamps``, ``legacy``, ``metadata``,
+``add_step_c_rate``, ``make_summary``, ``renumber_cycles``), the column-header
+schema types, and the package exceptions. Everything else (``units``, ``timestamps``, ``legacy``, ``metadata``,
 ``testing`` ...) remains importable as submodules but is not part of the
 guaranteed top-level API.
 """
@@ -23,11 +23,17 @@ from cellpycore.config import (
     RawCols,
     Schema,
     StepCols,
+    StepDirection,
     default_schema,
 )
 from cellpycore.exceptions import CellpyError, NoDataFound
 from cellpycore.merge import merge_data, update_data
-from cellpycore.summarizers import add_step_c_rate, make_step_table, make_summary
+from cellpycore.summarizers import (
+    add_step_c_rate,
+    make_step_table,
+    make_summary,
+    renumber_cycles,
+)
 
 try:
     __version__ = version("cellpycore")
@@ -44,6 +50,7 @@ __all__ = [
     "RawCols",
     "Schema",
     "StepCols",
+    "StepDirection",
     "__version__",
     "add_step_c_rate",
     "cast_raw_frame",
@@ -51,6 +58,7 @@ __all__ = [
     "make_step_table",
     "make_summary",
     "merge_data",
+    "renumber_cycles",
     "update_data",
     "validate_raw_frame",
 ]

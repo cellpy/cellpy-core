@@ -106,6 +106,29 @@ class ResetGranularity(StrEnum):
     TEST = "test"
 
 
+class StepDirection(StrEnum):
+    """Current direction of a charge / discharge step.
+
+    Used by :func:`cellpycore.summarizers.renumber_cycles` to say which
+    direction *opens* a cycle when a cycler's cycle counter has to be repaired
+    (e.g. a full cell whose test starts with a lone discharge). Deliberately
+    separate from :class:`TestMode`: ``TestMode`` is about sign / coulombic-
+    efficiency polarity, this enum is about the ordering of half-cycles within
+    a cycle.
+
+    Attributes:
+        CHARGE (``"charge"``): Charge steps (``charge``, ``cv_charge``,
+            ``taper_charge``, ``charge_cv``). The usual opening direction for
+            full cells and cathode half-cells (``TestMode.NORMAL``).
+        DISCHARGE (``"discharge"``): Discharge steps (``discharge``,
+            ``cv_discharge``, ``taper_discharge``, ``discharge_cv``). The usual
+            opening direction for anode half-cells (``TestMode.INVERTED``).
+    """
+
+    CHARGE = "charge"
+    DISCHARGE = "discharge"
+
+
 class StepType(StrEnum):
     """Canonical step-type labels for the ``step_type`` column of the step table.
 
