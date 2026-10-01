@@ -11,6 +11,8 @@ from cellpycore.config import (
     ResetGranularity,
     Schema,
     StepCols,
+    StepDirection,
+    StepType,
     TestMode,
     default_schema,
 )
@@ -179,29 +181,243 @@ def normalize_capacity_granularity(
         source_keys = [nhdr.test_id]
     cycle_keys = [nhdr.test_id, nhdr.cycle_num]
 
-    cols = [
+    raw = _reaccumulate_cumulative(
+        raw, _present_cumulative_cols(raw, nhdr), source_keys, cycle_keys
+    )
+
+    data.raw = raw.to_pandas() if was_pandas else raw
+    return data
+
+
+def _present_cumulative_cols(raw: "pl.DataFrame", nhdr) -> list:
+    """Return the cumulative capacity / energy columns present in ``raw``."""
+    return [
         getattr(nhdr, attr)
         for attr in _CUMULATIVE_ATTRS
         if getattr(nhdr, attr) in raw.columns
     ]
-    if cols:
-        # Two passes (polars disallows a window expr nested inside another
-        # window's aggregation): (1) per-row increment within the source reset
-        # group (first row of the group keeps its own value), then (2)
-        # re-accumulate over the cycle.
-        increments = []
-        for col in cols:
-            diff = pl.col(col) - pl.col(col).shift(1).over(source_keys)
-            increments.append(
-                pl.when(diff.is_null()).then(pl.col(col)).otherwise(diff).alias(col)
-            )
-        raw = raw.with_columns(increments)
-        raw = raw.with_columns(
-            [pl.col(col).cum_sum().over(cycle_keys).alias(col) for col in cols]
+
+
+def _reaccumulate_cumulative(
+    raw: "pl.DataFrame", cols: list, source_keys: list, target_keys: list
+) -> "pl.DataFrame":
+    """Re-accumulate cumulative columns from ``source_keys`` groups to ``target_keys``.
+
+    For each column, the per-row increment within the *source* reset group is
+    reconstructed (the first row of a group keeps its own value) and then
+    re-accumulated over the *target* group. ``raw`` must already be sorted by
+    datapoint. Shared by :func:`normalize_capacity_granularity` (step/test ->
+    cycle) and :func:`renumber_cycles` (old cycle -> new cycle).
+    """
+    if not cols:
+        return raw
+    # Two passes (polars disallows a window expr nested inside another
+    # window's aggregation).
+    increments = []
+    for col in cols:
+        diff = pl.col(col) - pl.col(col).shift(1).over(source_keys)
+        increments.append(
+            pl.when(diff.is_null()).then(pl.col(col)).otherwise(diff).alias(col)
+        )
+    raw = raw.with_columns(increments)
+    return raw.with_columns(
+        [pl.col(col).cum_sum().over(target_keys).alias(col) for col in cols]
+    )
+
+
+# Step types counted as charge / discharge when deciding where a cycle opens
+# (see ``renumber_cycles``). Everything else (rest, ir, ocvrlx_*, "") is
+# neutral and attaches to the current cycle.
+_CHARGE_STEP_TYPES = (
+    StepType.CHARGE,
+    StepType.CV_CHARGE,
+    StepType.TAPER_CHARGE,
+    StepType.CHARGE_CV,
+)
+_DISCHARGE_STEP_TYPES = (
+    StepType.DISCHARGE,
+    StepType.CV_DISCHARGE,
+    StepType.TAPER_DISCHARGE,
+    StepType.DISCHARGE_CV,
+)
+
+
+def renumber_cycles(
+    data: Data,
+    schema: Optional[Schema] = None,
+    opening: StepDirection = StepDirection.CHARGE,
+    **step_table_kwargs,
+) -> Data:
+    """Renumber cycles so that every cycle opens with the given step direction.
+
+    Repairs a cycler's cycle counter for tests whose half-cycle ordering does
+    not match the cell convention — typically a full cell that starts with a
+    lone discharge, where the cycler then reports ``discharge-charge-discharge``
+    for cycle 1 or ``discharge-charge`` for every cycle. After renumbering,
+    each cycle contains at most one run of ``opening`` steps followed by at most
+    one run of the other direction; neutral steps (rest, ir, ocv relaxation)
+    attach to the cycle they occur in. A leading run of the *closing*
+    direction is kept as the first cycle on its own, so coulombic efficiency
+    and curve extraction pair the right half-cycles from the second cycle on.
+
+    The raw cumulative capacity / energy columns are re-accumulated to the new
+    cycle boundaries (they stay cycle-cumulative, see
+    ``docs/specifications/harmonized-raw.md``), the step table is rebuilt with
+    :func:`make_step_table` so its per-step cumulative statistics follow, and
+    any existing summary is dropped (call :func:`make_summary` again).
+
+    Args:
+        data (Data): The data object (needs ``raw`` and a classified ``steps``).
+        schema: The column-header schema to use. Defaults to the native
+            cellpy-core schema when not provided.
+        opening (StepDirection): The direction that starts a cycle.
+            ``StepDirection.CHARGE`` (default) for full cells / cathode
+            half-cells, ``StepDirection.DISCHARGE`` for anode half-cells.
+        **step_table_kwargs: Forwarded to :func:`make_step_table` when the
+            step table is rebuilt (e.g. ``override_step_types``,
+            ``raw_limits``). Pass the same arguments the original step table
+            was built with.
+
+    Returns:
+        Data: The same object with ``raw`` and ``steps`` renumbered (frame types
+        preserved — pandas in, pandas out) and ``summary`` set to ``None``.
+        Returned untouched when the counter already matches the convention.
+
+    Raises:
+        NoDataFound: If ``data.raw`` or ``data.steps`` is missing.
+        ValueError: If required columns are missing, if the step table carries
+            ``ustep`` rows, or if ``(test_id, cycle_num, step_num)`` does not
+            identify a single step row.
+
+    Note:
+        Cycle numbering restarts from each test's original first cycle number
+        (``0``- or ``1``-based input stays that way). A lone leading discharge
+        under ``TestMode.NORMAL`` yields ``coulombic_efficiency = inf`` for that
+        first cycle (``discharge / 0``); that is the honest value and is left to
+        the consumer. Apply this after the raw data is complete — incremental
+        appends (:func:`cellpycore.merge.update_data`) key on the cycler's own
+        counter.
+    """
+    if schema is None:
+        schema = default_schema()
+    nhdr, shdr = schema.raw, schema.step
+    opening = StepDirection(opening)
+    open_sign = 1 if opening == StepDirection.CHARGE else -1
+
+    _require_frame(data.raw, "raw")
+    _require_frame(data.steps, "steps")
+    raw = data.raw
+    was_pandas = not isinstance(raw, pl.DataFrame)
+    if was_pandas:
+        raw = pl.from_pandas(raw)
+    steps = data.steps
+    if not isinstance(steps, pl.DataFrame):
+        steps = pl.from_pandas(steps)
+    _require_columns(
+        raw,
+        {
+            "datapoint_num": nhdr.datapoint_num,
+            "cycle_num": nhdr.cycle_num,
+            "step_num": nhdr.step_num,
+        },
+        "raw",
+    )
+    _require_columns(
+        steps,
+        {
+            "cycle_num": shdr.cycle_num,
+            "step_num": shdr.step_num,
+            "step_type": shdr.step_type,
+            "datapoint_num_first": shdr.datapoint_num_first,
+        },
+        "steps",
+    )
+    if "ustep" in steps.columns:
+        raise ValueError(
+            "renumber_cycles needs a step table built without usteps "
+            "(ustep rows cannot be mapped back onto the raw frame)"
         )
 
+    raw = _ensure_test_id(raw, nhdr.test_id).sort(nhdr.datapoint_num)
+    steps = _ensure_test_id(steps, shdr.test_id).sort(
+        [shdr.test_id, shdr.datapoint_num_first]
+    )
+    tid = shdr.test_id
+
+    # Direction per step: +1 charge, -1 discharge, 0 neutral. A new cycle opens
+    # where an ``opening`` step follows the last non-neutral step of the other
+    # direction. The first step of a test is never a boundary, so a leading run
+    # of closing steps becomes a cycle of its own.
+    direction = (
+        pl.when(pl.col(shdr.step_type).is_in([str(t) for t in _CHARGE_STEP_TYPES]))
+        .then(1)
+        .when(pl.col(shdr.step_type).is_in([str(t) for t in _DISCHARGE_STEP_TYPES]))
+        .then(-1)
+        .otherwise(0)
+    )
+    steps = steps.with_columns(direction.alias("__dir"))
+    steps = steps.with_columns(
+        pl.when(pl.col("__dir") != 0)
+        .then(pl.col("__dir"))
+        .otherwise(None)
+        .forward_fill()
+        .over(tid)
+        .alias("__prev")
+    )
+    steps = steps.with_columns(pl.col("__prev").shift(1).over(tid))
+    boundary = (pl.col("__dir") == open_sign) & (pl.col("__prev") == -open_sign)
+    steps = steps.with_columns(
+        (
+            pl.col(shdr.cycle_num).min().over(tid)
+            + boundary.cast(pl.Int64).cum_sum().over(tid)
+        ).alias("__new_cycle")
+    )
+
+    mapping_keys = [tid, shdr.cycle_num, shdr.step_num]
+    mapping = steps.select([*mapping_keys, "__new_cycle"])
+    if mapping.n_unique(subset=mapping_keys) != mapping.height:
+        raise ValueError(
+            "renumber_cycles needs (test_id, cycle_num, step_num) to identify a "
+            "single step row; the step table has duplicate keys"
+        )
+    if (mapping["__new_cycle"] == mapping[shdr.cycle_num]).all():
+        logger.debug("renumber_cycles: cycle counter already matches; no-op")
+        return data
+
+    # Map the new cycle number onto the raw rows. Rows without a step row
+    # (e.g. ``skip_steps``) inherit the preceding row's cycle, else keep theirs.
+    raw = raw.join(
+        mapping,
+        left_on=[nhdr.test_id, nhdr.cycle_num, nhdr.step_num],
+        right_on=mapping_keys,
+        how="left",
+    )
+    raw = raw.with_columns(
+        pl.col("__new_cycle")
+        .forward_fill()
+        .over(nhdr.test_id)
+        .fill_null(pl.col(nhdr.cycle_num))
+        .cast(raw.schema[nhdr.cycle_num])
+    )
+    raw = _reaccumulate_cumulative(
+        raw,
+        _present_cumulative_cols(raw, nhdr),
+        [nhdr.test_id, nhdr.cycle_num],
+        [nhdr.test_id, "__new_cycle"],
+    )
+    raw = raw.with_columns(pl.col("__new_cycle").alias(nhdr.cycle_num)).drop(
+        "__new_cycle"
+    )
+
+    n_old = mapping[shdr.cycle_num].n_unique()
+    n_new = mapping["__new_cycle"].n_unique()
+    logger.info(f"renumber_cycles: {n_old} -> {n_new} cycles (opening={opening.value})")
+
     data.raw = raw.to_pandas() if was_pandas else raw
-    return data
+    if data.summary is not None:
+        logger.info("renumber_cycles: dropping stale summary; rerun make_summary")
+        data.summary = None
+    return make_step_table(data, schema=schema, **step_table_kwargs)
 
 
 def _delta_expr(base: str) -> pl.Expr:
